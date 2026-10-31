@@ -50,6 +50,17 @@ class LibraryDestinationChoiceTest {
     }
 
     @Test
+    fun aRemovedAnimeShowsAsNotSaved() {
+        val membership = libraryPickerInitialMembership(
+            tabs = animeTabs,
+            currentMembership = emptyMap(),
+            rememberedDestinations = setOf("local", malPlanned.key),
+            removedByUser = true,
+        )
+        assertTrue(membership.values.none { it })
+    }
+
+    @Test
     fun theMemoryIsNotUsedForOtherContent() {
         val membership = libraryPickerInitialMembership(showTabs, emptyMap(), setOf("local"))
         assertEquals(mapOf("local" to false, "watchlist" to false), membership)

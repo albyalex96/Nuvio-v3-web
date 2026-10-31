@@ -15,15 +15,18 @@ internal fun hasAnimeLibraryDestinations(tabs: List<TrackingLibraryTab>): Boolea
 
 /**
  * The picker selection: where the item is saved now. An anime saved nowhere gets the destinations
- * chosen the last time, minus the ones no longer offered (e.g. a disconnected service).
+ * chosen the last time, minus the ones no longer offered (e.g. a disconnected service), unless
+ * the user removed it from there.
  */
 internal fun libraryPickerInitialMembership(
     tabs: List<TrackingLibraryTab>,
     currentMembership: Map<String, Boolean>,
     rememberedDestinations: Set<String>,
+    /** True after the user removed the item: it must show as not saved, without preselection. */
+    removedByUser: Boolean = false,
 ): Map<String, Boolean> {
     val membership = tabs.associate { tab -> tab.key to (currentMembership[tab.key] == true) }
-    if (!hasAnimeLibraryDestinations(tabs) || membership.values.any { it }) return membership
+    if (removedByUser || !hasAnimeLibraryDestinations(tabs) || membership.values.any { it }) return membership
     // Through the toggle so a selection group (one MAL status) keeps a single choice.
     return trackingMembershipDestinations(tabs)
         .filter { tab -> tab.key in rememberedDestinations }

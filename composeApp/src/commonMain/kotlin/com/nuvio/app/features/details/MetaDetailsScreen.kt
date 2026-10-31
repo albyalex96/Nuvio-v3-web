@@ -557,6 +557,7 @@ fun MetaDetailsScreen(
                                     tabs = tabs,
                                     currentMembership = snapshot,
                                     rememberedDestinations = AnimeTrackingSettingsRepository.lastLibraryDestinations(),
+                                    removedByUser = AnimeTrackingSettingsRepository.wasRemovedFromLibrary(libraryItem.id),
                                 )
                             }.onFailure { error ->
                                 pickerError = error.message ?: getString(Res.string.trakt_lists_load_failed)
@@ -1628,7 +1629,7 @@ fun MetaDetailsScreen(
                                     }
                                     val completeMembershipUpdate: suspend (TrackingMembershipApplyResult) -> Unit = { result ->
                                         animeLibraryDestinationsToRemember(pickerTabs, desiredMembership)
-                                            ?.let(AnimeTrackingSettingsRepository::rememberLibraryDestinations)
+                                            ?.let { destinations -> AnimeTrackingSettingsRepository.onLibraryDestinationsSaved(item.id, destinations) }
                                         showTrackingMembershipRewriteFeedback(result)
                                         showLibraryListPicker = false
                                     }

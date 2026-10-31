@@ -78,6 +78,26 @@ object AnimeTrackingSettingsRepository {
         saveLibraryDestinations(listKeys)
     }
 
+    /** Content IDs (lowercase) the user removed from every anime destination during this session. */
+    private val removedFromLibrary = mutableSetOf<String>()
+
+    /**
+     * Records a picker save: a removal stops the remembered destinations from being preselected for
+     * that item, so the picker shows it as not saved; a new save clears the mark.
+     */
+    fun onLibraryDestinationsSaved(contentId: String, listKeys: Set<String>) {
+        val key = contentId.lowercase()
+        if (listKeys.isEmpty()) {
+            log.d { "Anime $contentId removed from the library: no preselection for it" }
+            removedFromLibrary += key
+        } else {
+            removedFromLibrary -= key
+            rememberLibraryDestinations(listKeys)
+        }
+    }
+
+    fun wasRemovedFromLibrary(contentId: String): Boolean = contentId.lowercase() in removedFromLibrary
+
     internal fun exportToSyncPayload(): JsonObject = buildJsonObject {
         ensureLoaded()
         put(SYNC_KEY, encodeSyncStringSet(_uiState.value.excludedProviders.mapTo(linkedSetOf()) { it.storageId }))
