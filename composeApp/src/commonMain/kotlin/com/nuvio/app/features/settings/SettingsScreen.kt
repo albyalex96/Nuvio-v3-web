@@ -947,8 +947,7 @@ private fun MobileSettingsScreen(
                     SettingsPage.AniSkip -> aniSkipSettingsContent(isTablet = false)
                     SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = false)
                     SettingsPage.AniList -> aniListSettingsContent(isTablet = false)
-                    SettingsPage.Telegram,
-                    -> workInProgressIntegrationContent(isTablet = false, page = page)
+                    SettingsPage.Telegram -> telegramSettingsContent(isTablet = false)
                     SettingsPage.AiAssistant -> aiAssistantSettingsContent(isTablet = false)
                     SettingsPage.Cloudstream -> cloudStreamSettingsContent()
                     SettingsPage.TraktAuthentication -> trackingSettingsContent(
@@ -1474,8 +1473,7 @@ private fun TabletSettingsScreen(
                         SettingsPage.AniSkip -> aniSkipSettingsContent(isTablet = true)
                         SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = true)
                         SettingsPage.AniList -> aniListSettingsContent(isTablet = true)
-                        SettingsPage.Telegram,
-                        -> workInProgressIntegrationContent(isTablet = true, page = page)
+                        SettingsPage.Telegram -> telegramSettingsContent(isTablet = true)
                         SettingsPage.AiAssistant -> aiAssistantSettingsContent(isTablet = true)
                         SettingsPage.Cloudstream -> cloudStreamSettingsContent()
                         SettingsPage.TraktAuthentication -> trackingSettingsContent(

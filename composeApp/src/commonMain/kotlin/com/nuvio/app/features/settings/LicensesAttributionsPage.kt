@@ -37,6 +37,7 @@ import com.nuvio.app.features.cloud.PremiumizeCloudLibraryPosterUrl
 import com.nuvio.app.features.cloud.TorboxCloudLibraryPosterUrl
 import com.nuvio.app.features.cloud.cloudLibraryDisplayArtworkUrl
 import com.nuvio.app.features.discord.DiscordRpcPlatform
+import com.nuvio.app.features.telegram.TelegramSourceResolver
 import com.nuvio.app.isIos
 import com.nuvio.app.features.player.seekthumb.seekThumbnailsSupported
 import nuvio.composeapp.generated.resources.*
@@ -55,6 +56,8 @@ private const val SkipDbUrl = "https://skipdb.tv"
 private const val MyAnimeListUrl = "https://myanimelist.net"
 private const val KitsuUrl = "https://kitsu.app"
 private const val AniListUrl = "https://anilist.co"
+private const val TelegramUrl = "https://telegram.org"
+private const val TdLibLicenseUrl = "https://github.com/tdlib/td/blob/master/LICENSE_1_0.txt"
 private const val AnimeSkipUrl = "https://anime-skip.com"
 private const val AniSkipUrl = "https://aniskip.com"
 private const val AniSkipLogoLicenseUrl = "https://github.com/aniskip/aniskip-extension/blob/main/LICENSE"
@@ -187,6 +190,18 @@ private fun LicensesAttributionsBody(
                         bodyRes = Res.string.settings_licenses_attributions_nuvio_arc_body,
                         licenseRes = Res.string.settings_licenses_attributions_nuvio_arc_license,
                         link = NuvioArcRepositoryUrl,
+                    ),
+                    isTablet = isTablet,
+                )
+            }
+            if (TelegramSourceResolver.isSupported) {
+                PlainStackDivider()
+                LicenseRow(
+                    item = LicenseItem(
+                        titleRes = Res.string.settings_licenses_attributions_tdlib_title,
+                        bodyRes = Res.string.settings_licenses_attributions_tdlib_body,
+                        licenseRes = Res.string.settings_licenses_attributions_tdlib_license,
+                        link = TdLibLicenseUrl,
                     ),
                     isTablet = isTablet,
                 )
@@ -544,6 +559,13 @@ private fun attributionItems(): List<AttributionItem> = listOf(
         logo = IntegrationLogo.Discord,
         link = DiscordUrl,
     ).takeIf { DiscordRpcPlatform.isSupported },
+    // Same visibility as the Telegram page (Android full distribution only).
+    AttributionItem(
+        titleRes = Res.string.settings_licenses_attributions_telegram_title,
+        bodyRes = Res.string.settings_licenses_attributions_telegram_body,
+        logo = IntegrationLogo.Telegram,
+        link = TelegramUrl,
+    ).takeIf { TelegramSourceResolver.isSupported },
     // Same visibility as the DNS over HTTPS option (Settings → Advanced → Network).
     AttributionItem(
         titleRes = Res.string.settings_licenses_attributions_doh_title,

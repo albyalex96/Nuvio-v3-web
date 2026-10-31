@@ -153,6 +153,23 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
             )
         }
 
+        outDir.resolve("com/nuvio/app/features/telegram").apply {
+            mkdirs()
+            val telegramApiId = props.getProperty("TELEGRAM_API_ID", "").trim().toIntOrNull() ?: 0
+            val telegramApiHash = props.getProperty("TELEGRAM_API_HASH", "").trim()
+            resolve("TelegramConfig.kt").writeText(
+                """
+                |package com.nuvio.app.features.telegram
+                |
+                |object TelegramConfig {
+                |    const val API_ID = $telegramApiId
+                |    const val API_HASH = "$telegramApiHash"
+                |    val isConfigured: Boolean get() = API_ID != 0 && API_HASH.isNotBlank()
+                |}
+                """.trimMargin()
+            )
+        }
+
         outDir.resolve("com/nuvio/app/features/mdblist").apply {
             mkdirs()
             resolve("MdbListConfig.kt").writeText(
@@ -514,6 +531,11 @@ kotlin {
                     implementation(libs.nicehttp)
                     implementation(libs.conscrypt.android)
                     implementation("com.uwetrottmann.tmdb2:tmdb-java:2.13.0")
+                    // Telegram (TDLib): Java bindings; the native libtdjni.so lives in src/full/jniLibs (arm64-v8a, armeabi-v7a).
+                    implementation(files("libs/tdlib.jar"))
+                    // Local HTTP proxy that serves Telegram files to the player with range requests.
+                    implementation(libs.ktor.server.core)
+                    implementation(libs.ktor.server.cio)
                 }
             }
         }

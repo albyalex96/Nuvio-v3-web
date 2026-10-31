@@ -24,7 +24,7 @@
     <string name="settings_integrations_subdl_description">Search subtitles on SubDL</string>
     <string name="settings_integrations_ai_assistant_description">Chat about movies and series with your own AI provider</string>
     <string name="settings_integrations_ai_assistant_tv_unavailable">Not available on TV</string>
-    <string name="settings_integrations_telegram_description">Connect Nuvio to Telegram</string>
+    <string name="settings_integrations_telegram_description">Search and stream video files from your Telegram chats</string>
     <string name="compose_settings_page_cloudstream">CloudStream</string>
     <string name="settings_content_discovery_cloudstream_description">Install and use CloudStream extensions as sources</string>
     <string name="settings_work_in_progress_badge">Work in progress</string>

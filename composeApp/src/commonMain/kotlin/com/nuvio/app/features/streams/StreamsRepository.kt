@@ -16,6 +16,8 @@ import com.nuvio.app.features.plugins.PluginRepository
 import com.nuvio.app.features.plugins.pluginContentId
 import com.nuvio.app.features.plugins.PluginsUiState
 import com.nuvio.app.features.servers.ServerStreams
+import com.nuvio.app.features.telegram.TelegramSourceResolver
+import com.nuvio.app.features.telegram.TelegramStreams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -89,7 +91,8 @@ object StreamsRepository {
             manualSelection = manualSelection,
         )
         val requestKey = "$requestToken::pluginsGrouped=${pluginUiState.groupStreamsByRepository}" +
-            "::${CloudStreamStreams.requestSignature()}"
+            "::${CloudStreamStreams.requestSignature()}" +
+            "::telegram=${TelegramSourceResolver.isEnabled()}"
         val currentState = _uiState.value
         if (
             !forceRefresh &&
@@ -179,6 +182,11 @@ object StreamsRepository {
         } else {
             CloudStreamStreams.sources(type, videoId, parentMetaId, season, episode)
         }
+        val telegramSources = if (isNativeRequest) {
+            emptyList()
+        } else {
+            TelegramStreams.sources(type, videoId, parentMetaId, season, episode)
+        }
         val preferredGroupIds = serverSources.filter { it.preferred }.mapTo(mutableSetOf()) { it.addonId }
         val installedAddons = if (isNativeRequest) emptyList() else AddonRepository.uiState.value.addons.enabledAddons()
         val pluginScrapers = if (AppFeaturePolicy.pluginsEnabled && !isNativeRequest) {
@@ -191,7 +199,7 @@ object StreamsRepository {
             groupByRepository = pluginUiState.groupStreamsByRepository,
         )
 
-        if (installedAddons.isEmpty() && pluginProviderGroups.isEmpty() && serverSources.isEmpty() && cloudStreamSources.isEmpty()) {
+        if (installedAddons.isEmpty() && pluginProviderGroups.isEmpty() && serverSources.isEmpty() && cloudStreamSources.isEmpty() && telegramSources.isEmpty()) {
             _uiState.value = StreamsUiState(
                 requestToken = requestToken,
                 isAnyLoading = false,
@@ -215,7 +223,7 @@ object StreamsRepository {
 
         log.d { "Found ${streamAddons.size} addons and ${cloudStreamSources.size} CloudStream groups for stream type=$type id=$videoId" }
 
-        if (streamAddons.isEmpty() && pluginProviderGroups.isEmpty() && serverSources.isEmpty() && cloudStreamSources.isEmpty()) {
+        if (streamAddons.isEmpty() && pluginProviderGroups.isEmpty() && serverSources.isEmpty() && cloudStreamSources.isEmpty() && telegramSources.isEmpty()) {
             _uiState.value = StreamsUiState(
                 requestToken = requestToken,
                 isAnyLoading = false,
@@ -242,7 +250,8 @@ object StreamsRepository {
                 isLoading = true,
                 pendingProviderKeys = providerGroup.scrapers.mapTo(LinkedHashSet()) { pluginProviderKey(it.id) },
             )
-        } + serverSources.map { it.loadingGroup() } + cloudStreamSources.map { it.loadingGroup() },
+        } + serverSources.map { it.loadingGroup() } + cloudStreamSources.map { it.loadingGroup() } +
+            telegramSources.map { it.loadingGroup() },
             installedAddonOrder, preferredGroupIds)
         val isInitiallyLoading = initialGroups.any { it.isLoading }
         _uiState.value = StreamsUiState(
@@ -570,6 +579,10 @@ object StreamsRepository {
             }
 
             cloudStreamSources.forEach { source ->
+                launch { publishCompletion(StreamLoadCompletion.Addon(source.load())) }
+            }
+
+            telegramSources.forEach { source ->
                 launch { publishCompletion(StreamLoadCompletion.Addon(source.load())) }
             }
 

@@ -78,6 +78,7 @@ import com.nuvio.app.features.p2p.P2pSettingsRepository
 import com.nuvio.app.isIos
 import com.nuvio.app.tv.LocalTvShell
 import com.nuvio.app.features.discord.DiscordRpcPlatform
+import com.nuvio.app.features.telegram.TelegramSourceResolver
 import com.nuvio.app.tv.TvAppRuntime
 import com.nuvio.app.features.ai.AiProvider
 import com.nuvio.app.supportsPosterNavigationMotion
@@ -364,6 +365,10 @@ internal fun settingsSearchEntries(
             .takeIf { AppFeaturePolicy.pluginsEnabled },
         PlaybackSearchRow("discord-attribution", stringResource(Res.string.settings_licenses_attributions_discord_title), stringResource(Res.string.settings_licenses_attributions_discord_body))
             .takeIf { DiscordRpcPlatform.isSupported },
+        PlaybackSearchRow("telegram-attribution", stringResource(Res.string.settings_licenses_attributions_telegram_title), stringResource(Res.string.settings_licenses_attributions_telegram_body))
+            .takeIf { TelegramSourceResolver.isSupported },
+        PlaybackSearchRow("tdlib-license", stringResource(Res.string.settings_licenses_attributions_tdlib_title), stringResource(Res.string.settings_licenses_attributions_tdlib_body))
+            .takeIf { TelegramSourceResolver.isSupported },
         PlaybackSearchRow("doh-attribution", stringResource(Res.string.settings_licenses_attributions_doh_title), stringResource(Res.string.settings_licenses_attributions_doh_body))
             .takeIf { dnsOverHttpsSettingsVisible },
         PlaybackSearchRow("okhttp-license", stringResource(Res.string.settings_licenses_attributions_okhttp_title), stringResource(Res.string.settings_licenses_attributions_okhttp_license))
@@ -1953,6 +1958,29 @@ private fun addAdditionalSearchEntries(
     addPage(SettingsPage.Kitsu, "kitsu", stringResource(Res.string.compose_settings_page_kitsu), stringResource(Res.string.settings_integrations_kitsu_description), generalCategory, Icons.Rounded.ViewList)
     addPage(SettingsPage.AniList, "anilist", stringResource(Res.string.compose_settings_page_anilist), stringResource(Res.string.settings_integrations_anilist_description), generalCategory, Icons.Rounded.ViewList)
     addPage(SettingsPage.Telegram, "telegram", stringResource(Res.string.compose_settings_page_telegram), stringResource(Res.string.settings_integrations_telegram_description), generalCategory, Icons.Rounded.Send)
+    if (TelegramSourceResolver.isSupported) {
+        // The Telegram page has a custom layout (login steps): its rows are indexed by hand.
+        row(
+            page = SettingsPage.Telegram,
+            key = "telegram-account",
+            title = stringResource(Res.string.settings_telegram_section_account),
+            description = stringResource(Res.string.settings_telegram_description),
+            pageLabel = stringResource(Res.string.compose_settings_page_telegram),
+            section = stringResource(Res.string.settings_telegram_section_account),
+            category = generalCategory,
+            icon = Icons.Rounded.Send,
+        )
+        row(
+            page = SettingsPage.Telegram,
+            key = "telegram-cache",
+            title = stringResource(Res.string.settings_telegram_clear_cache),
+            description = stringResource(Res.string.settings_telegram_connected_title),
+            pageLabel = stringResource(Res.string.compose_settings_page_telegram),
+            section = stringResource(Res.string.settings_telegram_section_account),
+            category = generalCategory,
+            icon = Icons.Rounded.Send,
+        )
+    }
 
     // Downloads
     val downloadsPage = stringResource(Res.string.compose_settings_root_downloads_title)

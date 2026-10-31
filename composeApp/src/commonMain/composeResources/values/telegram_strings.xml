@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_telegram_section_account">Telegram account</string>
+    <string name="settings_telegram_description">Connect your Telegram account: Nuvio searches the chats and channels you joined for video files and lists them on the stream screen.</string>
+    <string name="settings_telegram_phone_card_title">Log in with your phone number</string>
+    <string name="settings_telegram_phone_instruction">Enter your phone number including the country code (e.g. +391234567890).</string>
+    <string name="settings_telegram_phone_label">Phone number</string>
+    <string name="settings_telegram_phone_placeholder">+391234567890</string>
+    <string name="settings_telegram_send_code">Send verification code</string>
+    <string name="settings_telegram_initializing">Starting the Telegram client…</string>
+    <string name="settings_telegram_code_card_title">Enter the verification code</string>
+    <string name="settings_telegram_code_instruction">Enter the %1$d-digit code sent to your Telegram app.</string>
+    <string name="settings_telegram_code_label">Verification code</string>
+    <string name="settings_telegram_verify_code">Verify code</string>
+    <string name="settings_telegram_2fa_card_title">Two-step verification</string>
+    <string name="settings_telegram_2fa_instruction">Enter your Telegram cloud password.</string>
+    <string name="settings_telegram_2fa_label">Password</string>
+    <string name="settings_telegram_submit_password">Confirm password</string>
+    <string name="settings_telegram_connected_title">Connected account</string>
+    <string name="settings_telegram_logged_in_as">Logged in as %1$s</string>
+    <string name="settings_telegram_media_cache">Media cache: %1$s</string>
+    <string name="settings_telegram_clear_cache">Clear cache</string>
+    <string name="settings_telegram_disconnect">Disconnect account</string>
+    <string name="settings_telegram_error_title">Telegram error</string>
+    <string name="settings_telegram_retry">Retry</string>
+    <string name="settings_telegram_qr_scan">Confirm the login from another Telegram device: %1$s</string>
+    <string name="settings_telegram_not_configured">Telegram is not configured in this build (missing API ID / API hash).</string>
+    <string name="settings_telegram_unavailable">Telegram is not available on this device (unsupported CPU architecture).</string>
+    <string name="settings_licenses_attributions_telegram_title">Telegram</string>
+    <string name="settings_licenses_attributions_telegram_body">Nuvio connects to Telegram, with your account, to search the chats you joined for video files and stream them. Telegram is a trademark of Telegram FZ-LLC. Nuvio is not affiliated with or endorsed by Telegram.</string>
+    <string name="settings_licenses_attributions_tdlib_title">TDLib</string>
+    <string name="settings_licenses_attributions_tdlib_body">The Telegram integration uses TDLib (Telegram Database Library) to log in, search messages and download files.</string>
+    <string name="settings_licenses_attributions_tdlib_license">Licensed under the Boost Software License 1.0.</string>
+</resources>
