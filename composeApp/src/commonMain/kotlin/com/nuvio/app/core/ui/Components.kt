@@ -283,6 +283,9 @@ fun NuvioBackButton(
     buttonSize: Dp = NuvioTokens.Space.s40,
     iconSize: Dp = NuvioTokens.Icon.md,
     contentDescription: String = stringResource(Res.string.action_back),
+    // TV: header back buttons are skipped by the D-pad (the remote has a Back key); the player
+    // keeps its own reachable, as its Back key only hides the controls.
+    tvFocusable: Boolean = false,
 ) {
     if (LocalUseNativeNavigation.current && !LocalNativeNavigationBarHidden.current) return
 
@@ -291,7 +294,7 @@ fun NuvioBackButton(
             .size(buttonSize)
             .clip(shape)
             .background(containerColor)
-            .tvNotFocusable()
+            .then(if (tvFocusable) Modifier else Modifier.tvNotFocusable())
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

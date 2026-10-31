@@ -105,7 +105,7 @@ internal fun PlayerTimelineDetails(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        val source = streamTitle.ifBlank { providerName }.replace("\n", " · ")
+        val source = providerName.ifBlank { streamTitle }.replace("\n", " · ")
         if (!isPlaying && source.isNotBlank()) {
             Text(
                 text = stringResource(Res.string.compose_player_via, source),

@@ -200,16 +200,28 @@ private class SeekPreview {
 /**
  * The element takes the focus as soon as it appears (TV): player panels, modals and prompts such
  * as "skip intro" or "next episode". Place it before the clickable it applies to, or before a
- * `focusGroup` to focus the first element of a container. With [onlyWithoutOverlay] (prompts) it
- * does not steal the focus from an open panel. No-op without a [TvShell].
+ * `focusGroup` to focus the first element of a container. With [onlyWithoutOverlay] (player
+ * prompts) it never steals the focus from an open panel or from the visible player controls (the
+ * controls keep it on the timeline / the button in use); it takes the focus again every time the
+ * controls hide while it is still on screen. No-op without a [TvShell].
  */
 @Composable
 fun Modifier.tvFocusOnAppear(onlyWithoutOverlay: Boolean = false): Modifier {
     if (LocalTvShell.current == null) return this
     val requester = remember { FocusRequester() }
     LaunchedEffect(requester) {
-        if (onlyWithoutOverlay && TvPlayerRemoteRegistry.active?.overlayOpen == true) return@LaunchedEffect
-        TvPlayerFocus.focus(requester, "element shown")
+        if (!onlyWithoutOverlay) {
+            TvPlayerFocus.focus(requester, "element shown")
+            return@LaunchedEffect
+        }
+        // Player prompt: focus only while nothing else of the player is on screen. The flow emits
+        // again when the controls or a panel close, so the prompt gets its highlight back.
+        snapshotFlow {
+            val remote = TvPlayerRemoteRegistry.active
+            remote == null || (!remote.controlsVisible && !remote.overlayOpen)
+        }.collect { free ->
+            if (free) TvPlayerFocus.focus(requester, "prompt shown")
+        }
     }
     return focusRequester(requester)
 }

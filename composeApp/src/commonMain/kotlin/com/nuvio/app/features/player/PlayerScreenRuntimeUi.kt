@@ -620,6 +620,7 @@ private fun BoxScope.RenderPlaybackOverlays(
             }
         },
         onDismissSkipInterval = { skipIntervalDismissed = true },
+        onSkipPromptVisibleChange = { skipPromptOnScreen = it },
         sliderEdgePadding = sliderEdgePadding,
         overlayBottomPadding = overlayBottomPadding,
         isSeries = isSeries,

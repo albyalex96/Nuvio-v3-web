@@ -98,6 +98,7 @@ internal fun PlayerToolbar(
             onClick = onLockToggle,
         )
         NuvioBackButton(
+            tvFocusable = true,
             onClick = onBack,
             containerColor = Color.Transparent,
             contentColor = Color.White,

@@ -441,7 +441,7 @@ internal fun PlayerScreenRuntime.BindTvPlayerRemote() {
 
             override fun activatePrompt(): Boolean {
                 val interval = runtime.activeSkipInterval
-                if (interval != null && !runtime.skipIntervalDismissed) {
+                if (interval != null && !runtime.skipIntervalDismissed && runtime.skipPromptOnScreen) {
                     val durationMs = runtime.playbackSnapshot.durationMs
                     val action = interval.internalSkipAction(runtime.skipIntervals, durationMs)
                     if (action != null) {
@@ -608,8 +608,10 @@ internal fun PlayerScreenRuntime.BindTvPlayerRemote() {
             log.i { "Player remote released" }
         }
     }
-    // Focus rules while the controls are on screen: they open on the timeline; when a panel or a
-    // prompt closes, the focus goes back to the last used control (e.g. the button that opened it).
+    // Focus rules while the controls are on screen: they always open on the timeline (a skip /
+    // next-episode prompt on screen stays reachable with the D-pad and takes the focus back when
+    // the controls hide); when a panel or a prompt closes, the focus goes back to the last used
+    // control (e.g. the button that opened it).
     LaunchedEffect(Unit) {
         var wasVisible = false
         var hadOverlay = false
@@ -619,7 +621,7 @@ internal fun PlayerScreenRuntime.BindTvPlayerRemote() {
         }.collect { (visible, overlay, prompt) ->
             if (visible && !overlay) {
                 when {
-                    !wasVisible && !prompt -> TvPlayerFocus.focus(TvPlayerFocus.timeline, "controls shown")
+                    !wasVisible -> TvPlayerFocus.focus(TvPlayerFocus.timeline, "controls shown")
                     hadOverlay -> TvPlayerFocus.focus(TvPlayerFocus.controls, "panel closed")
                     hadPrompt && !prompt -> TvPlayerFocus.focus(TvPlayerFocus.controls, "prompt closed")
                 }
@@ -662,9 +664,12 @@ private fun PlayerScreenRuntime.tvSeekPreviewAvailable(): Boolean =
     seekThumbnailProvider?.available == true && playbackSnapshot.durationMs > 0L &&
         !playerControlsLocked && !tvOverlayOpen() && !tvPromptVisible()
 
-/** "Skip intro/recap/outro" or "next episode" is on screen (it takes the focus itself). */
+/**
+ * "Skip intro/recap/outro" or "next episode" is on screen (it takes the focus itself while the
+ * controls are hidden). The skip button counts only while it is drawn: it auto-hides after a while.
+ */
 private fun PlayerScreenRuntime.tvPromptVisible(): Boolean =
-    (activeSkipInterval != null && !skipIntervalDismissed) || showNextEpisodeCard
+    (activeSkipInterval != null && !skipIntervalDismissed && skipPromptOnScreen) || showNextEpisodeCard
 
 
 /** Search field row: on TV the shell's voice search button sits before the field. */

@@ -26,7 +26,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +58,7 @@ fun SkipIntroButton(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     skipsToPostCredits: Boolean = false,
+    onVisibleChange: (Boolean) -> Unit = {},
 ) {
     var lastType by remember { mutableStateOf(interval?.type) }
     var lastSkipsToPostCredits by remember { mutableStateOf(skipsToPostCredits) }
@@ -101,6 +104,9 @@ fun SkipIntroButton(
     }
 
     val isVisible = shouldShow && (!autoHidden || controlsVisible)
+    val currentOnVisibleChange by rememberUpdatedState(onVisibleChange)
+    LaunchedEffect(isVisible) { currentOnVisibleChange(isVisible) }
+    DisposableEffect(Unit) { onDispose { currentOnVisibleChange(false) } }
 
     AnimatedVisibility(
         visible = isVisible,
@@ -116,7 +122,7 @@ fun SkipIntroButton(
                 .background(Color(0xFF1E1E1E).copy(alpha = 0.85f))
                 // TV: the prompt takes the focus when it appears (OK skips).
                 .tvFocusOnAppear(onlyWithoutOverlay = true)
-                .clickable(enabled = canSkip) { onSkip() },
+                .clickable(enabled = canSkip && isVisible) { onSkip() },
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),

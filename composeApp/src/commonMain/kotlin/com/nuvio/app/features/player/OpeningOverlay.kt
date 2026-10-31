@@ -116,6 +116,7 @@ internal fun OpeningOverlay(
         }
 
         NuvioBackButton(
+            tvFocusable = true,
             onClick = onBack,
             modifier = Modifier
                 .align(Alignment.TopEnd)

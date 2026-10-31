@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -48,6 +49,7 @@ internal fun BoxScope.PlayerPlaybackOverlays(
     controlsVisible: Boolean,
     onSkipInterval: (SkipInterval) -> Unit,
     onDismissSkipInterval: () -> Unit,
+    onSkipPromptVisibleChange: (Boolean) -> Unit,
     sliderEdgePadding: Dp,
     overlayBottomPadding: Dp,
     isSeries: Boolean,
@@ -113,7 +115,9 @@ internal fun BoxScope.PlayerPlaybackOverlays(
         horizontalPadding = metrics.horizontalPadding,
     )
 
-    if (!playerControlsLocked) {
+    if (playerControlsLocked) {
+        LaunchedEffect(Unit) { onSkipPromptVisibleChange(false) }
+    } else {
         SkipIntroButton(
             interval = if (!initialLoadCompleted || pausedOverlayVisible) null else activeSkipInterval,
             skipsToPostCredits = skipsToPostCredits,
@@ -123,6 +127,7 @@ internal fun BoxScope.PlayerPlaybackOverlays(
                 activeSkipInterval?.let(onSkipInterval)
             },
             onDismiss = onDismissSkipInterval,
+            onVisibleChange = onSkipPromptVisibleChange,
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = sliderEdgePadding, bottom = overlayBottomPadding),

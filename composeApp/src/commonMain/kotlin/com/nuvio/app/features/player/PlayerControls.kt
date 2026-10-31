@@ -629,6 +629,7 @@ private fun PlayerHeader(
                         )
                     }
                     NuvioBackButton(
+                        tvFocusable = true,
                         onClick = onBack,
                         containerColor = Color.Black.copy(alpha = 0.35f),
                         contentColor = Color.White,

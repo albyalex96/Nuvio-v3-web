@@ -189,6 +189,9 @@ internal class PlayerScreenRuntime(
     var lastManualSkipSeekPositions by mutableStateOf<Pair<Long, Long>?>(null)
     var activeSkipInterval by mutableStateOf<SkipInterval?>(null)
     var skipIntervalDismissed by mutableStateOf(false)
+
+    /** The skip intro/recap/outro button is actually on screen (it auto-hides after a while). */
+    var skipPromptOnScreen by mutableStateOf(false)
     var parentalWarnings by mutableStateOf<List<ParentalWarning>>(emptyList())
     var showParentalGuide by mutableStateOf(false)
     var parentalGuideHasShown by mutableStateOf(false)
