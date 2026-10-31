@@ -125,12 +125,34 @@ object TelegramRepository {
                     )
                     else -> continue
                 }
+                if (!isPlayableVideo(video)) {
+                    log.d { "Skipping Telegram media '${video.fileName}' mime=${video.mimeType} size=${video.fileSize} duration=${video.duration}" }
+                    continue
+                }
                 if (seen.add(video.fileName to video.fileSize)) results.add(video)
             }
         }
         log.d { "Telegram search '$query' videos=${results.size}" }
         return results
     }
+
+    private val imageExtensions = setOf("jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "heif", "tiff", "svg")
+    private val videoExtensions = setOf("mkv", "mp4", "avi", "mov", "m4v", "webm", "ts", "m2ts", "wmv", "flv", "mpg", "mpeg")
+
+    /** Drops images, GIFs and short clips (GIFs are often re-encoded by Telegram as short mp4 videos). */
+    private fun isPlayableVideo(video: TelegramVideoMessage): Boolean {
+        val mime = video.mimeType.lowercase()
+        val ext = video.fileName.substringAfterLast('.', "").lowercase()
+        if (mime.startsWith("image/") || ext in imageExtensions) return false
+        val looksLikeVideo = mime.startsWith("video/") || mime == "application/x-matroska" || ext in videoExtensions
+        if (!looksLikeVideo) return false
+        if (video.duration in 1 until MIN_DURATION_SECONDS) return false
+        if (video.fileSize in 1 until MIN_FILE_SIZE_BYTES) return false
+        return true
+    }
+
+    private const val MIN_DURATION_SECONDS = 120
+    private const val MIN_FILE_SIZE_BYTES = 20L * 1024 * 1024
 
     fun getStreamUrl(fileId: Int): String = TelegramStreamingProxy.getUrl(fileId)
 }
