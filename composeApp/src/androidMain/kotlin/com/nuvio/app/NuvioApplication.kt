@@ -27,6 +27,7 @@ import com.nuvio.app.core.network.dns.DnsOverHttpsStorage
 import com.nuvio.app.features.player.seekthumb.SeekThumbnailPlatform
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import java.util.concurrent.TimeUnit
 import com.nuvio.app.core.poster.CustomPosterFallbackInterceptor
 
 /**
@@ -52,7 +53,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
 
     override fun newImageLoader(context: android.content.Context): ImageLoader {
         val tv = isTvPackage(context)
-        Logger.withTag("ImageLoader").i { "Creating image loader (tv=$tv)" }
+        Logger.withTag("ImageLoader").i { "Creating image loader (tv=$tv, 16 requests per host)" }
         return ImageLoader.Builder(context)
             .crossfade(!tv)
             .diskCachePolicy(CachePolicy.ENABLED)
@@ -63,7 +64,27 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 add(SvgDecoder.Factory())
                 add(
                     KtorNetworkFetcherFactory(
-                        httpClient = { HttpClient(OkHttp) { engine { config { dns(NuvioDns) } } } },
+                        httpClient = {
+                            HttpClient(OkHttp) {
+                                engine {
+                                    config {
+                                        dns(NuvioDns)
+                                        // OkHttp's default allows 5 parallel requests per host: the home asks
+                                        // dozens of posters from the same CDN at startup and they queue up.
+                                        dispatcher(okhttp3.Dispatcher().apply {
+                                            maxRequests = 32
+                                            maxRequestsPerHost = 16
+                                        })
+                                        if (tv) {
+                                            // NuvioTV timeouts: a stalled image must not hold a slot for long.
+                                            connectTimeout(4, TimeUnit.SECONDS)
+                                            readTimeout(5, TimeUnit.SECONDS)
+                                            callTimeout(8, TimeUnit.SECONDS)
+                                        }
+                                    }
+                                }
+                            }
+                        },
                         cacheStrategy = { CacheControlCacheStrategy() },
                     ),
                 )
