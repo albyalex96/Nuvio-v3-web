@@ -83,6 +83,7 @@ import com.nuvio.app.features.trakt.TraktConnectionMode
 import com.nuvio.app.features.trakt.traktBrandPainter
 import com.nuvio.app.features.watchprogress.WatchProgressSourceCoordinator
 import kotlinx.coroutines.launch
+import nuvio.composeapp.generated.resources.settings_kitsu_disconnect_description
 import nuvio.composeapp.generated.resources.settings_mal_disconnect_description
 import nuvio.composeapp.generated.resources.settings_mdblist_disconnect_description
 import nuvio.composeapp.generated.resources.Res
@@ -130,6 +131,7 @@ internal enum class TrackingBrand(val displayName: String) {
     SIMKL("Simkl"),
     MDBLIST("MDBList"),
     MAL("MyAnimeList"),
+    KITSU("Kitsu"),
     TMDB("TMDB"),
 }
 
@@ -145,6 +147,7 @@ internal fun isTrackingBrandAvailable(
     simklConnected: Boolean,
     mdblistConnected: Boolean = false,
     malConnected: Boolean = false,
+    kitsuConnected: Boolean = false,
 ): Boolean = when (brand) {
     TrackingBrand.NUVIO,
     TrackingBrand.TMDB,
@@ -153,6 +156,7 @@ internal fun isTrackingBrandAvailable(
     TrackingBrand.SIMKL -> simklConnected
     TrackingBrand.MDBLIST -> mdblistConnected
     TrackingBrand.MAL -> malConnected
+    TrackingBrand.KITSU -> kitsuConnected
 }
 
 internal fun TraktConnectionMode.toTrackingConnectionCardMode(): TrackingConnectionCardMode = when (this) {
@@ -209,6 +213,7 @@ internal fun TrackingProviderCards(
         )
         MdbListProviderCard(Modifier.fillMaxWidth())
         MalProviderCard(Modifier.fillMaxWidth())
+        KitsuProviderCard(Modifier.fillMaxWidth())
     }
 
     if (showSyncInfo) {
@@ -327,6 +332,8 @@ internal fun TrackingProviderCard(
     onCancelAuthorization: () -> Unit,
     onSyncRequested: (() -> Unit)? = null,
     onInfoRequested: (() -> Unit)? = null,
+    /** Replaces the connect button while disconnected, for sign-ins without a browser (e.g. a login form). */
+    disconnectedContent: (@Composable () -> Unit)? = null,
     onDisconnect: () -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
@@ -497,12 +504,16 @@ internal fun TrackingProviderCard(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.82f),
                             )
-                            TrackingBrandPrimaryButton(
-                                label = connectLabel,
-                                loading = isLoading,
-                                enabled = credentialsConfigured && !isLoading,
-                                onClick = { actionScope.launch { openUrl(onConnectRequested()) } },
-                            )
+                            if (disconnectedContent != null) {
+                                disconnectedContent()
+                            } else {
+                                TrackingBrandPrimaryButton(
+                                    label = connectLabel,
+                                    loading = isLoading,
+                                    enabled = credentialsConfigured && !isLoading,
+                                    onClick = { actionScope.launch { openUrl(onConnectRequested()) } },
+                                )
+                            }
                             if (!credentialsConfigured) {
                                 TrackingBrandMessage(
                                     text = missingCredentialsMessage,
@@ -606,7 +617,7 @@ internal fun TrackingProviderCard(
 }
 
 @Composable
-private fun TrackingBrandPrimaryButton(
+internal fun TrackingBrandPrimaryButton(
     label: String,
     loading: Boolean,
     enabled: Boolean,
@@ -645,7 +656,7 @@ private fun TrackingBrandPrimaryButton(
 }
 
 @Composable
-private fun TrackingBrandMessage(
+internal fun TrackingBrandMessage(
     text: String,
     isError: Boolean,
 ) {
@@ -683,6 +694,7 @@ private fun TrackingDisconnectDialog(
                     stringResource(Res.string.settings_simkl_disconnect_description)
                 TrackingBrand.MDBLIST -> stringResource(Res.string.settings_mdblist_disconnect_description)
                 TrackingBrand.MAL -> stringResource(Res.string.settings_mal_disconnect_description)
+                TrackingBrand.KITSU -> stringResource(Res.string.settings_kitsu_disconnect_description)
                 TrackingBrand.NUVIO,
                 TrackingBrand.TMDB,
                 -> stringResource(
@@ -738,6 +750,12 @@ internal fun TrackingBrandGlyph(
             modifier = modifier,
             contentScale = ContentScale.Fit,
         )
+        TrackingBrand.KITSU -> Image(
+            painter = integrationLogoPainter(IntegrationLogo.Kitsu),
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = ContentScale.Fit,
+        )
         TrackingBrand.TMDB -> Image(
             painter = integrationLogoPainter(IntegrationLogo.Tmdb),
             contentDescription = contentDescription,
@@ -763,11 +781,12 @@ private fun TrackingBrandWordmark(
         TrackingBrand.SIMKL -> simklBrandPainter(SimklBrandAsset.Wordmark)
         TrackingBrand.MDBLIST -> integrationLogoPainter(IntegrationLogo.MdbList)
         TrackingBrand.MAL -> integrationLogoPainter(IntegrationLogo.MyAnimeList)
+        TrackingBrand.KITSU -> integrationLogoPainter(IntegrationLogo.Kitsu)
         TrackingBrand.NUVIO,
         TrackingBrand.TMDB,
         -> return
     }
-    if (brand == TrackingBrand.MDBLIST || brand == TrackingBrand.MAL) {
+    if (brand == TrackingBrand.MDBLIST || brand == TrackingBrand.MAL || brand == TrackingBrand.KITSU) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Image(painter, contentDescription = null, modifier = Modifier.size(32.dp))
             Text(contentDescription, style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
@@ -786,6 +805,7 @@ private fun TrackingBrandWordmark(
                 .height(30.dp)
             TrackingBrand.MDBLIST,
             TrackingBrand.MAL,
+            TrackingBrand.KITSU,
             -> Modifier.width(130.dp).height(32.dp)
             TrackingBrand.NUVIO,
             TrackingBrand.TMDB,
@@ -808,6 +828,9 @@ private fun TrackingBrand.cardBrush(): Brush = when (this) {
     )
     TrackingBrand.MAL -> Brush.linearGradient(
         colors = listOf(Color(0xFF1B3266), Color(0xFF2E51A2), Color(0xFF162A57)),
+    )
+    TrackingBrand.KITSU -> Brush.linearGradient(
+        colors = listOf(Color(0xFF402F3F), Color(0xFFF75239), Color(0xFF332433)),
     )
     TrackingBrand.NUVIO,
     TrackingBrand.TMDB,

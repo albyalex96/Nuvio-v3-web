@@ -351,6 +351,7 @@ internal fun settingsSearchEntries(
         PlaybackSearchRow("skipdb-attribution", stringResource(Res.string.settings_licenses_attributions_skipdb_title), stringResource(Res.string.settings_licenses_attributions_skipdb_body)),
         PlaybackSearchRow("imdb-datasets", stringResource(Res.string.settings_licenses_attributions_imdb_title), stringResource(Res.string.settings_licenses_attributions_imdb_body)),
         PlaybackSearchRow("myanimelist-attribution", stringResource(Res.string.settings_licenses_attributions_myanimelist_title), stringResource(Res.string.settings_licenses_attributions_myanimelist_body)),
+        PlaybackSearchRow("kitsu-attribution", stringResource(Res.string.settings_licenses_attributions_kitsu_title), stringResource(Res.string.settings_licenses_attributions_kitsu_body)),
         PlaybackSearchRow("fribb-attribution", stringResource(Res.string.settings_licenses_attributions_fribb_title), stringResource(Res.string.settings_licenses_attributions_fribb_body)),
         PlaybackSearchRow("kometa-attribution", stringResource(Res.string.settings_licenses_attributions_kometa_title), stringResource(Res.string.settings_licenses_attributions_kometa_body)),
         PlaybackSearchRow("animeskip-attribution", stringResource(Res.string.settings_licenses_attributions_animeskip_title), stringResource(Res.string.settings_licenses_attributions_animeskip_body)),
@@ -1240,6 +1241,16 @@ internal fun settingsSearchEntries(
         category = accountCategory,
         icon = Icons.Rounded.Link,
     )
+    addRow(
+        page = SettingsPage.TraktAuthentication,
+        key = "kitsu-authentication",
+        title = stringResource(Res.string.settings_kitsu_title),
+        description = stringResource(Res.string.settings_kitsu_sign_in_description),
+        pageLabel = trackingPage,
+        section = stringResource(Res.string.settings_tracking_services),
+        category = accountCategory,
+        icon = Icons.Rounded.Link,
+    )
     listOf(
         PlaybackSearchRow("trakt-library-source", stringResource(Res.string.trakt_library_source_title), stringResource(Res.string.trakt_library_source_subtitle)),
         PlaybackSearchRow("trakt-watch-progress", stringResource(Res.string.trakt_watch_progress_title), stringResource(Res.string.trakt_watch_progress_subtitle)),
@@ -1326,6 +1337,27 @@ internal fun settingsSearchEntries(
         description = stringResource(Res.string.settings_mal_sync_login_description),
         pageLabel = malPage,
         section = stringResource(Res.string.settings_tracking_mal_section),
+        category = accountCategory,
+        icon = Icons.Rounded.Link,
+    )
+    val kitsuPage = stringResource(Res.string.compose_settings_page_kitsu)
+    addRow(
+        page = SettingsPage.Kitsu,
+        key = "kitsu-account",
+        title = stringResource(Res.string.settings_kitsu_title),
+        description = stringResource(Res.string.settings_kitsu_sign_in_description),
+        pageLabel = kitsuPage,
+        section = stringResource(Res.string.settings_tracking_services),
+        category = accountCategory,
+        icon = Icons.Rounded.Link,
+    )
+    addRow(
+        page = SettingsPage.Kitsu,
+        key = "kitsu-sync-login",
+        title = stringResource(Res.string.settings_kitsu_sync_login_title),
+        description = stringResource(Res.string.settings_kitsu_sync_login_description),
+        pageLabel = kitsuPage,
+        section = stringResource(Res.string.settings_kitsu_section),
         category = accountCategory,
         icon = Icons.Rounded.Link,
     )

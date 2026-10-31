@@ -67,6 +67,7 @@ import com.nuvio.app.features.mdblist.PlatformMdbListAuthPersistence
 import com.nuvio.app.features.mdblist.PlatformMdbListSyncStorage
 import com.nuvio.app.features.servers.ServerStorage
 import com.nuvio.app.features.simkl.SimklAuthStorage
+import com.nuvio.app.features.kitsu.KitsuAuthStorage
 import com.nuvio.app.features.mal.MalAuthStorage
 import com.nuvio.app.features.anime.AnimeTrackingStorage
 import com.nuvio.app.features.player.skip.TimestampProviderStorage
@@ -149,6 +150,7 @@ open class MainActivity : AppCompatActivity() {
         Top10Storage.initialize(applicationContext)
         SimklAuthStorage.initialize(applicationContext)
         MalAuthStorage.initialize(applicationContext)
+        KitsuAuthStorage.initialize(applicationContext)
         AnimeTrackingStorage.initialize(applicationContext)
         TimestampProviderStorage.initialize(applicationContext)
         SimklSyncStorage.initialize(applicationContext)

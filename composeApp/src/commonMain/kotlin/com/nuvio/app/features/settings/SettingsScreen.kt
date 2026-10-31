@@ -945,7 +945,7 @@ private fun MobileSettingsScreen(
                     SettingsPage.MyAnimeList -> myAnimeListSettingsContent(isTablet = false)
                     SettingsPage.SkipDb -> skipDbSettingsContent(isTablet = false)
                     SettingsPage.AniSkip -> aniSkipSettingsContent(isTablet = false)
-                    SettingsPage.Kitsu,
+                    SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = false)
                     SettingsPage.AniList,
                     SettingsPage.Telegram,
                     -> workInProgressIntegrationContent(isTablet = false, page = page)
@@ -1472,7 +1472,7 @@ private fun TabletSettingsScreen(
                         SettingsPage.MyAnimeList -> myAnimeListSettingsContent(isTablet = true)
                         SettingsPage.SkipDb -> skipDbSettingsContent(isTablet = true)
                         SettingsPage.AniSkip -> aniSkipSettingsContent(isTablet = true)
-                        SettingsPage.Kitsu,
+                        SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = true)
                         SettingsPage.AniList,
                         SettingsPage.Telegram,
                         -> workInProgressIntegrationContent(isTablet = true, page = page)

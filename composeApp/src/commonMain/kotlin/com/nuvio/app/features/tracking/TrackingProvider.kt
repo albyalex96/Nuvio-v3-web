@@ -20,7 +20,8 @@ enum class TrackingProviderId(
     TRAKT("trakt", "Trakt"),
     SIMKL("simkl", "Simkl"),
     MDBLIST("mdblist", "MDBList"),
-    MAL("mal", "MyAnimeList");
+    MAL("mal", "MyAnimeList"),
+    KITSU("kitsu", "Kitsu");
 
     companion object {
         fun fromStorage(value: String?): TrackingProviderId? =

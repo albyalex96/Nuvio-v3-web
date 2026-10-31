@@ -1,5 +1,8 @@
 package com.nuvio.app.features.anime
 
+import com.nuvio.app.features.kitsu.KitsuAuthRepository
+import com.nuvio.app.features.kitsu.KitsuTrackingLibraryProvider
+import com.nuvio.app.features.kitsu.isKitsuLibrarySection
 import com.nuvio.app.features.library.LibraryUiState
 import com.nuvio.app.features.mal.MalAuthRepository
 import com.nuvio.app.features.mal.MalTrackingLibraryProvider
@@ -28,9 +31,9 @@ interface AnimeLibrarySource {
     suspend fun refresh(intent: TrackingRefreshIntent)
 }
 
-/** Every anime tracker with library lists. AniList and Kitsu go here when they are added. */
+/** Every anime tracker with library lists. AniList goes here when it is added. */
 object AnimeLibrarySources {
-    val all: List<AnimeLibrarySource> = listOf(MalAnimeLibrarySource)
+    val all: List<AnimeLibrarySource> = listOf(MalAnimeLibrarySource, KitsuAnimeLibrarySource)
 
     fun byProvider(providerId: TrackingProviderId): AnimeLibrarySource? =
         all.firstOrNull { it.providerId == providerId }
@@ -53,4 +56,20 @@ private object MalAnimeLibrarySource : AnimeLibrarySource {
     override fun prepare() = MalTrackingLibraryProvider.prepare()
 
     override suspend fun refresh(intent: TrackingRefreshIntent) = MalTrackingLibraryProvider.refresh(intent)
+}
+
+private object KitsuAnimeLibrarySource : AnimeLibrarySource {
+    override val providerId: TrackingProviderId = TrackingProviderId.KITSU
+    override val isConnected: StateFlow<Boolean>
+        get() {
+            KitsuAuthRepository.ensureLoaded()
+            return KitsuAuthRepository.isAuthenticated
+        }
+    override val libraryState: Flow<LibraryUiState> get() = KitsuTrackingLibraryProvider.libraryState
+
+    override fun ownsSection(sectionType: String?): Boolean = isKitsuLibrarySection(sectionType)
+
+    override fun prepare() = KitsuTrackingLibraryProvider.prepare()
+
+    override suspend fun refresh(intent: TrackingRefreshIntent) = KitsuTrackingLibraryProvider.refresh(intent)
 }

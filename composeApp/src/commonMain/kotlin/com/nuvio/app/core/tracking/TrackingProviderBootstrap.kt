@@ -1,5 +1,7 @@
 package com.nuvio.app.core.tracking
 
+import com.nuvio.app.features.kitsu.KitsuAuthRepository
+import com.nuvio.app.features.kitsu.KitsuTrackingLibraryProvider
 import com.nuvio.app.features.mal.MalAuthRepository
 import com.nuvio.app.features.mal.MalTrackingLibraryProvider
 import com.nuvio.app.features.mal.MalTrackingWrites
@@ -31,6 +33,8 @@ fun ensureTrackingProvidersRegistered() {
     MalAuthRepository.descriptor
     MalTrackingWrites.ensureRegistered()
     TrackingProviderRegistry.registerLibraryProvider(MalTrackingLibraryProvider)
+    KitsuAuthRepository.descriptor
+    TrackingProviderRegistry.registerLibraryProvider(KitsuTrackingLibraryProvider)
     TrackingProviderRegistry.registerLibraryProvider(TraktTrackingLibraryProvider)
     TrackingProviderRegistry.registerLibraryProvider(SimklTrackingLibraryProvider)
     TrackingProviderRegistry.registerWatchedProvider(TraktWatchedSyncAdapter)
