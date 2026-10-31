@@ -1,5 +1,7 @@
 package com.nuvio.app.core.tracking
 
+import com.nuvio.app.features.anilist.AniListAuthRepository
+import com.nuvio.app.features.anilist.AniListTrackingLibraryProvider
 import com.nuvio.app.features.kitsu.KitsuAuthRepository
 import com.nuvio.app.features.kitsu.KitsuTrackingLibraryProvider
 import com.nuvio.app.features.mal.MalAuthRepository
@@ -35,6 +37,8 @@ fun ensureTrackingProvidersRegistered() {
     TrackingProviderRegistry.registerLibraryProvider(MalTrackingLibraryProvider)
     KitsuAuthRepository.descriptor
     TrackingProviderRegistry.registerLibraryProvider(KitsuTrackingLibraryProvider)
+    AniListAuthRepository.descriptor
+    TrackingProviderRegistry.registerLibraryProvider(AniListTrackingLibraryProvider)
     TrackingProviderRegistry.registerLibraryProvider(TraktTrackingLibraryProvider)
     TrackingProviderRegistry.registerLibraryProvider(SimklTrackingLibraryProvider)
     TrackingProviderRegistry.registerWatchedProvider(TraktWatchedSyncAdapter)

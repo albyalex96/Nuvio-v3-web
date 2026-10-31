@@ -1,5 +1,8 @@
 package com.nuvio.app.features.anime
 
+import com.nuvio.app.features.anilist.AniListAuthRepository
+import com.nuvio.app.features.anilist.AniListTrackingLibraryProvider
+import com.nuvio.app.features.anilist.isAniListLibrarySection
 import com.nuvio.app.features.kitsu.KitsuAuthRepository
 import com.nuvio.app.features.kitsu.KitsuTrackingLibraryProvider
 import com.nuvio.app.features.kitsu.isKitsuLibrarySection
@@ -31,9 +34,9 @@ interface AnimeLibrarySource {
     suspend fun refresh(intent: TrackingRefreshIntent)
 }
 
-/** Every anime tracker with library lists. AniList goes here when it is added. */
+/** Every anime tracker with library lists. */
 object AnimeLibrarySources {
-    val all: List<AnimeLibrarySource> = listOf(MalAnimeLibrarySource, KitsuAnimeLibrarySource)
+    val all: List<AnimeLibrarySource> = listOf(MalAnimeLibrarySource, KitsuAnimeLibrarySource, AniListAnimeLibrarySource)
 
     fun byProvider(providerId: TrackingProviderId): AnimeLibrarySource? =
         all.firstOrNull { it.providerId == providerId }
@@ -72,4 +75,20 @@ private object KitsuAnimeLibrarySource : AnimeLibrarySource {
     override fun prepare() = KitsuTrackingLibraryProvider.prepare()
 
     override suspend fun refresh(intent: TrackingRefreshIntent) = KitsuTrackingLibraryProvider.refresh(intent)
+}
+
+private object AniListAnimeLibrarySource : AnimeLibrarySource {
+    override val providerId: TrackingProviderId = TrackingProviderId.ANILIST
+    override val isConnected: StateFlow<Boolean>
+        get() {
+            AniListAuthRepository.ensureLoaded()
+            return AniListAuthRepository.isAuthenticated
+        }
+    override val libraryState: Flow<LibraryUiState> get() = AniListTrackingLibraryProvider.libraryState
+
+    override fun ownsSection(sectionType: String?): Boolean = isAniListLibrarySection(sectionType)
+
+    override fun prepare() = AniListTrackingLibraryProvider.prepare()
+
+    override suspend fun refresh(intent: TrackingRefreshIntent) = AniListTrackingLibraryProvider.refresh(intent)
 }

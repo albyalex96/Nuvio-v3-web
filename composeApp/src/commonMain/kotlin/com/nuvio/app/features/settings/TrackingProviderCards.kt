@@ -83,6 +83,7 @@ import com.nuvio.app.features.trakt.TraktConnectionMode
 import com.nuvio.app.features.trakt.traktBrandPainter
 import com.nuvio.app.features.watchprogress.WatchProgressSourceCoordinator
 import kotlinx.coroutines.launch
+import nuvio.composeapp.generated.resources.settings_anilist_disconnect_description
 import nuvio.composeapp.generated.resources.settings_kitsu_disconnect_description
 import nuvio.composeapp.generated.resources.settings_mal_disconnect_description
 import nuvio.composeapp.generated.resources.settings_mdblist_disconnect_description
@@ -132,6 +133,7 @@ internal enum class TrackingBrand(val displayName: String) {
     MDBLIST("MDBList"),
     MAL("MyAnimeList"),
     KITSU("Kitsu"),
+    ANILIST("AniList"),
     TMDB("TMDB"),
 }
 
@@ -148,6 +150,7 @@ internal fun isTrackingBrandAvailable(
     mdblistConnected: Boolean = false,
     malConnected: Boolean = false,
     kitsuConnected: Boolean = false,
+    aniListConnected: Boolean = false,
 ): Boolean = when (brand) {
     TrackingBrand.NUVIO,
     TrackingBrand.TMDB,
@@ -157,6 +160,7 @@ internal fun isTrackingBrandAvailable(
     TrackingBrand.MDBLIST -> mdblistConnected
     TrackingBrand.MAL -> malConnected
     TrackingBrand.KITSU -> kitsuConnected
+    TrackingBrand.ANILIST -> aniListConnected
 }
 
 internal fun TraktConnectionMode.toTrackingConnectionCardMode(): TrackingConnectionCardMode = when (this) {
@@ -214,6 +218,7 @@ internal fun TrackingProviderCards(
         MdbListProviderCard(Modifier.fillMaxWidth())
         MalProviderCard(Modifier.fillMaxWidth())
         KitsuProviderCard(Modifier.fillMaxWidth())
+        AniListProviderCard(Modifier.fillMaxWidth())
     }
 
     if (showSyncInfo) {
@@ -695,6 +700,7 @@ private fun TrackingDisconnectDialog(
                 TrackingBrand.MDBLIST -> stringResource(Res.string.settings_mdblist_disconnect_description)
                 TrackingBrand.MAL -> stringResource(Res.string.settings_mal_disconnect_description)
                 TrackingBrand.KITSU -> stringResource(Res.string.settings_kitsu_disconnect_description)
+                TrackingBrand.ANILIST -> stringResource(Res.string.settings_anilist_disconnect_description)
                 TrackingBrand.NUVIO,
                 TrackingBrand.TMDB,
                 -> stringResource(
@@ -756,6 +762,12 @@ internal fun TrackingBrandGlyph(
             modifier = modifier,
             contentScale = ContentScale.Fit,
         )
+        TrackingBrand.ANILIST -> Image(
+            painter = integrationLogoPainter(IntegrationLogo.AniList),
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = ContentScale.Fit,
+        )
         TrackingBrand.TMDB -> Image(
             painter = integrationLogoPainter(IntegrationLogo.Tmdb),
             contentDescription = contentDescription,
@@ -782,11 +794,12 @@ private fun TrackingBrandWordmark(
         TrackingBrand.MDBLIST -> integrationLogoPainter(IntegrationLogo.MdbList)
         TrackingBrand.MAL -> integrationLogoPainter(IntegrationLogo.MyAnimeList)
         TrackingBrand.KITSU -> integrationLogoPainter(IntegrationLogo.Kitsu)
+        TrackingBrand.ANILIST -> integrationLogoPainter(IntegrationLogo.AniList)
         TrackingBrand.NUVIO,
         TrackingBrand.TMDB,
         -> return
     }
-    if (brand == TrackingBrand.MDBLIST || brand == TrackingBrand.MAL || brand == TrackingBrand.KITSU) {
+    if (brand == TrackingBrand.MDBLIST || brand == TrackingBrand.MAL || brand == TrackingBrand.KITSU || brand == TrackingBrand.ANILIST) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Image(painter, contentDescription = null, modifier = Modifier.size(32.dp))
             Text(contentDescription, style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
@@ -806,6 +819,7 @@ private fun TrackingBrandWordmark(
             TrackingBrand.MDBLIST,
             TrackingBrand.MAL,
             TrackingBrand.KITSU,
+            TrackingBrand.ANILIST,
             -> Modifier.width(130.dp).height(32.dp)
             TrackingBrand.NUVIO,
             TrackingBrand.TMDB,
@@ -831,6 +845,9 @@ private fun TrackingBrand.cardBrush(): Brush = when (this) {
     )
     TrackingBrand.KITSU -> Brush.linearGradient(
         colors = listOf(Color(0xFF402F3F), Color(0xFFF75239), Color(0xFF332433)),
+    )
+    TrackingBrand.ANILIST -> Brush.linearGradient(
+        colors = listOf(Color(0xFF0B1622), Color(0xFF02A9FF), Color(0xFF152232)),
     )
     TrackingBrand.NUVIO,
     TrackingBrand.TMDB,

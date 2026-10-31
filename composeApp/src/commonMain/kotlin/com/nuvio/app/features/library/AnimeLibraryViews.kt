@@ -10,6 +10,7 @@ import com.nuvio.app.features.tracking.TrackingProviderId
 import com.nuvio.app.features.tracking.providerId
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.library_anime_section_title
+import nuvio.composeapp.generated.resources.library_source_anilist
 import nuvio.composeapp.generated.resources.library_source_kitsu
 import nuvio.composeapp.generated.resources.library_source_mal
 import nuvio.composeapp.generated.resources.library_status_completed
@@ -20,7 +21,7 @@ import nuvio.composeapp.generated.resources.library_status_watching
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Chip label and logo of an anime tracker in the library. AniList goes here when it is added. */
+/** Chip label and logo of an anime tracker in the library. */
 internal data class AnimeLibraryChipStyle(
     val label: StringResource,
     val logo: IntegrationLogo,
@@ -29,6 +30,7 @@ internal data class AnimeLibraryChipStyle(
 internal fun animeLibraryChipStyle(providerId: TrackingProviderId): AnimeLibraryChipStyle? = when (providerId) {
     TrackingProviderId.MAL -> AnimeLibraryChipStyle(Res.string.library_source_mal, IntegrationLogo.MyAnimeList)
     TrackingProviderId.KITSU -> AnimeLibraryChipStyle(Res.string.library_source_kitsu, IntegrationLogo.Kitsu)
+    TrackingProviderId.ANILIST -> AnimeLibraryChipStyle(Res.string.library_source_anilist, IntegrationLogo.AniList)
     else -> null
 }
 
@@ -61,6 +63,11 @@ private val animeLibrarySectionTitleResources: Map<String, StringResource> = map
     "kitsu:status:on_hold" to Res.string.library_status_on_hold,
     "kitsu:status:completed" to Res.string.library_status_completed,
     "kitsu:status:dropped" to Res.string.library_status_dropped,
+    "anilist:status:current" to Res.string.library_status_watching,
+    "anilist:status:planned" to Res.string.library_status_plan_to_watch,
+    "anilist:status:on_hold" to Res.string.library_status_on_hold,
+    "anilist:status:completed" to Res.string.library_status_completed,
+    "anilist:status:dropped" to Res.string.library_status_dropped,
 )
 
 /** Localized title of a library list (a library section or a list picker destination). */

@@ -54,6 +54,7 @@ private const val IntroDbUrl = "https://introdb.app/"
 private const val SkipDbUrl = "https://skipdb.tv"
 private const val MyAnimeListUrl = "https://myanimelist.net"
 private const val KitsuUrl = "https://kitsu.app"
+private const val AniListUrl = "https://anilist.co"
 private const val AnimeSkipUrl = "https://anime-skip.com"
 private const val AniSkipUrl = "https://aniskip.com"
 private const val AniSkipLogoLicenseUrl = "https://github.com/aniskip/aniskip-extension/blob/main/LICENSE"
@@ -486,6 +487,12 @@ private fun attributionItems(): List<AttributionItem> = listOf(
         bodyRes = Res.string.settings_licenses_attributions_kitsu_body,
         logo = IntegrationLogo.Kitsu,
         link = KitsuUrl,
+    ),
+    AttributionItem(
+        titleRes = Res.string.settings_licenses_attributions_anilist_title,
+        bodyRes = Res.string.settings_licenses_attributions_anilist_body,
+        logo = IntegrationLogo.AniList,
+        link = AniListUrl,
     ),
     AttributionItem(
         titleRes = Res.string.settings_licenses_attributions_fribb_title,

@@ -946,7 +946,7 @@ private fun MobileSettingsScreen(
                     SettingsPage.SkipDb -> skipDbSettingsContent(isTablet = false)
                     SettingsPage.AniSkip -> aniSkipSettingsContent(isTablet = false)
                     SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = false)
-                    SettingsPage.AniList,
+                    SettingsPage.AniList -> aniListSettingsContent(isTablet = false)
                     SettingsPage.Telegram,
                     -> workInProgressIntegrationContent(isTablet = false, page = page)
                     SettingsPage.AiAssistant -> aiAssistantSettingsContent(isTablet = false)
@@ -1473,7 +1473,7 @@ private fun TabletSettingsScreen(
                         SettingsPage.SkipDb -> skipDbSettingsContent(isTablet = true)
                         SettingsPage.AniSkip -> aniSkipSettingsContent(isTablet = true)
                         SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = true)
-                        SettingsPage.AniList,
+                        SettingsPage.AniList -> aniListSettingsContent(isTablet = true)
                         SettingsPage.Telegram,
                         -> workInProgressIntegrationContent(isTablet = true, page = page)
                         SettingsPage.AiAssistant -> aiAssistantSettingsContent(isTablet = true)
