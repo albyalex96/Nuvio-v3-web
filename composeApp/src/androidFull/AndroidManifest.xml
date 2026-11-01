@@ -2,5 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <application>
+        <!-- TV remote: notification, lock screen and volume keys while the app is in background. -->
+        <service
+            android:name="com.nuvio.app.features.tvremote.PhoneTvRemoteService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+    </application>
 
 </manifest>

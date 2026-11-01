@@ -50,4 +50,9 @@
     <string name="settings_licenses_attributions_zxing_title">ZXing</string>
     <string name="settings_licenses_attributions_zxing_body">Crea e legge il codice QR che abbina il telefono a Nuvio su Android TV (Telecomando TV). ZXing degli autori di ZXing; scanner di JourneyApps (ZXing Android Embedded).</string>
     <string name="settings_licenses_attributions_zxing_license">Distribuita con licenza Apache License, Version 2.0.</string>
+    <string name="tv_remote_notification_channel">Telecomando TV</string>
+    <string name="tv_remote_notification_channel_description">Controlli della TV con Nuvio abbinata a questo telefono</string>
+    <string name="tv_remote_notification_stop">Chiudi</string>
+    <string name="tv_remote_background_title">Controlli in notifica e schermata di blocco</string>
+    <string name="tv_remote_background_description">Mentre la TV riproduce, controllala dalla notifica, dalla schermata di blocco e con i tasti del volume, anche con Nuvio chiuso. Si chiudono da soli dopo 10 minuti senza riproduzione.</string>
 </resources>

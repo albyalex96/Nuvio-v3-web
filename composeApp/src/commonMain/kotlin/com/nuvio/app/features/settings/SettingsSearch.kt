@@ -96,6 +96,8 @@ import nuvio.composeapp.generated.resources.tv_remote_scan_description
 import nuvio.composeapp.generated.resources.tv_remote_open_controls
 import nuvio.composeapp.generated.resources.tv_remote_open_controls_description
 import nuvio.composeapp.generated.resources.tv_remote_forget_title
+import nuvio.composeapp.generated.resources.tv_remote_background_description
+import nuvio.composeapp.generated.resources.tv_remote_background_title
 import nuvio.composeapp.generated.resources.tv_remote_forget_description
 import nuvio.composeapp.generated.resources.tv_remote_section_about
 import nuvio.composeapp.generated.resources.tv_remote_about_body
@@ -1466,6 +1468,16 @@ internal fun settingsSearchEntries(
                 key = "tv-remote-controls",
                 title = stringResource(Res.string.tv_remote_open_controls),
                 description = stringResource(Res.string.tv_remote_open_controls_description),
+                pageLabel = tvRemotePage,
+                section = tvSection,
+                category = generalCategory,
+                icon = Icons.Rounded.Cast,
+            )
+            addRow(
+                page = SettingsPage.TvRemote,
+                key = "tv-remote-background",
+                title = stringResource(Res.string.tv_remote_background_title),
+                description = stringResource(Res.string.tv_remote_background_description),
                 pageLabel = tvRemotePage,
                 section = tvSection,
                 category = generalCategory,

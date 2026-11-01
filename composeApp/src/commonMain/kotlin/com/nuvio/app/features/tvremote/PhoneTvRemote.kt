@@ -60,6 +60,8 @@ data class PhoneTvRemoteUiState(
     val volume: TvRemoteVolume? = null,
     /** Last command refused by the TV (cleared by the next command). */
     val lastCommandError: TvRemoteCommandError? = null,
+    /** Media notification, lock screen controls and volume keys while the app is in background. */
+    val backgroundControls: Boolean = true,
 ) {
     val canControl: Boolean
         get() = connection == PhoneTvRemoteConnection.Connected && playback != null
@@ -91,6 +93,9 @@ interface PhoneTvRemoteClient {
         forward: Boolean? = null,
         level: Int? = null,
     )
+
+    /** Turns the notification / lock screen controls on or off. */
+    fun setBackgroundControls(enabled: Boolean)
 
     /** QR scanner launcher; the callback receives the scanned text (null when cancelled). */
     @Composable

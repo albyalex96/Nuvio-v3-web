@@ -35,6 +35,8 @@ import com.nuvio.app.features.tvremote.PhoneTvRemotePairingError
 import com.nuvio.app.features.tvremote.TvRemoteControlSheet
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.tv_remote_about_body
+import nuvio.composeapp.generated.resources.tv_remote_background_description
+import nuvio.composeapp.generated.resources.tv_remote_background_title
 import nuvio.composeapp.generated.resources.tv_remote_error_expired
 import nuvio.composeapp.generated.resources.tv_remote_error_invalid_code
 import nuvio.composeapp.generated.resources.tv_remote_error_rejected
@@ -172,6 +174,14 @@ private fun TvRemoteSettingsRows(client: PhoneTvRemoteClient, isTablet: Boolean)
     }
 
     if (paired != null) {
+        SettingsGroupDivider(isTablet = isTablet)
+        SettingsSwitchRow(
+            title = stringResource(Res.string.tv_remote_background_title),
+            description = stringResource(Res.string.tv_remote_background_description),
+            checked = state.backgroundControls,
+            isTablet = isTablet,
+            onCheckedChange = client::setBackgroundControls,
+        )
         SettingsGroupDivider(isTablet = isTablet)
         SettingsNavigationRow(
             title = stringResource(Res.string.tv_remote_forget_title),

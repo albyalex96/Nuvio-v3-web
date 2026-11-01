@@ -50,4 +50,9 @@
     <string name="settings_licenses_attributions_zxing_title">ZXing</string>
     <string name="settings_licenses_attributions_zxing_body">Creates and reads the QR code that pairs the phone with Nuvio on Android TV (TV remote). ZXing by the ZXing authors; scanner by JourneyApps (ZXing Android Embedded).</string>
     <string name="settings_licenses_attributions_zxing_license">Licensed under the Apache License, Version 2.0.</string>
+    <string name="tv_remote_notification_channel">TV remote</string>
+    <string name="tv_remote_notification_channel_description">Controls of the Nuvio TV paired with this phone</string>
+    <string name="tv_remote_notification_stop">Close</string>
+    <string name="tv_remote_background_title">Controls in notification and lock screen</string>
+    <string name="tv_remote_background_description">While the TV plays, control it from the notification, the lock screen and the volume keys, even with Nuvio closed. They close by themselves after 10 minutes with nothing playing.</string>
 </resources>

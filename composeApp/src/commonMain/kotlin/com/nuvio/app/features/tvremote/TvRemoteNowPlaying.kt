@@ -104,6 +104,7 @@ import nuvio.composeapp.generated.resources.tv_remote_unmute
 import nuvio.composeapp.generated.resources.tv_remote_volume_down
 import nuvio.composeapp.generated.resources.tv_remote_volume_fixed
 import nuvio.composeapp.generated.resources.tv_remote_volume_up
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /*
@@ -650,16 +651,18 @@ private fun episodeLabel(playback: TvRemotePlayback): String? {
 
 @Composable
 private fun skipLabel(type: String?, skipsToPostCredits: Boolean): String =
+    stringResource(tvRemoteSkipLabelRes(type, skipsToPostCredits))
+
+/** Label of the skip button for a segment type: the same one the TV player shows. */
+internal fun tvRemoteSkipLabelRes(type: String?, skipsToPostCredits: Boolean): StringResource =
     when (type?.trim()?.lowercase()) {
-        "intro", "op", "mixed-op" -> stringResource(Res.string.player_skip_intro)
-        "outro", "ed", "mixed-ed", "credits" -> stringResource(
-            if (skipsToPostCredits) Res.string.player_skip_to_post_credits else Res.string.player_skip_outro,
-        )
-        "recap" -> stringResource(Res.string.player_skip_recap)
-        "movie-credits" -> stringResource(
-            if (skipsToPostCredits) Res.string.player_skip_to_post_credits else Res.string.player_skip_movie_credits,
-        )
-        else -> stringResource(Res.string.player_skip)
+        "intro", "op", "mixed-op" -> Res.string.player_skip_intro
+        "outro", "ed", "mixed-ed", "credits" ->
+            if (skipsToPostCredits) Res.string.player_skip_to_post_credits else Res.string.player_skip_outro
+        "recap" -> Res.string.player_skip_recap
+        "movie-credits" ->
+            if (skipsToPostCredits) Res.string.player_skip_to_post_credits else Res.string.player_skip_movie_credits
+        else -> Res.string.player_skip
     }
 
 /** Position moved forward locally while the TV plays, between two state updates. */

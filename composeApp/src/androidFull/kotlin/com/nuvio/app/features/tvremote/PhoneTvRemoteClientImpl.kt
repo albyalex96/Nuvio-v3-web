@@ -56,8 +56,34 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         .retryOnConnectionFailure(false)
         .build()
 
-    private val _state = MutableStateFlow(PhoneTvRemoteUiState(pairedTv = loadPairedTv()))
+    /** Kept apart from the pairing preferences, which are cleared when the TV is forgotten. */
+    private val settings = appContext.getSharedPreferences(SETTINGS_PREFERENCES, Context.MODE_PRIVATE)
+
+    private val _state = MutableStateFlow(
+        PhoneTvRemoteUiState(
+            pairedTv = loadPairedTv(),
+            backgroundControls = settings.getBoolean(BACKGROUND_CONTROLS, true),
+        ),
+    )
     override val state: StateFlow<PhoneTvRemoteUiState> = _state.asStateFlow()
+
+    init {
+        // Something started playing on the TV while the app watches it: keep the controls in
+        // the notification so they survive when the app goes to background.
+        scope.launch {
+            state.collect { current ->
+                val playback = current.playback
+                if (
+                    current.backgroundControls &&
+                    current.connection == PhoneTvRemoteConnection.Connected &&
+                    playback != null &&
+                    PhoneTvRemoteService.shouldStartFor(playback.sessionKey)
+                ) {
+                    PhoneTvRemoteService.start(appContext)
+                }
+            }
+        }
+    }
 
     private var observers = 0
     private var pollJob: Job? = null
@@ -111,6 +137,7 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
                 _state.value = PhoneTvRemoteUiState(
                     pairedTv = paired,
                     connection = PhoneTvRemoteConnection.Connecting,
+                    backgroundControls = _state.value.backgroundControls,
                 )
                 log.i { "Paired with ${paired.name} (key ${TvRemoteCrypto.fingerprint(clientKey)})" }
                 restartPolling()
@@ -142,7 +169,7 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         clearPairing()
         bootId = null
         revision = 0L
-        _state.value = PhoneTvRemoteUiState()
+        _state.value = PhoneTvRemoteUiState(backgroundControls = _state.value.backgroundControls)
         synchronized(lock) {
             pollJob?.cancel()
             pollJob = null
@@ -164,6 +191,12 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
                 }.onFailure { log.d { "TV not reachable to forget this phone" } }
             }
         }
+    }
+
+    override fun setBackgroundControls(enabled: Boolean) {
+        settings.edit().putBoolean(BACKGROUND_CONTROLS, enabled).apply()
+        _state.update { it.copy(backgroundControls = enabled) }
+        log.i { "Background controls ${if (enabled) "enabled" else "disabled"}" }
     }
 
     // endregion
@@ -549,6 +582,8 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
 
     private companion object {
         const val PREFERENCES = "nuvio_phone_tv_remote"
+        const val SETTINGS_PREFERENCES = "nuvio_phone_tv_remote_settings"
+        const val BACKGROUND_CONTROLS = "background_controls"
         const val KEY_ALIAS = "com.nuvio.phone.tv_remote.v1"
         const val TV_ID = "tv_id"
         const val TV_NAME = "tv_name"
