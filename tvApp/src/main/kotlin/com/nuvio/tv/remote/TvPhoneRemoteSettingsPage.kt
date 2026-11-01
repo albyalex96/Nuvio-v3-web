@@ -1,6 +1,9 @@
 package com.nuvio.tv.remote
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,8 +88,22 @@ private fun PairingSection() {
                     delay(1_000L)
                 }
             }
+            // Focusable so the D-pad can reach it: the list then scrolls the whole QR into view
+            // (otherwise only the rows below it take focus and its top stays cut off).
+            var qrFocused by remember { mutableStateOf(false) }
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp)
+                    .clip(QrShape)
+                    .border(
+                        width = 2.dp,
+                        color = if (qrFocused) MaterialTheme.nuvio.colors.textPrimary else Color.Transparent,
+                        shape = QrShape,
+                    )
+                    .onFocusChanged { qrFocused = it.isFocused }
+                    .focusable()
+                    .padding(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

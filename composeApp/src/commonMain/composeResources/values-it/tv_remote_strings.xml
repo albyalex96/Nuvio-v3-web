@@ -55,4 +55,8 @@
     <string name="tv_remote_notification_stop">Chiudi</string>
     <string name="tv_remote_background_title">Controlli in notifica e schermata di blocco</string>
     <string name="tv_remote_background_description">Mentre la TV riproduce, controllala dalla notifica, dalla schermata di blocco e con i tasti del volume, anche con Nuvio chiuso. Si chiudono da soli dopo 10 minuti senza riproduzione.</string>
+    <string name="tv_remote_manual_address_label">Indirizzo IP della TV (facoltativo)</string>
+    <string name="tv_remote_manual_address_hint">Inserisci l'indirizzo mostrato sotto il QR code (es. 192.168.1.50 o 192.168.1.50:47380) se il telefono non riesce a raggiungere la TV. Lascia vuoto per trovarla in automatico.</string>
+    <string name="tv_remote_manual_address_invalid">Indirizzo non valido: usa un IP come 192.168.1.50, eventualmente seguito da :porta.</string>
+    <string name="tv_remote_manual_address_save">Salva</string>
 </resources>

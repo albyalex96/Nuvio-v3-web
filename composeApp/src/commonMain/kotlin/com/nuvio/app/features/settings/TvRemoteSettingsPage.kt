@@ -13,7 +13,19 @@ import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Tv
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import com.nuvio.app.features.tvremote.parseManualTvAddress
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +55,10 @@ import nuvio.composeapp.generated.resources.tv_remote_error_rejected
 import nuvio.composeapp.generated.resources.tv_remote_error_unknown
 import nuvio.composeapp.generated.resources.tv_remote_error_unreachable
 import nuvio.composeapp.generated.resources.tv_remote_forget_description
+import nuvio.composeapp.generated.resources.tv_remote_manual_address_hint
+import nuvio.composeapp.generated.resources.tv_remote_manual_address_invalid
+import nuvio.composeapp.generated.resources.tv_remote_manual_address_label
+import nuvio.composeapp.generated.resources.tv_remote_manual_address_save
 import nuvio.composeapp.generated.resources.tv_remote_forget_title
 import nuvio.composeapp.generated.resources.tv_remote_open_controls
 import nuvio.composeapp.generated.resources.tv_remote_open_controls_description
@@ -173,6 +189,13 @@ private fun TvRemoteSettingsRows(client: PhoneTvRemoteClient, isTablet: Boolean)
         }
     }
 
+    SettingsGroupDivider(isTablet = isTablet)
+    ManualAddressRow(
+        saved = state.manualTvAddress,
+        isTablet = isTablet,
+        onSave = client::setManualTvAddress,
+    )
+
     if (paired != null) {
         SettingsGroupDivider(isTablet = isTablet)
         SettingsSwitchRow(
@@ -195,6 +218,54 @@ private fun TvRemoteSettingsRows(client: PhoneTvRemoteClient, isTablet: Boolean)
     if (showControls) {
         TvRemoteControlSheet(client = client, onDismiss = { showControls = false })
     }
+}
+
+/** TV address typed by hand (saved on Done, on the check button or when the field loses focus). */
+@Composable
+private fun ManualAddressRow(saved: String, isTablet: Boolean, onSave: (String) -> Unit) {
+    var text by remember(saved) { mutableStateOf(saved) }
+    val focusManager = LocalFocusManager.current
+    val invalid = text.isNotBlank() && parseManualTvAddress(text, 1) == null
+    val tokens = MaterialTheme.nuvio
+    fun save() {
+        if (!invalid && text.trim() != saved) onSave(text)
+    }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = if (isTablet) 20.dp else 16.dp, vertical = 12.dp)
+            .onFocusChanged { if (!it.isFocused) save() },
+        singleLine = true,
+        label = { Text(stringResource(Res.string.tv_remote_manual_address_label)) },
+        placeholder = { Text("192.168.1.50") },
+        isError = invalid,
+        supportingText = {
+            Text(
+                stringResource(
+                    if (invalid) Res.string.tv_remote_manual_address_invalid else Res.string.tv_remote_manual_address_hint,
+                ),
+            )
+        },
+        trailingIcon = if (!invalid && text.trim() != saved) {
+            {
+                IconButton(onClick = { save(); focusManager.clearFocus() }) {
+                    Icon(Icons.Rounded.Check, contentDescription = stringResource(Res.string.tv_remote_manual_address_save))
+                }
+            }
+        } else {
+            null
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { save(); focusManager.clearFocus() }),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = tokens.colors.borderFocus.copy(alpha = tokens.opacity.strong),
+            unfocusedBorderColor = tokens.colors.borderDefault.copy(alpha = tokens.opacity.medium),
+            focusedContainerColor = tokens.colors.surface,
+            unfocusedContainerColor = tokens.colors.surface,
+        ),
+    )
 }
 
 @Composable

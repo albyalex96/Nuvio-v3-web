@@ -62,6 +62,8 @@ data class PhoneTvRemoteUiState(
     val lastCommandError: TvRemoteCommandError? = null,
     /** Media notification, lock screen controls and volume keys while the app is in background. */
     val backgroundControls: Boolean = true,
+    /** TV address typed by the user ("ip" or "ip:port"); blank = use the QR code / discovery. */
+    val manualTvAddress: String = "",
 ) {
     val canControl: Boolean
         get() = connection == PhoneTvRemoteConnection.Connected && playback != null
@@ -97,6 +99,12 @@ interface PhoneTvRemoteClient {
     /** Turns the notification / lock screen controls on or off. */
     fun setBackgroundControls(enabled: Boolean)
 
+    /**
+     * Saves the TV address typed by the user (kept across restarts). When set, it replaces the
+     * address in the QR code and the network discovery; blank goes back to automatic.
+     */
+    fun setManualTvAddress(address: String)
+
     /** QR scanner launcher; the callback receives the scanned text (null when cancelled). */
     @Composable
     fun rememberQrScanner(onResult: (String?) -> Unit): () -> Unit
@@ -109,4 +117,32 @@ object PhoneTvRemote {
     /** The phone remote is offered: Android full distribution, phone/tablet app (not the TV app). */
     val activeClient: PhoneTvRemoteClient?
         get() = client?.takeIf { !TvAppRuntime.isTvApp }
+}
+
+/** Parses "host" or "host:port" (IPv6 as "[::1]:port"); null when it is not valid. */
+fun parseManualTvAddress(raw: String, defaultPort: Int): Pair<String, Int>? {
+    val text = raw.trim()
+    if (text.isEmpty()) return null
+    val host: String
+    val port: Int
+    if (text.startsWith("[")) {
+        val end = text.indexOf(']')
+        if (end <= 1) return null
+        host = text.substring(1, end)
+        val rest = text.substring(end + 1)
+        port = when {
+            rest.isEmpty() -> defaultPort
+            rest.startsWith(":") -> rest.substring(1).toIntOrNull() ?: return null
+            else -> return null
+        }
+    } else if (text.count { it == ':' } == 1) {
+        host = text.substringBefore(':')
+        port = text.substringAfter(':').toIntOrNull() ?: return null
+    } else {
+        host = text
+        port = defaultPort
+    }
+    if (host.isBlank() || host.any { it.isWhitespace() || it == '/' }) return null
+    if (port !in 1..65_535) return null
+    return host to port
 }

@@ -63,6 +63,7 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         PhoneTvRemoteUiState(
             pairedTv = loadPairedTv(),
             backgroundControls = settings.getBoolean(BACKGROUND_CONTROLS, true),
+            manualTvAddress = settings.getString(MANUAL_ADDRESS, null).orEmpty(),
         ),
     )
     override val state: StateFlow<PhoneTvRemoteUiState> = _state.asStateFlow()
@@ -101,15 +102,18 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
             _state.update { it.copy(pairing = PhoneTvRemotePairing.Failed(PhoneTvRemotePairingError.InvalidCode)) }
             return
         }
+        val manual = parseManualTvAddress(_state.value.manualTvAddress, info.port)
+        val host = manual?.first ?: info.host
+        val port = manual?.second ?: info.port
         _state.update { it.copy(pairing = PhoneTvRemotePairing.InProgress) }
-        log.i { "Pairing with ${info.tvName} at ${info.host}:${info.port}" }
+        log.i { "Pairing with ${info.tvName} at $host:$port${if (manual != null) " (manual address)" else ""}" }
         scope.launch {
             val result = runCatching {
                 val key = TvRemoteCrypto.decode(info.secret)
                 require(key.size == TvRemoteCrypto.KEY_BYTES) { "Invalid pairing secret" }
                 post(
-                    host = info.host,
-                    port = info.port,
+                    host = host,
+                    port = port,
                     path = TV_REMOTE_PATH_PAIR,
                     key = key,
                     clientId = TV_REMOTE_PAIR_CLIENT_ID,
@@ -128,8 +132,8 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
                 val paired = PhoneTvRemotePairedTv(
                     tvId = response.tvId,
                     name = response.tvName.ifBlank { info.tvName },
-                    host = info.host,
-                    port = info.port,
+                    host = host,
+                    port = port,
                 )
                 savePairing(paired, response.clientId, clientKey)
                 bootId = null
@@ -138,6 +142,7 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
                     pairedTv = paired,
                     connection = PhoneTvRemoteConnection.Connecting,
                     backgroundControls = _state.value.backgroundControls,
+                    manualTvAddress = _state.value.manualTvAddress,
                 )
                 log.i { "Paired with ${paired.name} (key ${TvRemoteCrypto.fingerprint(clientKey)})" }
                 restartPolling()
@@ -202,6 +207,28 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
     // endregion
 
     // region Observation
+
+    override fun setManualTvAddress(address: String) {
+        val value = address.trim()
+        if (value == _state.value.manualTvAddress) return
+        settings.edit().putString(MANUAL_ADDRESS, value).apply()
+        _state.update { it.copy(manualTvAddress = value) }
+        val paired = _state.value.pairedTv
+        val manual = paired?.let { parseManualTvAddress(value, it.port) }
+        if (value.isBlank()) {
+            log.i { "Manual TV address cleared: back to automatic discovery" }
+        } else if (paired == null) {
+            log.i { "Manual TV address set to $value (used at the next pairing)" }
+        } else if (manual == null) {
+            log.w { "Manual TV address '$value' is not valid: ignored" }
+        } else if (manual.first != paired.host || manual.second != paired.port) {
+            log.i { "Manual TV address set: connecting to ${manual.first}:${manual.second}" }
+            updatePairedTv(paired.copy(host = manual.first, port = manual.second))
+            bootId = null
+            revision = 0L
+            restartPolling()
+        }
+    }
 
     override fun observe(): () -> Unit {
         synchronized(lock) {
@@ -308,7 +335,7 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
                 if (failures == 1) log.w(error) { "TV not reachable" } else log.d { "TV still not reachable ($failures)" }
                 markUnreachable()
                 // The TV address may have changed (DHCP): look for it on the network once per outage.
-                if (!rediscovered && failures >= 2) {
+                if (!rediscovered && failures >= 2 && _state.value.manualTvAddress.isBlank()) {
                     rediscovered = true
                     val found = discoverTvAddress(paired)
                     if (found != null && (found.first != paired.host || found.second != paired.port)) {
@@ -584,6 +611,7 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         const val PREFERENCES = "nuvio_phone_tv_remote"
         const val SETTINGS_PREFERENCES = "nuvio_phone_tv_remote_settings"
         const val BACKGROUND_CONTROLS = "background_controls"
+        const val MANUAL_ADDRESS = "manual_tv_address"
         const val KEY_ALIAS = "com.nuvio.phone.tv_remote.v1"
         const val TV_ID = "tv_id"
         const val TV_NAME = "tv_name"
