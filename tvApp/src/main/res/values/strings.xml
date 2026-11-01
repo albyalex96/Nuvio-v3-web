@@ -47,6 +47,8 @@
     <string name="tv_details_creator">Created by %1$s</string>
     <string name="tv_details_director">Directed by %1$s</string>
     <string name="tv_details_writer">Written by %1$s</string>
+    <string name="tv_details_synopsis_read_more">Read more</string>
+    <string name="tv_details_synopsis_dismiss_hint">Press back to close</string>
     <string name="tv_details_status_ended">Ended</string>
     <string name="tv_details_status_continuing">Continuing</string>
     <string name="tv_details_status_cancelled">Cancelled</string>

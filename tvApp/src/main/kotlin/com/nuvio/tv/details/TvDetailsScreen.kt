@@ -432,17 +432,27 @@ private fun HeroSection(
                 Spacer(modifier = Modifier.height(14.dp))
             }
 
-            if (!meta.description.isNullOrBlank()) {
-                Text(
-                    text = meta.description.orEmpty(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.nuvio.colors.textPrimary.copy(alpha = 0.88f),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
+            // NuvioTV plot: up to 8 lines, focusable when cut, OK opens the whole plot.
+            val description = meta.description?.takeIf { it.isNotBlank() }
+            if (description != null) {
+                var showFullDescription by rememberSaveable(meta.id) { mutableStateOf(false) }
+                TvSynopsisDescription(
+                    description = description,
+                    onShowFullDescription = {
+                        log.d { "Full plot opened" }
+                        showFullDescription = true
+                    },
                     modifier = Modifier
                         .fillMaxWidth(0.6f)
                         .padding(bottom = 12.dp),
                 )
+                if (showFullDescription) {
+                    TvSynopsisOverlay(
+                        title = meta.name,
+                        description = description,
+                        onDismiss = { showFullDescription = false },
+                    )
+                }
             }
 
             MetaInfoRows(model)

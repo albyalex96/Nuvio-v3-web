@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -989,6 +990,10 @@ private fun HeroInfoPanel(
             Column(
                 modifier = Modifier
                     .fillMaxWidth(if (expanded) HERO_EXPANDED_TEXT_WIDTH_FRACTION else HERO_TEXT_WIDTH_FRACTION)
+                    // NuvioTV `HeroTitleBlock`: anchored above the rows and free to grow upwards, so the
+                    // logo, details and the 4 plot lines are never squeezed by the hero height.
+                    // Expanded, the plot scrolls inside the screen and needs the bounded height.
+                    .then(if (expanded) Modifier else Modifier.wrapContentHeight(Alignment.Bottom, unbounded = true))
                     .heroOutline(color = outlineColor, alpha = { outlineAlpha.value })
                     // Expanded: up/down scroll the plot and never move the focus out of the hero.
                     .onPreviewKeyEvent { event ->
