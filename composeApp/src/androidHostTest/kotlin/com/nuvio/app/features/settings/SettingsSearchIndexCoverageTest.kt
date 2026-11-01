@@ -111,6 +111,8 @@ class SettingsSearchIndexCoverageTest {
 
         /** String keys of rows that intentionally have no search entry. */
         val ignoredKeys = setOf(
+            // TV remote: action shown only while the paired TV is unreachable, not a setting.
+            "tv_remote_reconnect",
             // Debug-only row.
             "updates_debug_test_title",
             "updates_debug_test_description",

@@ -72,6 +72,11 @@ import nuvio.composeapp.generated.resources.party_settings_description
 import nuvio.composeapp.generated.resources.party_title
 import nuvio.composeapp.generated.resources.about_supporters_contributors_subtitle
 import nuvio.composeapp.generated.resources.about_licenses_attributions_subtitle
+import nuvio.composeapp.generated.resources.tv_remote_settings_description
+import nuvio.composeapp.generated.resources.tv_remote_settings_title
+import nuvio.composeapp.generated.resources.tv_remote_settings_tv_description
+import androidx.compose.material.icons.rounded.Cast
+import com.nuvio.app.tv.TvAppRuntime
 import org.jetbrains.compose.resources.stringResource
 
 private const val PRIVACY_POLICY_URL = "https://nuvio.tv/privacy-policy"
@@ -93,6 +98,8 @@ internal fun LazyListScope.settingsRootContent(
     onAccountClick: () -> Unit,
     onSwitchProfileClick: (() -> Unit)? = null,
     onWatchPartyClick: (() -> Unit)? = null,
+    /** Phone: pairing with a Nuvio TV (Android full). TV: phone pairing page. Null hides the row. */
+    onTvRemoteClick: (() -> Unit)? = null,
     showAccountSection: Boolean = true,
     showGeneralSection: Boolean = true,
     showAboutSection: Boolean = true,
@@ -191,6 +198,22 @@ internal fun LazyListScope.settingsRootContent(
                         isTablet = isTablet,
                         onClick = onIntegrationsClick,
                     )
+                    if (onTvRemoteClick != null) {
+                        SettingsGroupDivider(isTablet = isTablet)
+                        SettingsNavigationRow(
+                            title = stringResource(Res.string.tv_remote_settings_title),
+                            description = stringResource(
+                                if (TvAppRuntime.isTvApp) {
+                                    Res.string.tv_remote_settings_tv_description
+                                } else {
+                                    Res.string.tv_remote_settings_description
+                                },
+                            ),
+                            icon = Icons.Rounded.Cast,
+                            isTablet = isTablet,
+                            onClick = onTvRemoteClick,
+                        )
+                    }
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_notifications),

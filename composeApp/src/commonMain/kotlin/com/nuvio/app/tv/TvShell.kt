@@ -37,6 +37,8 @@ class TvShell(
     val posterMenu: (@Composable (menu: TvPosterMenu) -> Unit)? = null,
     /** TV-only layout settings page (Settings -> Appearance -> TV layout). */
     val layoutSettings: TvSettingsPage? = null,
+    /** "Phone remote" page (Settings -> Phone remote): pairing QR and paired phones. */
+    val phoneRemoteSettings: TvSettingsPage? = null,
 )
 
 /** Options of a long-pressed card; [actions] are the shared ones (library, watched, resume…). */
@@ -288,6 +290,18 @@ interface TvPlayerRemote {
 
     /** Zoom / aspect button: cycles fit, fill and zoom. */
     fun cycleResizeMode(): Boolean
+
+    /*
+     * Paired phone remote (see `com.nuvio.app.features.tvremote`). Both run on the main thread.
+     */
+
+    /** Playback state shown by the paired phone. */
+    fun phoneRemotePlayback(): com.nuvio.app.features.tvremote.TvRemotePlayback
+
+    /** Applies a phone command (volume commands excluded); null when it was applied. */
+    fun handlePhoneRemoteCommand(
+        request: com.nuvio.app.features.tvremote.TvRemoteCommandRequest,
+    ): com.nuvio.app.features.tvremote.TvRemoteCommandError?
 }
 
 /** Process-wide flags for the Android TV app, set by its activity before any UI is shown. */

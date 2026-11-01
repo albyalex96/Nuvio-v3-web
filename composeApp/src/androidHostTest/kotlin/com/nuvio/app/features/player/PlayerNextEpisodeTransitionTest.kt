@@ -99,6 +99,7 @@ class PlayerNextEpisodeTransitionTest {
                         controlsVisible = true,
                         onSkipInterval = {},
                         onDismissSkipInterval = {},
+                        onSkipPromptVisibleChange = {},
                         sliderEdgePadding = 20.dp,
                         overlayBottomPadding = 84.dp,
                         isSeries = true,

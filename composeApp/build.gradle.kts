@@ -536,6 +536,8 @@ kotlin {
                     // Local HTTP proxy that serves Telegram files to the player with range requests.
                     implementation(libs.ktor.server.core)
                     implementation(libs.ktor.server.cio)
+                    // TV remote: QR scanner used to pair the phone with Nuvio on Android TV.
+                    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
                 }
             }
         }

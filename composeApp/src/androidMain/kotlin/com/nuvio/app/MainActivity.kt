@@ -105,6 +105,7 @@ open class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         AutoSyncPreferencesAndroid.initialize(applicationContext) // AutoSync hook
         com.nuvio.app.features.telegram.TelegramBootstrap.initialize(applicationContext)
+        com.nuvio.app.features.tvremote.TvRemoteBootstrap.initialize(applicationContext)
         window.setBackgroundDrawableResource(R.color.nuvio_background)
         pipRemoteActionReceiver = PipRemoteActionReceiver.register(this)
         SyncClientIdentityStorage.initialize(applicationContext)

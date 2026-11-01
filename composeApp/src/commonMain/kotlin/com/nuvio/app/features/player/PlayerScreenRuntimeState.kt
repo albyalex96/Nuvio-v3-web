@@ -257,6 +257,8 @@ internal class PlayerScreenRuntime(
     var hasScannedTextTracksOnce by mutableStateOf(false)
     var autoFetchedAddonSubtitlesForKey by mutableStateOf<String?>(null)
     var trackPreferenceRestoreApplied by mutableStateOf(false)
+    /** Subtitle turned off from the phone remote: turning subtitles back on restores it. */
+    var phoneRemoteSubtitleRestore: PhoneRemoteSubtitleChoice? = null
     var subtitleDelayMs by mutableStateOf(0)
     // Per-device delay + current stream's behaviorHints.audioDelayMs + the user's tweak on that stream.
     var audioDelayParts by mutableStateOf(AudioDelayParts())

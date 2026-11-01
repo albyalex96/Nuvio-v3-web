@@ -10,6 +10,7 @@ import com.nuvio.app.tv.TvTextInputHost
 import com.nuvio.tv.auth.TvAuthScreen
 import com.nuvio.tv.details.TvDetailsScreen
 import com.nuvio.tv.home.TvHomeScreen
+import com.nuvio.tv.remote.TvPhoneRemoteSettingsPage
 import com.nuvio.tv.search.TvVoiceSearchButton
 import com.nuvio.tv.settings.TvLayoutSettingsPage
 import com.nuvio.tv.shell.TvSidebarChrome
@@ -30,6 +31,7 @@ fun TvApp() {
             voiceSearch = { onQuery -> TvVoiceSearchButton(onQuery) },
             posterMenu = { menu -> TvPosterMenuDialog(menu) },
             layoutSettings = TvLayoutSettingsPage,
+            phoneRemoteSettings = TvPhoneRemoteSettingsPage,
         )
     }
     CompositionLocalProvider(LocalTvShell provides shell) {

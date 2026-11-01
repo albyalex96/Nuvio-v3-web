@@ -696,35 +696,8 @@ private fun PlayerScreenRuntime.RenderPlayerModals(displayedPositionMs: Long) {
         subtitleDelayMs = subtitleDelayMs,
         selectedAddonSubtitle = selectedAddonSubtitle,
         subtitleAutoSyncState = subtitleAutoSyncState,
-        onBuiltInSubtitleTrackSelected = { index ->
-            if (serverSubtitleTracks.isNotEmpty() && index >= 0) {
-                selectServerSubtitleTrack(index)
-            } else {
-                val wasCustom = useCustomSubtitles
-                isUserExplicitSubtitleSelection = true
-                preferredSubtitleSelectionApplied = true
-                selectedSubtitleIndex = index
-                selectedAddonSubtitleId = null
-                useCustomSubtitles = false
-                persistInternalSubtitlePreference(subtitleTracks.firstOrNull { it.index == index })
-                if (wasCustom) {
-                    playerController?.clearExternalSubtitleAndSelect(index)
-                } else {
-                    playerController?.selectSubtitleTrack(index)
-                }
-                if (hasBurnedInServerSubtitle) clearServerSubtitleTrack()
-            }
-        },
-        onAddonSubtitleSelected = { addon ->
-            isUserExplicitSubtitleSelection = true
-            selectedAddonSubtitleId = addon.selectionKey
-            selectedSubtitleIndex = -1
-            useCustomSubtitles = true
-            preferredSubtitleSelectionApplied = true
-            persistAddonSubtitlePreference(addon)
-            attachSelectedAddonSubtitleWithAutoSync(addon.url) // AutoSync hook
-            if (hasBurnedInServerSubtitle) clearServerSubtitleTrack()
-        },
+        onBuiltInSubtitleTrackSelected = { index -> selectBuiltInSubtitleTrack(index) },
+        onAddonSubtitleSelected = { addon -> selectAddonSubtitle(addon) },
         onFetchAddonSubtitles = { fetchAddonSubtitlesForActiveItem() },
         onSubtitleStyleChanged = PlayerSettingsRepository::setSubtitleStyle,
         onSubtitleDelayChanged = { delayMs -> setSubtitleDelay(delayMs) },

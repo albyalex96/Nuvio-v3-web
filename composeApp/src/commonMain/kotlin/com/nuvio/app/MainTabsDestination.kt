@@ -2,6 +2,8 @@ package com.nuvio.app
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -36,6 +38,7 @@ import com.nuvio.app.features.profiles.ProfileSwitcherTab
 import com.nuvio.app.features.settings.NavBarStyle
 import com.nuvio.app.features.settings.tabletNavBarStyle
 import com.nuvio.app.features.settings.ThemeSettingsRepository
+import com.nuvio.app.features.tvremote.TvRemoteNowPlayingCard
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import nuvio.composeapp.generated.resources.Res
@@ -135,43 +138,47 @@ internal fun MainTabsDestination(
             contentWindowInsets = WindowInsets(0),
             bottomBar = {
                 if (!isTabletLayout && !useNativeBottomTabs && navBarStyleSetting == NavBarStyle.CLASSIC) {
-                    NuvioClassicNavigationBar {
-                        NavItem(
-                            selected = selectedTab == AppScreenTab.Home,
-                            onClick = { onTabSelected(AppScreenTab.Home) },
-                            icon = Icons.Filled.Home,
-                            contentDescription = stringResource(Res.string.compose_nav_home),
-                        )
-                        NavItem(
-                            selected = selectedTab == AppScreenTab.Search,
-                            onClick = { onTabSelected(AppScreenTab.Search) },
-                            icon = Res.drawable.sidebar_search,
-                            contentDescription = stringResource(Res.string.compose_nav_search),
-                        )
-                        NavItem(
-                            selected = selectedTab == AppScreenTab.Library,
-                            onClick = { onTabSelected(AppScreenTab.Library) },
-                            icon = Res.drawable.sidebar_library,
-                            contentDescription = stringResource(Res.string.compose_nav_library),
-                        )
-                        if (showLiveTvInNavigation) {
+                    Column {
+                        // What the paired TV is playing (Android full, phone remote).
+                        TvRemoteNowPlayingCard()
+                        NuvioClassicNavigationBar {
                             NavItem(
-                                selected = selectedTab == AppScreenTab.LiveTv,
-                                onClick = { onTabSelected(AppScreenTab.LiveTv) },
-                                icon = Res.drawable.nav_live_tv,
-                                contentDescription = stringResource(Res.string.compose_nav_live_tv),
+                                selected = selectedTab == AppScreenTab.Home,
+                                onClick = { onTabSelected(AppScreenTab.Home) },
+                                icon = Icons.Filled.Home,
+                                contentDescription = stringResource(Res.string.compose_nav_home),
                             )
-                        }
-                        NavItem(
-                            selected = selectedTab == AppScreenTab.Settings,
-                            onClick = { onTabSelected(AppScreenTab.Settings) },
-                        ) {
-                            ProfileSwitcherTab(
+                            NavItem(
+                                selected = selectedTab == AppScreenTab.Search,
+                                onClick = { onTabSelected(AppScreenTab.Search) },
+                                icon = Res.drawable.sidebar_search,
+                                contentDescription = stringResource(Res.string.compose_nav_search),
+                            )
+                            NavItem(
+                                selected = selectedTab == AppScreenTab.Library,
+                                onClick = { onTabSelected(AppScreenTab.Library) },
+                                icon = Res.drawable.sidebar_library,
+                                contentDescription = stringResource(Res.string.compose_nav_library),
+                            )
+                            if (showLiveTvInNavigation) {
+                                NavItem(
+                                    selected = selectedTab == AppScreenTab.LiveTv,
+                                    onClick = { onTabSelected(AppScreenTab.LiveTv) },
+                                    icon = Res.drawable.nav_live_tv,
+                                    contentDescription = stringResource(Res.string.compose_nav_live_tv),
+                                )
+                            }
+                            NavItem(
                                 selected = selectedTab == AppScreenTab.Settings,
                                 onClick = { onTabSelected(AppScreenTab.Settings) },
-                                onProfileSelected = onProfileSelected,
-                                onAddProfileRequested = onAddProfileRequested,
-                            )
+                            ) {
+                                ProfileSwitcherTab(
+                                    selected = selectedTab == AppScreenTab.Settings,
+                                    onClick = { onTabSelected(AppScreenTab.Settings) },
+                                    onProfileSelected = onProfileSelected,
+                                    onAddProfileRequested = onAddProfileRequested,
+                                )
+                            }
                         }
                     }
                 }
@@ -213,6 +220,23 @@ internal fun MainTabsDestination(
                         compactSize = true,
                         items = floatingNavigationItems,
                         glowEnabled = navBarGlowEnabled,
+                    )
+                }
+
+                if (isTabletLayout || useNativeBottomTabs || navBarStyleSetting != NavBarStyle.CLASSIC) {
+                    // Floating bars and tablets: the TV card floats above the bottom edge / bar.
+                    val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    TvRemoteNowPlayingCard(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .widthIn(max = 560.dp)
+                            .padding(
+                                bottom = navigationBarsPadding + when {
+                                    isTabletLayout -> 12.dp
+                                    useNativeBottomTabs -> 56.dp
+                                    else -> 80.dp
+                                },
+                            ),
                     )
                 }
 

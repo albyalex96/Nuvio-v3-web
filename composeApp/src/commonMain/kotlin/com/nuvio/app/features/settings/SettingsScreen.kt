@@ -107,6 +107,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import com.nuvio.app.tv.LocalTvShell
+import com.nuvio.app.features.tvremote.PhoneTvRemote
 import com.nuvio.app.tv.TvCenteredScrolling
 import com.nuvio.app.tv.tvFadingEdges
 import com.nuvio.app.tv.TvMenuBackHandler
@@ -710,6 +711,8 @@ private fun MobileSettingsScreen(
         val appLogsViewer = if (page == SettingsPage.AppLogs) rememberAppLogsViewerState() else null
         val watchPartyRowClick = watchPartyRow(onWatchPartyClick)
         val tvLayoutSettings = LocalTvShell.current?.layoutSettings
+        val tvPhoneRemoteSettings = LocalTvShell.current?.phoneRemoteSettings
+        val tvRemoteAvailable = tvPhoneRemoteSettings != null || PhoneTvRemote.activeClient != null
 
         SettingsSearchHighlightHost(page = page, listState = listState) {
             NuvioScreen(
@@ -770,6 +773,7 @@ private fun MobileSettingsScreen(
                                 onAccountClick = onAccountClick,
                                 onSwitchProfileClick = onSwitchProfile,
                                 onWatchPartyClick = watchPartyRowClick,
+                                onTvRemoteClick = tvRemoteAvailable.takeIf { it }?.let { { onPageChange(SettingsPage.TvRemote) } },
                                 showSupportersContributorsPage = AppFeaturePolicy.supportersContributorsPageEnabled,
                             )
                         }
@@ -948,6 +952,19 @@ private fun MobileSettingsScreen(
                     SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = false)
                     SettingsPage.AniList -> aniListSettingsContent(isTablet = false)
                     SettingsPage.Telegram -> telegramSettingsContent(isTablet = false)
+                    SettingsPage.TvRemote -> if (tvPhoneRemoteSettings != null) {
+                        tvPhoneRemoteSettings.content.invoke(
+                            this,
+                            TvSettingsNavigator(
+                                openHomescreen = onHomescreenClick,
+                                openContinueWatching = onContinueWatchingClick,
+                                openMetaScreen = onMetaScreenClick,
+                                openStreams = { onPageChange(SettingsPage.Streams) },
+                            ),
+                        )
+                    } else {
+                        tvRemoteSettingsContent(isTablet = false)
+                    }
                     SettingsPage.AiAssistant -> aiAssistantSettingsContent(isTablet = false)
                     SettingsPage.Cloudstream -> cloudStreamSettingsContent()
                     SettingsPage.TraktAuthentication -> trackingSettingsContent(
@@ -1211,6 +1228,8 @@ private fun TabletSettingsScreen(
             val appLogsViewer = if (page == SettingsPage.AppLogs) rememberAppLogsViewerState() else null
             val watchPartyRowClick = watchPartyRow(onWatchPartyClick)
             val tvLayoutSettings = LocalTvShell.current?.layoutSettings
+            val tvPhoneRemoteSettings = LocalTvShell.current?.phoneRemoteSettings
+            val tvRemoteAvailable = tvPhoneRemoteSettings != null || PhoneTvRemote.activeClient != null
             SettingsSearchHighlightHost(page = page, listState = listState) {
                 LazyColumn(
                     state = listState,
@@ -1292,6 +1311,7 @@ private fun TabletSettingsScreen(
                                     onAccountClick = { openInlinePage(SettingsPage.Account) },
                                     onSwitchProfileClick = onSwitchProfile,
                                     onWatchPartyClick = watchPartyRowClick,
+                                    onTvRemoteClick = tvRemoteAvailable.takeIf { it }?.let { { openInlinePage(SettingsPage.TvRemote) } },
                                     showAccountSection = activeCategory == SettingsCategory.Account,
                                     showGeneralSection = activeCategory == SettingsCategory.General,
                                     showAboutSection = activeCategory == SettingsCategory.About,
@@ -1474,6 +1494,19 @@ private fun TabletSettingsScreen(
                         SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = true)
                         SettingsPage.AniList -> aniListSettingsContent(isTablet = true)
                         SettingsPage.Telegram -> telegramSettingsContent(isTablet = true)
+                        SettingsPage.TvRemote -> if (tvPhoneRemoteSettings != null) {
+                            tvPhoneRemoteSettings.content.invoke(
+                                this,
+                                TvSettingsNavigator(
+                                    openHomescreen = { openInlinePage(SettingsPage.Homescreen) },
+                                    openContinueWatching = { openInlinePage(SettingsPage.ContinueWatching) },
+                                    openMetaScreen = { openInlinePage(SettingsPage.MetaScreen) },
+                                    openStreams = { openInlinePage(SettingsPage.Streams) },
+                                ),
+                            )
+                        } else {
+                            tvRemoteSettingsContent(isTablet = true)
+                        }
                         SettingsPage.AiAssistant -> aiAssistantSettingsContent(isTablet = true)
                         SettingsPage.Cloudstream -> cloudStreamSettingsContent()
                         SettingsPage.TraktAuthentication -> trackingSettingsContent(

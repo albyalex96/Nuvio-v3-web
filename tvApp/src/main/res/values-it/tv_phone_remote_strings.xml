@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_phone_remote_title">Telecomando TV</string>
+    <string name="tv_phone_remote_scan_title">Inquadra con Nuvio sul telefono</string>
+    <string name="tv_phone_remote_step_1">Collega il telefono alla stessa rete della TV.</string>
+    <string name="tv_phone_remote_step_2">Sul telefono apri Impostazioni → Telecomando TV → Scansiona il codice della TV.</string>
+    <string name="tv_phone_remote_step_3">Inquadra questo codice: dal telefono potrai controllare la riproduzione.</string>
+    <string name="tv_phone_remote_code_expires">Il codice scade tra %1$s</string>
+    <string name="tv_phone_remote_qr_description">Codice di abbinamento del telefono</string>
+    <string name="tv_phone_remote_new_code">Nuovo codice</string>
+    <string name="tv_phone_remote_show_code">Abbina un telefono</string>
+    <string name="tv_phone_remote_pair_another">Abbina un altro telefono</string>
+    <string name="tv_phone_remote_show_code_sub">Mostra un codice QR da inquadrare con l\'app Nuvio sul telefono, per controllare la riproduzione dal telefono.</string>
+    <string name="tv_phone_remote_pairing_error">Impossibile avviare l\'abbinamento: controlla che la TV sia connessa alla rete.</string>
+    <string name="tv_phone_remote_paired_message">%1$s ora è abbinato a questa TV.</string>
+    <string name="tv_phone_remote_phones_title">Telefoni abbinati</string>
+    <string name="tv_phone_remote_no_phones">Nessun telefono abbinato.</string>
+    <string name="tv_phone_remote_phone_connected">Connesso</string>
+    <string name="tv_phone_remote_phone_paired_on">Abbinato il %1$s</string>
+    <string name="tv_phone_remote_forget_confirm">Premi di nuovo per rimuovere</string>
+    <string name="tv_phone_remote_security_note">I telefoni abbinati vedono cosa è in riproduzione e possono controllare riproduzione e volume. Tutto resta nella rete locale ed è cifrato con una chiave diversa per ogni telefono. Rimuovi un telefono per revocarne l\'accesso.</string>
+</resources>

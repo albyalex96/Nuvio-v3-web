@@ -87,6 +87,22 @@ import com.nuvio.app.features.updater.AppUpdaterPlatform
 import com.nuvio.app.features.updater.InstalledReleaseNotes
 import com.nuvio.app.features.player.seekthumb.seekThumbnailsSupported
 import nuvio.composeapp.generated.resources.*
+import nuvio.composeapp.generated.resources.tv_remote_settings_title
+import nuvio.composeapp.generated.resources.tv_remote_settings_tv_description
+import nuvio.composeapp.generated.resources.tv_remote_settings_description
+import nuvio.composeapp.generated.resources.tv_remote_section_tv
+import nuvio.composeapp.generated.resources.tv_remote_scan_title
+import nuvio.composeapp.generated.resources.tv_remote_scan_description
+import nuvio.composeapp.generated.resources.tv_remote_open_controls
+import nuvio.composeapp.generated.resources.tv_remote_open_controls_description
+import nuvio.composeapp.generated.resources.tv_remote_forget_title
+import nuvio.composeapp.generated.resources.tv_remote_forget_description
+import nuvio.composeapp.generated.resources.tv_remote_section_about
+import nuvio.composeapp.generated.resources.tv_remote_about_body
+import com.nuvio.app.features.tvremote.PhoneTvRemote
+import androidx.compose.material.icons.rounded.Cast
+import nuvio.composeapp.generated.resources.settings_licenses_attributions_zxing_body
+import nuvio.composeapp.generated.resources.settings_licenses_attributions_zxing_title
 import org.jetbrains.compose.resources.stringResource
 
 internal sealed class SettingsSearchTarget {
@@ -369,6 +385,8 @@ internal fun settingsSearchEntries(
             .takeIf { TelegramSourceResolver.isSupported },
         PlaybackSearchRow("tdlib-license", stringResource(Res.string.settings_licenses_attributions_tdlib_title), stringResource(Res.string.settings_licenses_attributions_tdlib_body))
             .takeIf { TelegramSourceResolver.isSupported },
+        PlaybackSearchRow("zxing-license", stringResource(Res.string.settings_licenses_attributions_zxing_title), stringResource(Res.string.settings_licenses_attributions_zxing_body))
+            .takeIf { tvRemoteLicenseVisible() },
         PlaybackSearchRow("doh-attribution", stringResource(Res.string.settings_licenses_attributions_doh_title), stringResource(Res.string.settings_licenses_attributions_doh_body))
             .takeIf { dnsOverHttpsSettingsVisible },
         PlaybackSearchRow("okhttp-license", stringResource(Res.string.settings_licenses_attributions_okhttp_title), stringResource(Res.string.settings_licenses_attributions_okhttp_license))
@@ -1398,6 +1416,83 @@ internal fun settingsSearchEntries(
         category = accountCategory,
         icon = Icons.Rounded.Link,
     )
+
+    // TV remote: pairing page on the phone (Android full) and on the TV app.
+    val tvPhoneRemoteSettings = LocalTvShell.current?.phoneRemoteSettings
+    if (tvPhoneRemoteSettings != null || PhoneTvRemote.activeClient != null) {
+        val tvRemotePage = stringResource(Res.string.tv_remote_settings_title)
+        addPage(
+            SettingsPage.TvRemote,
+            "tv-remote",
+            tvRemotePage,
+            stringResource(
+                if (tvPhoneRemoteSettings != null) {
+                    Res.string.tv_remote_settings_tv_description
+                } else {
+                    Res.string.tv_remote_settings_description
+                },
+            ),
+            generalCategory,
+            Icons.Rounded.Cast,
+        )
+        if (tvPhoneRemoteSettings != null) {
+            tvPhoneRemoteSettings.searchEntries().forEach { item ->
+                addRow(
+                    page = SettingsPage.TvRemote,
+                    key = "tv-remote-${item.key}",
+                    title = item.title,
+                    description = item.description,
+                    pageLabel = tvRemotePage,
+                    section = item.section,
+                    category = generalCategory,
+                    icon = Icons.Rounded.Cast,
+                )
+            }
+        } else {
+            // The phone page has a custom layout (pairing state): its rows are indexed by hand.
+            val tvSection = stringResource(Res.string.tv_remote_section_tv)
+            addRow(
+                page = SettingsPage.TvRemote,
+                key = "tv-remote-scan",
+                title = stringResource(Res.string.tv_remote_scan_title),
+                description = stringResource(Res.string.tv_remote_scan_description),
+                pageLabel = tvRemotePage,
+                section = tvSection,
+                category = generalCategory,
+                icon = Icons.Rounded.Cast,
+            )
+            addRow(
+                page = SettingsPage.TvRemote,
+                key = "tv-remote-controls",
+                title = stringResource(Res.string.tv_remote_open_controls),
+                description = stringResource(Res.string.tv_remote_open_controls_description),
+                pageLabel = tvRemotePage,
+                section = tvSection,
+                category = generalCategory,
+                icon = Icons.Rounded.Cast,
+            )
+            addRow(
+                page = SettingsPage.TvRemote,
+                key = "tv-remote-forget",
+                title = stringResource(Res.string.tv_remote_forget_title),
+                description = stringResource(Res.string.tv_remote_forget_description),
+                pageLabel = tvRemotePage,
+                section = tvSection,
+                category = generalCategory,
+                icon = Icons.Rounded.Cast,
+            )
+            addRow(
+                page = SettingsPage.TvRemote,
+                key = "tv-remote-about",
+                title = stringResource(Res.string.tv_remote_section_about),
+                description = stringResource(Res.string.tv_remote_about_body),
+                pageLabel = tvRemotePage,
+                section = stringResource(Res.string.tv_remote_section_about),
+                category = generalCategory,
+                icon = Icons.Rounded.Cast,
+            )
+        }
+    }
 
     LocalTvShell.current?.layoutSettings?.let { tvLayout ->
         val tvLayoutPage = stringResource(Res.string.tv_layout_settings_title)

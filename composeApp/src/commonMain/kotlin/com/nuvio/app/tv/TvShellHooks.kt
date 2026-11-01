@@ -58,6 +58,8 @@ import com.nuvio.app.features.player.togglePlayback
 import com.nuvio.app.features.player.isPartyControlLocked
 import com.nuvio.app.features.player.ownSeekTarget
 import com.nuvio.app.features.player.partyBlocksControl
+import com.nuvio.app.features.player.phoneRemotePlayback
+import com.nuvio.app.features.player.handlePhoneRemoteCommand
 import com.nuvio.app.features.player.publishPartyPlayback
 import com.nuvio.app.features.player.cycleResizeMode
 import com.nuvio.app.features.player.openEpisodesPanel
@@ -597,6 +599,12 @@ internal fun PlayerScreenRuntime.BindTvPlayerRemote() {
                 log.d { "Remote zoom key: resize mode ${runtime.resizeMode}" }
                 return true
             }
+
+            override fun phoneRemotePlayback() = runtime.phoneRemotePlayback()
+
+            override fun handlePhoneRemoteCommand(
+                request: com.nuvio.app.features.tvremote.TvRemoteCommandRequest,
+            ) = runtime.handlePhoneRemoteCommand(request)
         }
         TvPlayerRemoteRegistry.active = remote
         log.i { "Player remote bound" }

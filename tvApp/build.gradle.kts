@@ -137,6 +137,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtimeCompose)
     implementation(libs.coil.compose)
     implementation(libs.kermit)
+    // Phone remote: local server (same Ktor engine the shared app uses for its Telegram proxy).
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.cio)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.core)
     implementation("com.google.zxing:core:3.5.3")
     // Launcher "Watch Next" row (continue watching outside the app).
     implementation("androidx.tvprovider:tvprovider:1.0.0")

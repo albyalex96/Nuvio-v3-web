@@ -42,6 +42,9 @@ import com.nuvio.app.isIos
 import com.nuvio.app.features.player.seekthumb.seekThumbnailsSupported
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.StringResource
+import nuvio.composeapp.generated.resources.settings_licenses_attributions_zxing_body
+import nuvio.composeapp.generated.resources.settings_licenses_attributions_zxing_license
+import nuvio.composeapp.generated.resources.settings_licenses_attributions_zxing_title
 import org.jetbrains.compose.resources.stringResource
 
 private const val TmdbUrl = "https://www.themoviedb.org"
@@ -79,6 +82,11 @@ private const val ApacheLicenseUrl = "https://www.apache.org/licenses/LICENSE-2.
 private const val HazeLicenseUrl = "https://github.com/chrisbanes/haze/blob/1.7.2/LICENSE"
 private const val DnsOverHttpsRfcUrl = "https://datatracker.ietf.org/doc/html/rfc8484"
 private const val OkHttpLicenseUrl = "https://github.com/square/okhttp/blob/master/LICENSE.txt"
+private const val ZxingLicenseUrl = "https://github.com/zxing/zxing/blob/master/LICENSE"
+
+/** ZXing creates (TV) and reads (phone, Android full) the TV remote pairing QR code. */
+internal fun tvRemoteLicenseVisible(): Boolean =
+    com.nuvio.app.tv.TvAppRuntime.isTvApp || com.nuvio.app.features.tvremote.PhoneTvRemote.activeClient != null
 
 private data class AttributionItem(
     val titleRes: StringResource,
@@ -202,6 +210,18 @@ private fun LicensesAttributionsBody(
                         bodyRes = Res.string.settings_licenses_attributions_tdlib_body,
                         licenseRes = Res.string.settings_licenses_attributions_tdlib_license,
                         link = TdLibLicenseUrl,
+                    ),
+                    isTablet = isTablet,
+                )
+            }
+            if (tvRemoteLicenseVisible()) {
+                PlainStackDivider()
+                LicenseRow(
+                    item = LicenseItem(
+                        titleRes = Res.string.settings_licenses_attributions_zxing_title,
+                        bodyRes = Res.string.settings_licenses_attributions_zxing_body,
+                        licenseRes = Res.string.settings_licenses_attributions_zxing_license,
+                        link = ZxingLicenseUrl,
                     ),
                     isTablet = isTablet,
                 )
