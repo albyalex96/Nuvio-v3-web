@@ -54,7 +54,7 @@
     <string name="tv_remote_notification_channel_description">Controls of the Nuvio TV paired with this phone</string>
     <string name="tv_remote_notification_stop">Close</string>
     <string name="tv_remote_background_title">Controls in notification and lock screen</string>
-    <string name="tv_remote_background_description">While the TV plays, control it from the notification, the lock screen and the volume keys, even with Nuvio closed. They close by themselves after 10 minutes with nothing playing.</string>
+    <string name="tv_remote_background_description">When the TV is found online or starts playing, control it from the notification, the lock screen and the volume keys, even with Nuvio closed. They close by themselves after 10 minutes with nothing playing.</string>
     <string name="tv_remote_manual_address_label">TV address</string>
     <string name="tv_remote_manual_address_hint">Shown on the TV under the QR code, e.g. 192.168.1.50 (port 47380 is the default).</string>
     <string name="tv_remote_manual_address_invalid">Invalid address: use an IP like 192.168.1.50, optionally followed by :port.</string>

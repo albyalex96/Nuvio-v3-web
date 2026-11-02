@@ -105,6 +105,8 @@ class PhoneTvRemoteService : Service() {
                 val since = idleSinceMs ?: continue
                 if (SystemClock.elapsedRealtime() - since >= IDLE_TIMEOUT_MS) {
                     log.i { "Nothing playing on the TV: background controls closed" }
+                    // Not reopened just because the TV is still online: only a new playback does.
+                    dismissedOnline = true
                     stopNow()
                     break
                 }
@@ -128,6 +130,7 @@ class PhoneTvRemoteService : Service() {
             ACTION_NEXT -> command(TvRemoteCommandType.NextEpisode)
             ACTION_STOP -> {
                 dismissedSessionKey = latest.playback?.sessionKey
+                dismissedOnline = true
                 log.i { "Background controls closed from the notification" }
                 stopNow()
             }
@@ -488,11 +491,26 @@ class PhoneTvRemoteService : Service() {
         @Volatile
         private var dismissedSessionKey: String? = null
 
-        internal fun shouldStartFor(sessionKey: String): Boolean {
+        /** Notification closed with the TV online: not reopened until the TV goes offline. */
+        @Volatile
+        private var dismissedOnline = false
+
+        /**
+         * Whether the notification should open for the TV state: [sessionKey] is the TV playback,
+         * null when the TV is online with nothing playing.
+         */
+        internal fun shouldStartFor(sessionKey: String?): Boolean {
             if (running) return false
+            if (sessionKey == null) return !dismissedOnline
             if (sessionKey == dismissedSessionKey) return false
             dismissedSessionKey = null
             return true
+        }
+
+        /** The TV went offline: the next time it is found online the notification opens again. */
+        internal fun onTvOffline() {
+            if (dismissedOnline) Logger.withTag("PhoneTvRemote").d { "TV offline: online notification enabled again" }
+            dismissedOnline = false
         }
 
         internal fun start(context: Context) {

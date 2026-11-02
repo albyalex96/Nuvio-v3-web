@@ -66,17 +66,23 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
     override val state: StateFlow<PhoneTvRemoteUiState> = _state.asStateFlow()
 
     init {
-        // Something started playing on the TV while the app watches it: keep the controls in
-        // the notification so they survive when the app goes to background.
+        // The TV was found online, or something started playing on it, while the app watches
+        // it: keep the controls in the notification so they survive in background.
         scope.launch {
             state.collect { current ->
+                if (current.connection == PhoneTvRemoteConnection.Unreachable ||
+                    current.connection == PhoneTvRemoteConnection.Revoked
+                ) {
+                    PhoneTvRemoteService.onTvOffline()
+                }
                 val playback = current.playback
                 if (
                     current.backgroundControls &&
+                    current.pairedTv != null &&
                     current.connection == PhoneTvRemoteConnection.Connected &&
-                    playback != null &&
-                    PhoneTvRemoteService.shouldStartFor(playback.sessionKey)
+                    PhoneTvRemoteService.shouldStartFor(playback?.sessionKey)
                 ) {
+                    log.i { if (playback == null) "TV online: notification controls opened" else "TV playback: notification controls opened" }
                     PhoneTvRemoteService.start(appContext)
                 }
             }

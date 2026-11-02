@@ -54,7 +54,7 @@
     <string name="tv_remote_notification_channel_description">Controlli della TV con Nuvio abbinata a questo telefono</string>
     <string name="tv_remote_notification_stop">Chiudi</string>
     <string name="tv_remote_background_title">Controlli in notifica e schermata di blocco</string>
-    <string name="tv_remote_background_description">Mentre la TV riproduce, controllala dalla notifica, dalla schermata di blocco e con i tasti del volume, anche con Nuvio chiuso. Si chiudono da soli dopo 10 minuti senza riproduzione.</string>
+    <string name="tv_remote_background_description">Quando la TV viene rilevata online o inizia a riprodurre, controllala dalla notifica, dalla schermata di blocco e con i tasti del volume, anche con Nuvio chiuso. Si chiudono da soli dopo 10 minuti senza riproduzione.</string>
     <string name="tv_remote_manual_address_label">Indirizzo della TV</string>
     <string name="tv_remote_manual_address_hint">È mostrato sulla TV sotto il QR, es. 192.168.1.50 (la porta 47380 è quella predefinita).</string>
     <string name="tv_remote_manual_address_invalid">Indirizzo non valido: usa un IP come 192.168.1.50, eventualmente seguito da :porta.</string>
