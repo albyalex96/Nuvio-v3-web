@@ -1,18 +1,14 @@
 package com.nuvio.app.features.tvremote
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
 import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import co.touchlab.kermit.Logger
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanOptions
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CompletableDeferred
@@ -20,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,55 +99,113 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
             _state.update { it.copy(pairing = PhoneTvRemotePairing.Failed(PhoneTvRemotePairingError.InvalidCode)) }
             return
         }
-        val manual = parseManualTvAddress(_state.value.manualTvAddress, info.port)
-        val host = manual?.first ?: info.host
-        val port = manual?.second ?: info.port
-        _state.update { it.copy(pairing = PhoneTvRemotePairing.InProgress) }
-        log.i { "Pairing with ${info.tvName} at $host:$port${if (manual != null) " (manual address)" else ""}" }
-        scope.launch {
-            val result = runCatching {
-                val key = TvRemoteCrypto.decode(info.secret)
-                require(key.size == TvRemoteCrypto.KEY_BYTES) { "Invalid pairing secret" }
-                post(
-                    host = host,
-                    port = port,
-                    path = TV_REMOTE_PATH_PAIR,
-                    key = key,
-                    clientId = TV_REMOTE_PAIR_CLIENT_ID,
-                    requestSerializer = TvRemotePairRequest.serializer(),
-                    request = TvRemotePairRequest(
-                        phoneName = phoneName(),
-                        timestampMs = System.currentTimeMillis(),
-                        requestId = TvRemoteCrypto.randomId(),
+        val key = runCatching { TvRemoteCrypto.decode(info.secret) }.getOrNull()
+        if (key == null || key.size != TvRemoteCrypto.KEY_BYTES) {
+            log.w { "Scanned code has an invalid pairing secret" }
+            _state.update { it.copy(pairing = PhoneTvRemotePairing.Failed(PhoneTvRemotePairingError.InvalidCode)) }
+            return
+        }
+        log.i { "Pairing with ${info.tvName} at ${info.host}:${info.port} (QR code)" }
+        startPairing(
+            host = info.host,
+            port = info.port,
+            fallbackName = info.tvName,
+            tvIdForRediscovery = info.tvId,
+            byCode = false,
+        ) { key }
+    }
+
+    override fun pairWithCode(address: String, code: String) {
+        val target = parseManualTvAddress(address, TV_REMOTE_DEFAULT_PORT)
+        val normalizedCode = normalizeTvRemotePairingCode(code)
+        if (target == null || normalizedCode == null) {
+            log.w { "Pairing by code not started: invalid ${if (target == null) "address" else "code"}" }
+            _state.update {
+                it.copy(
+                    pairing = PhoneTvRemotePairing.Failed(
+                        if (target == null) PhoneTvRemotePairingError.Unreachable else PhoneTvRemotePairingError.WrongCode,
                     ),
-                    responseSerializer = TvRemotePairResponse.serializer(),
-                    timeoutMs = PAIRING_TIMEOUT_MS,
                 )
+            }
+            return
+        }
+        val typed = address.trim()
+        settings.edit().putString(MANUAL_ADDRESS, typed).apply()
+        _state.update { it.copy(manualTvAddress = typed) }
+        log.i { "Pairing with the TV at ${target.first}:${target.second} (pairing code)" }
+        startPairing(
+            host = target.first,
+            port = target.second,
+            fallbackName = discoveredName(target.first, target.second) ?: target.first,
+            tvIdForRediscovery = null,
+            byCode = true,
+        ) { TvRemoteCrypto.pairingCodeKey(normalizedCode) }
+    }
+
+    private fun discoveredName(host: String, port: Int): String? =
+        _state.value.discoveredTvs.firstOrNull { it.host == host && it.port == port }?.name
+
+    private fun startPairing(
+        host: String,
+        port: Int,
+        fallbackName: String,
+        tvIdForRediscovery: String?,
+        byCode: Boolean,
+        pairingKey: () -> ByteArray,
+    ) {
+        _state.update { it.copy(pairing = PhoneTvRemotePairing.InProgress) }
+        scope.launch {
+            var targetHost = host
+            var targetPort = port
+            var key: ByteArray? = null
+            var result = runCatching {
+                val derived = pairingKey().also { key = it }
+                requestPairing(targetHost, targetPort, derived)
+            }
+            // The address in the QR code may be stale (TV on another interface, DHCP): look for
+            // the same TV on the network and try once more.
+            val derivedKey = key
+            val failure = result.exceptionOrNull()
+            if (failure is IOException && failure !is TvRemoteHttpException &&
+                tvIdForRediscovery != null && derivedKey != null
+            ) {
+                val found = discoverTvAddress(tvIdForRediscovery)
+                if (found != null && (found.first != targetHost || found.second != targetPort)) {
+                    log.i { "TV not reachable at $targetHost:$targetPort, trying ${found.first}:${found.second}" }
+                    targetHost = found.first
+                    targetPort = found.second
+                    result = runCatching { requestPairing(found.first, found.second, derivedKey) }
+                }
             }
             result.onSuccess { response ->
                 val clientKey = TvRemoteCrypto.decode(response.clientKey)
                 val paired = PhoneTvRemotePairedTv(
                     tvId = response.tvId,
-                    name = response.tvName.ifBlank { info.tvName },
-                    host = host,
-                    port = port,
+                    name = response.tvName.ifBlank { fallbackName },
+                    host = targetHost,
+                    port = targetPort,
                 )
                 savePairing(paired, response.clientId, clientKey)
                 bootId = null
                 revision = 0L
-                _state.value = PhoneTvRemoteUiState(
-                    pairedTv = paired,
-                    connection = PhoneTvRemoteConnection.Connecting,
-                    backgroundControls = _state.value.backgroundControls,
-                    manualTvAddress = _state.value.manualTvAddress,
-                )
+                _state.update {
+                    it.copy(
+                        pairedTv = paired,
+                        connection = PhoneTvRemoteConnection.Connecting,
+                        pairing = PhoneTvRemotePairing.Idle,
+                        playback = null,
+                        volume = null,
+                        lastCommandError = null,
+                    )
+                }
                 log.i { "Paired with ${paired.name} (key ${TvRemoteCrypto.fingerprint(clientKey)})" }
                 restartPolling()
             }.onFailure { error ->
                 val reason = when (error) {
                     is TvRemoteHttpException -> when (error.code) {
                         410 -> PhoneTvRemotePairingError.Expired
-                        403, 412 -> PhoneTvRemotePairingError.Rejected
+                        403 -> if (byCode) PhoneTvRemotePairingError.WrongCode else PhoneTvRemotePairingError.Rejected
+                        412 -> PhoneTvRemotePairingError.Rejected
                         else -> PhoneTvRemotePairingError.Unknown
                     }
                     is IOException -> PhoneTvRemotePairingError.Unreachable
@@ -163,6 +218,22 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         }
     }
 
+    private fun requestPairing(host: String, port: Int, key: ByteArray): TvRemotePairResponse = post(
+        host = host,
+        port = port,
+        path = TV_REMOTE_PATH_PAIR,
+        key = key,
+        clientId = TV_REMOTE_PAIR_CLIENT_ID,
+        requestSerializer = TvRemotePairRequest.serializer(),
+        request = TvRemotePairRequest(
+            phoneName = phoneName(),
+            timestampMs = System.currentTimeMillis(),
+            requestId = TvRemoteCrypto.randomId(),
+        ),
+        responseSerializer = TvRemotePairResponse.serializer(),
+        timeoutMs = PAIRING_TIMEOUT_MS,
+    )
+
     override fun clearPairingError() {
         _state.update { if (it.pairing is PhoneTvRemotePairing.Failed) it.copy(pairing = PhoneTvRemotePairing.Idle) else it }
     }
@@ -174,7 +245,14 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         clearPairing()
         bootId = null
         revision = 0L
-        _state.value = PhoneTvRemoteUiState(backgroundControls = _state.value.backgroundControls)
+        _state.update {
+            PhoneTvRemoteUiState(
+                backgroundControls = it.backgroundControls,
+                manualTvAddress = it.manualTvAddress,
+                discoveredTvs = it.discoveredTvs,
+                discovering = it.discovering,
+            )
+        }
         synchronized(lock) {
             pollJob?.cancel()
             pollJob = null
@@ -208,30 +286,32 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
 
     // region Observation
 
-    override fun setManualTvAddress(address: String) {
-        val value = address.trim()
-        if (value == _state.value.manualTvAddress) return
-        settings.edit().putString(MANUAL_ADDRESS, value).apply()
-        _state.update { it.copy(manualTvAddress = value) }
-        val paired = _state.value.pairedTv
-        val manual = paired?.let { parseManualTvAddress(value, it.port) }
-        if (value.isBlank()) {
-            log.i { "Manual TV address cleared: back to automatic discovery" }
-        } else if (paired == null) {
-            log.i { "Manual TV address set to $value (used at the next pairing)" }
-        } else if (manual == null) {
-            log.w { "Manual TV address '$value' is not valid: ignored" }
-        } else if (manual.first != paired.host || manual.second != paired.port) {
-            log.i { "Manual TV address set: connecting to ${manual.first}:${manual.second}" }
-            updatePairedTv(paired.copy(host = manual.first, port = manual.second))
-            bootId = null
-            revision = 0L
-            restartPolling()
-        }
+    private var networkCallbackRegistered = false
+
+    /** Registered with the first observer (after construction, so every field is ready). */
+    private fun registerNetworkCallbackOnce() {
+        if (networkCallbackRegistered) return
+        networkCallbackRegistered = true
+        // Wi-Fi back (or changed): retry at once instead of waiting for the backoff.
+        runCatching {
+            appContext.getSystemService(ConnectivityManager::class.java)?.registerDefaultNetworkCallback(
+                object : ConnectivityManager.NetworkCallback() {
+                    override fun onAvailable(network: Network) {
+                        if (_state.value.pairedTv != null &&
+                            _state.value.connection != PhoneTvRemoteConnection.Connected
+                        ) {
+                            log.i { "Network available: reconnecting to the TV" }
+                            wakeUp.complete(Unit)
+                        }
+                    }
+                },
+            )
+        }.onFailure { error -> log.w(error) { "Network callback not available: reconnection only by retry" } }
     }
 
     override fun observe(): () -> Unit {
         synchronized(lock) {
+            registerNetworkCallbackOnce()
             observers += 1
             if (observers == 1) restartPolling()
         }
@@ -335,9 +415,9 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
                 if (failures == 1) log.w(error) { "TV not reachable" } else log.d { "TV still not reachable ($failures)" }
                 markUnreachable()
                 // The TV address may have changed (DHCP): look for it on the network once per outage.
-                if (!rediscovered && failures >= 2 && _state.value.manualTvAddress.isBlank()) {
+                if (!rediscovered && failures >= 2) {
                     rediscovered = true
-                    val found = discoverTvAddress(paired)
+                    val found = discoverTvAddress(paired.tvId)
                     if (found != null && (found.first != paired.host || found.second != paired.port)) {
                         log.i { "TV found at a new address ${found.first}:${found.second}" }
                         updatePairedTv(paired.copy(host = found.first, port = found.second))
@@ -364,7 +444,7 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         }
     }
 
-    private suspend fun discoverTvAddress(paired: PhoneTvRemotePairedTv): Pair<String, Int>? {
+    private suspend fun discoverTvAddress(tvId: String): Pair<String, Int>? {
         val nsd = appContext.getSystemService(NsdManager::class.java) ?: return null
         val result = CompletableDeferred<Pair<String, Int>?>()
         val listener = object : NsdManager.DiscoveryListener {
@@ -389,7 +469,7 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
                                 val id = serviceInfo.attributes[TV_REMOTE_NSD_ID_ATTRIBUTE]?.decodeToString()
                                 @Suppress("DEPRECATION")
                                 val host = serviceInfo.host?.hostAddress
-                                if (id == paired.tvId && host != null) result.complete(host to serviceInfo.port)
+                                if (id == tvId && host != null) result.complete(host to serviceInfo.port)
                             }
                         },
                     )
@@ -406,6 +486,160 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
             runCatching { nsd.stopServiceDiscovery(listener) }
         }
     }
+
+    // region Discovery (list of TVs on the settings page)
+
+    override fun refreshDiscovery() {
+        synchronized(lock) {
+            if (discoveryHandles == 0) return
+            discoveryJob?.cancel()
+            discoveryJob = scope.launch { discoveryLoop() }
+        }
+        log.i { "TV discovery restarted by the user" }
+        // The paired TV may be back too: retry at once instead of waiting for the backoff.
+        if (_state.value.connection != PhoneTvRemoteConnection.Connected) wakeUp.complete(Unit)
+    }
+
+    /** The paired TV showed up on the network: follow its new address and reconnect at once. */
+    private fun reconnectIfPaired(tv: PhoneTvRemoteDiscoveredTv) {
+        val paired = _state.value.pairedTv ?: return
+        if (tv.tvId != paired.tvId) return
+        if (tv.host != paired.host || tv.port != paired.port) {
+            log.i { "Paired TV found at a new address ${tv.address}: reconnecting" }
+            updatePairedTv(paired.copy(host = tv.host, port = tv.port))
+            bootId = null
+            restartPolling()
+        } else if (_state.value.connection != PhoneTvRemoteConnection.Connected) {
+            log.i { "Paired TV is back on the network: reconnecting" }
+            wakeUp.complete(Unit)
+        }
+    }
+
+    private var discoveryHandles = 0
+    private var discoveryJob: Job? = null
+
+    override fun discover(): () -> Unit {
+        synchronized(lock) {
+            discoveryHandles += 1
+            if (discoveryHandles == 1) {
+                discoveryJob?.cancel()
+                discoveryJob = scope.launch { discoveryLoop() }
+            }
+        }
+        var released = false
+        return {
+            synchronized(lock) {
+                if (!released) {
+                    released = true
+                    discoveryHandles = (discoveryHandles - 1).coerceAtLeast(0)
+                    if (discoveryHandles == 0) {
+                        discoveryJob?.cancel()
+                        discoveryJob = null
+                        _state.update { it.copy(discovering = false) }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Browses the network until cancelled. Services are resolved one at a time: older Android
+     * versions refuse a second resolution while one is running.
+     */
+    private suspend fun discoveryLoop() {
+        val nsd = appContext.getSystemService(NsdManager::class.java)
+        if (nsd == null) {
+            log.w { "Network discovery not available on this device" }
+            return
+        }
+        val pending = Channel<NsdServiceInfo>(Channel.UNLIMITED)
+        val found = mutableMapOf<String, PhoneTvRemoteDiscoveredTv>()
+        fun publish() {
+            val list = synchronized(found) { found.values.sortedBy { it.name.lowercase() } }
+            _state.update { it.copy(discoveredTvs = list) }
+        }
+        val listener = object : NsdManager.DiscoveryListener {
+            override fun onDiscoveryStarted(serviceType: String) {
+                log.d { "TV discovery started" }
+            }
+
+            override fun onDiscoveryStopped(serviceType: String) = Unit
+
+            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
+                log.w { "TV discovery failed to start ($errorCode)" }
+                _state.update { it.copy(discovering = false) }
+            }
+
+            override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) = Unit
+
+            override fun onServiceFound(serviceInfo: NsdServiceInfo) {
+                pending.trySend(serviceInfo)
+            }
+
+            override fun onServiceLost(serviceInfo: NsdServiceInfo) {
+                val removed = synchronized(found) { found.remove(serviceInfo.serviceName) }
+                if (removed != null) {
+                    log.d { "TV left the network: ${removed.name}" }
+                    publish()
+                }
+            }
+        }
+        _state.update { it.copy(discovering = true, discoveredTvs = emptyList()) }
+        try {
+            nsd.discoverServices(TV_REMOTE_NSD_SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, listener)
+            for (service in pending) {
+                val resolved = resolveService(nsd, service) ?: continue
+                @Suppress("DEPRECATION")
+                val host = resolved.host?.hostAddress ?: continue
+                val id = resolved.attributes[TV_REMOTE_NSD_ID_ATTRIBUTE]?.decodeToString() ?: continue
+                val name = resolved.attributes[TV_REMOTE_NSD_NAME_ATTRIBUTE]?.decodeToString()
+                    ?.takeIf { it.isNotBlank() }
+                    ?: resolved.serviceName.removePrefix("Nuvio ").ifBlank { "Android TV" }
+                val tv = PhoneTvRemoteDiscoveredTv(tvId = id, name = name, host = host, port = resolved.port)
+                val isNew = synchronized(found) {
+                    // The same TV can show up again with a new address: keep only the last one.
+                    found.entries.removeAll { it.value.tvId == id && it.key != service.serviceName }
+                    found.put(service.serviceName, tv) != tv
+                }
+                if (isNew) {
+                    log.i { "TV found on the network: $name at ${tv.address}" }
+                    publish()
+                    reconnectIfPaired(tv)
+                }
+            }
+        } catch (error: kotlinx.coroutines.CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            log.w(error) { "TV discovery stopped by an error" }
+        } finally {
+            runCatching { nsd.stopServiceDiscovery(listener) }
+            pending.close()
+            log.d { "TV discovery stopped" }
+        }
+    }
+
+    private suspend fun resolveService(nsd: NsdManager, service: NsdServiceInfo): NsdServiceInfo? {
+        val result = CompletableDeferred<NsdServiceInfo?>()
+        @Suppress("DEPRECATION")
+        runCatching {
+            nsd.resolveService(
+                service,
+                object : NsdManager.ResolveListener {
+                    override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                        log.d { "Could not resolve ${serviceInfo.serviceName} ($errorCode)" }
+                        result.complete(null)
+                    }
+
+                    override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
+                        result.complete(serviceInfo)
+                    }
+                },
+            )
+        }.onFailure { return null }
+        return withTimeoutOrNull(RESOLVE_TIMEOUT_MS) { result.await() }
+    }
+
+    // endregion
 
     // endregion
 
@@ -481,22 +715,8 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
     // region Scanner
 
     @Composable
-    override fun rememberQrScanner(onResult: (String?) -> Unit): () -> Unit {
-        val callback by rememberUpdatedState(onResult)
-        val launcher = rememberLauncherForActivityResult(ScanContract()) { result ->
-            callback(result.contents)
-        }
-        return remember(launcher) {
-            {
-                launcher.launch(
-                    ScanOptions()
-                        .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                        .setBeepEnabled(false)
-                        .setOrientationLocked(false)
-                        .setPrompt(""),
-                )
-            }
-        }
+    override fun QrScanner(onResult: (String?) -> Unit) {
+        TvRemoteQrScanner(onResult = onResult)
     }
 
     // endregion
@@ -621,8 +841,9 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         const val CLIENT_KEY = "client_key"
         const val PAIRING_TIMEOUT_MS = 12_000L
         const val COMMAND_TIMEOUT_MS = 6_000L
-        const val MAX_BACKOFF_MS = 15_000L
+        const val MAX_BACKOFF_MS = 8_000L
         const val DISCOVERY_TIMEOUT_MS = 6_000L
+        const val RESOLVE_TIMEOUT_MS = 5_000L
         /** Playback older than this is hidden while the TV is unreachable. */
         const val STALE_STATE_MS = 30_000L
         val JSON_MEDIA_TYPE = "application/json".toMediaType()

@@ -6,9 +6,11 @@ import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import co.touchlab.kermit.Logger
+import com.nuvio.app.features.tvremote.TV_REMOTE_DEFAULT_PORT
 import com.nuvio.app.features.tvremote.TV_REMOTE_MAX_CLOCK_SKEW_MS
 import com.nuvio.app.features.tvremote.TV_REMOTE_MAX_WAIT_MS
 import com.nuvio.app.features.tvremote.TV_REMOTE_NSD_ID_ATTRIBUTE
+import com.nuvio.app.features.tvremote.TV_REMOTE_NSD_NAME_ATTRIBUTE
 import com.nuvio.app.features.tvremote.TV_REMOTE_NSD_SERVICE_TYPE
 import com.nuvio.app.features.tvremote.TV_REMOTE_PAIR_CLIENT_ID
 import com.nuvio.app.features.tvremote.TV_REMOTE_PATH_COMMAND
@@ -72,7 +74,7 @@ import kotlinx.serialization.KSerializer
 object TvPhoneRemote {
     private val log = Logger.withTag("TvPhoneRemote")
 
-    private const val PREFERRED_PORT = 47_380
+    private const val PREFERRED_PORT = TV_REMOTE_DEFAULT_PORT
     private const val PAIRING_VALIDITY_MS = 5 * 60_000L
     private const val MAX_PAIRING_FAILURES = 5
     private const val MAX_BODY_CHARS = 64 * 1024
@@ -90,6 +92,8 @@ object TvPhoneRemote {
         val tvName: String = "",
         /** Pairing QR on screen; null when pairing is closed. */
         val pairing: TvRemotePairingInfo? = null,
+        /** Code typed on the phone with the TV address (alternative to the QR). */
+        val pairingCode: String? = null,
         val pairingExpiresAtMs: Long = 0L,
         val pairingError: Boolean = false,
         val phones: List<TvPairedPhone> = emptyList(),
@@ -125,6 +129,8 @@ object TvPhoneRemote {
     @Volatile private var server: EmbeddedServer<*, *>? = null
     @Volatile private var port: Int = 0
     @Volatile private var pairingKey: ByteArray? = null
+    /** Key derived from the pairing code; null while it is computed or pairing is closed. */
+    @Volatile private var pairingCodeKey: ByteArray? = null
     private var pairingFailures = 0
     private var pairingJob: Job? = null
     private var samplerJob: Job? = null
@@ -155,6 +161,7 @@ object TvPhoneRemote {
             return
         }
         val key = TvRemoteCrypto.randomKey()
+        val code = TvRemoteCrypto.randomPairingCode()
         val info = TvRemotePairingInfo(
             tvId = store.tvId,
             tvName = store.tvName,
@@ -165,14 +172,26 @@ object TvPhoneRemote {
         val expiresAt = System.currentTimeMillis() + PAIRING_VALIDITY_MS
         synchronized(lock) {
             pairingKey = key
+            pairingCodeKey = null
             pairingFailures = 0
         }
         _state.update {
-            it.copy(pairing = info, pairingExpiresAtMs = expiresAt, pairingError = false, justPairedPhone = null)
+            it.copy(
+                pairing = info,
+                pairingCode = code,
+                pairingExpiresAtMs = expiresAt,
+                pairingError = false,
+                justPairedPhone = null,
+            )
         }
         log.i { "Pairing opened on $host:$port" }
         pairingJob?.cancel()
         pairingJob = scope.launch {
+            // Slow derivation: computed off the main thread while the QR is already usable.
+            val codeKey = runCatching { TvRemoteCrypto.pairingCodeKey(code) }
+                .onFailure { error -> log.e(error) { "Pairing code key derivation failed" } }
+                .getOrNull()
+            synchronized(lock) { if (pairingKey === key) pairingCodeKey = codeKey }
             delay(PAIRING_VALIDITY_MS)
             log.i { "Pairing code expired" }
             closePairing()
@@ -212,8 +231,11 @@ object TvPhoneRemote {
     private fun closePairing() {
         pairingJob?.cancel()
         pairingJob = null
-        synchronized(lock) { pairingKey = null }
-        _state.update { it.copy(pairing = null, pairingExpiresAtMs = 0L) }
+        synchronized(lock) {
+            pairingKey = null
+            pairingCodeKey = null
+        }
+        _state.update { it.copy(pairing = null, pairingCode = null, pairingExpiresAtMs = 0L) }
     }
 
     private fun stopServerIfUnused() {
@@ -317,15 +339,19 @@ object TvPhoneRemote {
     }
 
     private suspend fun RoutingContext.handlePair(envelope: TvRemoteEnvelope) {
-        val key = synchronized(lock) { pairingKey }
-        if (key == null || envelope.clientId != TV_REMOTE_PAIR_CLIENT_ID) {
+        val (qrKey, codeKey) = synchronized(lock) { pairingKey to pairingCodeKey }
+        if (qrKey == null || envelope.clientId != TV_REMOTE_PAIR_CLIENT_ID) {
             log.w { "Pair request while pairing is closed" }
             call.respond(HttpStatusCode.Gone)
             return
         }
-        val request = runCatching {
-            TvRemoteCrypto.open(key, TV_REMOTE_PATH_PAIR, TvRemotePairRequest.serializer(), envelope)
-        }.getOrNull()
+        // The phone sealed the request either with the QR secret or with the typed code.
+        var key: ByteArray = qrKey
+        var request = openPairRequest(qrKey, envelope)
+        if (request == null && codeKey != null) {
+            request = openPairRequest(codeKey, envelope)
+            if (request != null) key = codeKey
+        }
         if (request == null || !isFresh(request.timestampMs)) {
             val failures = synchronized(lock) { ++pairingFailures }
             log.w { "Invalid pair request ($failures/$MAX_PAIRING_FAILURES)" }
@@ -338,8 +364,9 @@ object TvPhoneRemote {
         }
         // One use only: a second phone has to wait for a new code.
         val stillOpen = synchronized(lock) {
-            if (pairingKey !== key) false else {
+            if (pairingKey !== qrKey) false else {
                 pairingKey = null
+                pairingCodeKey = null
                 true
             }
         }
@@ -354,9 +381,12 @@ object TvPhoneRemote {
         markSeen(clientId)
         pairingJob?.cancel()
         _state.update {
-            it.copy(pairing = null, pairingExpiresAtMs = 0L, phones = store.phones(), justPairedPhone = phoneName)
+            it.copy(pairing = null, pairingCode = null, pairingExpiresAtMs = 0L, phones = store.phones(), justPairedPhone = phoneName)
         }
-        log.i { "Phone paired (key ${TvRemoteCrypto.fingerprint(clientKey)})" }
+        log.i {
+            "Phone paired with the ${if (key === qrKey) "QR code" else "pairing code"} " +
+                "(key ${TvRemoteCrypto.fingerprint(clientKey)})"
+        }
         respondSealed(
             key,
             TV_REMOTE_PAIR_CLIENT_ID,
@@ -370,6 +400,11 @@ object TvPhoneRemote {
             ),
         )
     }
+
+    private fun openPairRequest(key: ByteArray, envelope: TvRemoteEnvelope): TvRemotePairRequest? =
+        runCatching {
+            TvRemoteCrypto.open(key, TV_REMOTE_PATH_PAIR, TvRemotePairRequest.serializer(), envelope)
+        }.getOrNull()
 
     private suspend fun <T> RoutingContext.openOrNull(
         key: ByteArray,
@@ -594,6 +629,7 @@ object TvPhoneRemote {
             serviceType = TV_REMOTE_NSD_SERVICE_TYPE
             setPort(port)
             setAttribute(TV_REMOTE_NSD_ID_ATTRIBUTE, store.tvId)
+            setAttribute(TV_REMOTE_NSD_NAME_ATTRIBUTE, store.tvName.take(60))
         }
         val listener = object : NsdManager.RegistrationListener {
             override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {

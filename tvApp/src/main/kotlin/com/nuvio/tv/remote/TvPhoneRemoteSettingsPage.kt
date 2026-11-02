@@ -34,7 +34,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.nuvio.app.features.tvremote.formatTvRemotePairingCode
 import androidx.compose.ui.unit.dp
 import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.tv.TvSettingsPage
@@ -145,10 +148,27 @@ private fun PairingSection() {
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.nuvio.colors.textMuted,
                     )
+                    state.pairingCode?.let { code ->
+                        Text(
+                            text = stringResource(R.string.tv_phone_remote_code_label),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.nuvio.colors.textSecondary,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                        Text(
+                            text = formatTvRemotePairingCode(code),
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                letterSpacing = 3.sp,
+                            ),
+                            color = MaterialTheme.nuvio.colors.textPrimary,
+                        )
+                    }
                     Text(
-                        text = "${pairing.host}:${pairing.port}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.nuvio.colors.textMuted,
+                        text = stringResource(R.string.tv_phone_remote_address, "${pairing.host}:${pairing.port}"),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.nuvio.colors.textSecondary,
                     )
                 }
             }

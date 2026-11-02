@@ -31,6 +31,8 @@ enum class PhoneTvRemotePairingError {
     Unreachable,
     /** The TV refused the request (wrong code or clock difference). */
     Rejected,
+    /** The typed pairing code does not match the one shown by the TV. */
+    WrongCode,
     Unknown,
 }
 
@@ -49,6 +51,17 @@ data class PhoneTvRemotePairedTv(
     val port: Int,
 )
 
+/** Nuvio TV found on the local network (its pairing page or a paired phone keeps it visible). */
+@Immutable
+data class PhoneTvRemoteDiscoveredTv(
+    val tvId: String,
+    val name: String,
+    val host: String,
+    val port: Int,
+) {
+    val address: String get() = if (':' in host) "[$host]:$port" else "$host:$port"
+}
+
 @Immutable
 data class PhoneTvRemoteUiState(
     val pairedTv: PhoneTvRemotePairedTv? = null,
@@ -62,8 +75,11 @@ data class PhoneTvRemoteUiState(
     val lastCommandError: TvRemoteCommandError? = null,
     /** Media notification, lock screen controls and volume keys while the app is in background. */
     val backgroundControls: Boolean = true,
-    /** TV address typed by the user ("ip" or "ip:port"); blank = use the QR code / discovery. */
+    /** Last TV address typed by the user ("ip" or "ip:port"), offered again in the address dialog. */
     val manualTvAddress: String = "",
+    /** Nuvio TVs found on the network while the settings page is open. */
+    val discoveredTvs: List<PhoneTvRemoteDiscoveredTv> = emptyList(),
+    val discovering: Boolean = false,
 ) {
     val canControl: Boolean
         get() = connection == PhoneTvRemoteConnection.Connected && playback != null
@@ -74,6 +90,18 @@ interface PhoneTvRemoteClient {
 
     /** Pairs with the TV of a scanned QR code (replacing the paired TV, if any). */
     fun pair(scannedCode: String)
+
+    /**
+     * Pairs with the TV at [address] ("ip" or "ip:port") using the pairing code shown on its
+     * screen: the alternative to the QR code (replacing the paired TV, if any).
+     */
+    fun pairWithCode(address: String, code: String)
+
+    /** Looks for Nuvio TVs on the network while the returned handle is open; call it to stop. */
+    fun discover(): () -> Unit
+
+    /** Starts the network search again (list cleared); also retries the paired TV at once. */
+    fun refreshDiscovery()
 
     fun clearPairingError()
 
@@ -99,15 +127,9 @@ interface PhoneTvRemoteClient {
     /** Turns the notification / lock screen controls on or off. */
     fun setBackgroundControls(enabled: Boolean)
 
-    /**
-     * Saves the TV address typed by the user (kept across restarts). When set, it replaces the
-     * address in the QR code and the network discovery; blank goes back to automatic.
-     */
-    fun setManualTvAddress(address: String)
-
-    /** QR scanner launcher; the callback receives the scanned text (null when cancelled). */
+    /** Full screen QR scanner; [onResult] receives the scanned text (null when closed). */
     @Composable
-    fun rememberQrScanner(onResult: (String?) -> Unit): () -> Unit
+    fun QrScanner(onResult: (String?) -> Unit)
 }
 
 object PhoneTvRemote {

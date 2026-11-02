@@ -3,8 +3,8 @@
     <string name="tv_phone_remote_title">TV remote</string>
     <string name="tv_phone_remote_scan_title">Scan with Nuvio on your phone</string>
     <string name="tv_phone_remote_step_1">Connect the phone to the same network as the TV.</string>
-    <string name="tv_phone_remote_step_2">On the phone open Settings → TV remote → Scan TV code.</string>
-    <string name="tv_phone_remote_step_3">Frame this code: the phone can then control playback.</string>
+    <string name="tv_phone_remote_step_2">On the phone open Settings → TV remote: pick this TV from the list, scan the QR or type the address.</string>
+    <string name="tv_phone_remote_step_3">Confirm with this code: the phone can then control playback.</string>
     <string name="tv_phone_remote_code_expires">The code expires in %1$s</string>
     <string name="tv_phone_remote_qr_description">Phone pairing code</string>
     <string name="tv_phone_remote_new_code">New code</string>
@@ -19,4 +19,6 @@
     <string name="tv_phone_remote_phone_paired_on">Paired on %1$s</string>
     <string name="tv_phone_remote_forget_confirm">Press again to remove</string>
     <string name="tv_phone_remote_security_note">Paired phones can see what is playing and control playback and volume. Everything stays on your local network and is encrypted with a key unique to each phone. Remove a phone to revoke its access.</string>
+    <string name="tv_phone_remote_code_label">Pairing code</string>
+    <string name="tv_phone_remote_address">Address: %1$s</string>
 </resources>

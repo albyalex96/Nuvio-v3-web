@@ -98,8 +98,12 @@ import nuvio.composeapp.generated.resources.tv_remote_open_controls_description
 import nuvio.composeapp.generated.resources.tv_remote_forget_title
 import nuvio.composeapp.generated.resources.tv_remote_background_description
 import nuvio.composeapp.generated.resources.tv_remote_background_title
-import nuvio.composeapp.generated.resources.tv_remote_manual_address_hint
-import nuvio.composeapp.generated.resources.tv_remote_manual_address_label
+import nuvio.composeapp.generated.resources.tv_remote_manual_title
+import nuvio.composeapp.generated.resources.tv_remote_manual_description
+import nuvio.composeapp.generated.resources.tv_remote_section_pair
+import nuvio.composeapp.generated.resources.tv_remote_discovering_title
+import nuvio.composeapp.generated.resources.tv_remote_discovering_description
+import nuvio.composeapp.generated.resources.tv_remote_pairing_in_progress
 import nuvio.composeapp.generated.resources.tv_remote_forget_description
 import nuvio.composeapp.generated.resources.tv_remote_section_about
 import nuvio.composeapp.generated.resources.tv_remote_about_body
@@ -1455,13 +1459,33 @@ internal fun settingsSearchEntries(
         } else {
             // The phone page has a custom layout (pairing state): its rows are indexed by hand.
             val tvSection = stringResource(Res.string.tv_remote_section_tv)
+            val pairSection = stringResource(Res.string.tv_remote_section_pair)
+            addRow(
+                page = SettingsPage.TvRemote,
+                key = "tv-remote-discovered",
+                title = stringResource(Res.string.tv_remote_discovering_title),
+                description = stringResource(Res.string.tv_remote_discovering_description),
+                pageLabel = tvRemotePage,
+                section = pairSection,
+                category = generalCategory,
+                icon = Icons.Rounded.Cast,
+            )
+            addRow(
+                page = SettingsPage.TvRemote,
+                key = "tv-remote-pairing",
+                title = stringResource(Res.string.tv_remote_pairing_in_progress),
+                pageLabel = tvRemotePage,
+                section = pairSection,
+                category = generalCategory,
+                icon = Icons.Rounded.Cast,
+            )
             addRow(
                 page = SettingsPage.TvRemote,
                 key = "tv-remote-scan",
                 title = stringResource(Res.string.tv_remote_scan_title),
                 description = stringResource(Res.string.tv_remote_scan_description),
                 pageLabel = tvRemotePage,
-                section = tvSection,
+                section = pairSection,
                 category = generalCategory,
                 icon = Icons.Rounded.Cast,
             )
@@ -1488,10 +1512,10 @@ internal fun settingsSearchEntries(
             addRow(
                 page = SettingsPage.TvRemote,
                 key = "tv-remote-manual-address",
-                title = stringResource(Res.string.tv_remote_manual_address_label),
-                description = stringResource(Res.string.tv_remote_manual_address_hint),
+                title = stringResource(Res.string.tv_remote_manual_title),
+                description = stringResource(Res.string.tv_remote_manual_description),
                 pageLabel = tvRemotePage,
-                section = tvSection,
+                section = pairSection,
                 category = generalCategory,
                 icon = Icons.Rounded.Cast,
             )

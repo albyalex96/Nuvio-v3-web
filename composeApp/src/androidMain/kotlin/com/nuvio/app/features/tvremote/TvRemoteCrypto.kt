@@ -11,6 +11,8 @@ import java.util.UUID
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.serialization.KSerializer
@@ -40,6 +42,35 @@ object TvRemoteCrypto {
 
     fun decode(value: String): ByteArray =
         Base64.decode(value, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+
+    /** New pairing code typed on the phone (see [normalizeTvRemotePairingCode]). */
+    fun randomPairingCode(): String = buildString {
+        repeat(TV_REMOTE_PAIRING_CODE_LENGTH) {
+            append(TV_REMOTE_PAIRING_CODE_ALPHABET[random.nextInt(TV_REMOTE_PAIRING_CODE_ALPHABET.length)])
+        }
+    }
+
+    /**
+     * Pairing key derived from a typed pairing code (alternative to the QR secret). The slow
+     * derivation makes guessing the code from a captured request expensive; the TV also closes
+     * pairing after a few wrong attempts.
+     */
+    fun pairingCodeKey(code: String): ByteArray {
+        val normalized = normalizeTvRemotePairingCode(code) ?: throw IllegalArgumentException("Invalid pairing code")
+        val spec = PBEKeySpec(
+            normalized.toCharArray(),
+            "nuvio-remote/v$TV_REMOTE_PROTOCOL_VERSION/pair-code".encodeToByteArray(),
+            PAIRING_CODE_ITERATIONS,
+            KEY_BYTES * 8,
+        )
+        return try {
+            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded
+        } finally {
+            spec.clearPassword()
+        }
+    }
+
+    private const val PAIRING_CODE_ITERATIONS = 120_000
 
     /** Short fingerprint for logs (never the key itself). */
     fun fingerprint(key: ByteArray): String =

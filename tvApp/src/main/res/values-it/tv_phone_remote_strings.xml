@@ -3,8 +3,8 @@
     <string name="tv_phone_remote_title">Telecomando TV</string>
     <string name="tv_phone_remote_scan_title">Inquadra con Nuvio sul telefono</string>
     <string name="tv_phone_remote_step_1">Collega il telefono alla stessa rete della TV.</string>
-    <string name="tv_phone_remote_step_2">Sul telefono apri Impostazioni → Telecomando TV → Scansiona il codice della TV.</string>
-    <string name="tv_phone_remote_step_3">Inquadra questo codice: dal telefono potrai controllare la riproduzione.</string>
+    <string name="tv_phone_remote_step_2">Sul telefono apri Impostazioni → Telecomando TV: scegli questa TV dall\'elenco, scansiona il QR o inserisci l\'indirizzo.</string>
+    <string name="tv_phone_remote_step_3">Conferma con questo codice: dal telefono potrai controllare la riproduzione.</string>
     <string name="tv_phone_remote_code_expires">Il codice scade tra %1$s</string>
     <string name="tv_phone_remote_qr_description">Codice di abbinamento del telefono</string>
     <string name="tv_phone_remote_new_code">Nuovo codice</string>
@@ -19,4 +19,6 @@
     <string name="tv_phone_remote_phone_paired_on">Abbinato il %1$s</string>
     <string name="tv_phone_remote_forget_confirm">Premi di nuovo per rimuovere</string>
     <string name="tv_phone_remote_security_note">I telefoni abbinati vedono cosa è in riproduzione e possono controllare riproduzione e volume. Tutto resta nella rete locale ed è cifrato con una chiave diversa per ogni telefono. Rimuovi un telefono per revocarne l\'accesso.</string>
+    <string name="tv_phone_remote_code_label">Codice di abbinamento</string>
+    <string name="tv_phone_remote_address">Indirizzo: %1$s</string>
 </resources>

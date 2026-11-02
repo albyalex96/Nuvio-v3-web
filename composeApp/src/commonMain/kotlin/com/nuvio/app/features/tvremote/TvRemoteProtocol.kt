@@ -16,9 +16,12 @@ import kotlinx.serialization.Serializable
  */
 
 const val TV_REMOTE_PROTOCOL_VERSION: Int = 1
+/** Port the TV server prefers; used when the user types an address without a port. */
+const val TV_REMOTE_DEFAULT_PORT: Int = 47_380
 const val TV_REMOTE_QR_SCHEME: String = "nuvio-remote"
 const val TV_REMOTE_NSD_SERVICE_TYPE: String = "_nuvio-remote._tcp."
 const val TV_REMOTE_NSD_ID_ATTRIBUTE: String = "id"
+const val TV_REMOTE_NSD_NAME_ATTRIBUTE: String = "n"
 const val TV_REMOTE_PAIR_CLIENT_ID: String = "pair"
 const val TV_REMOTE_PATH_PAIR: String = "/v1/pair"
 const val TV_REMOTE_PATH_STATE: String = "/v1/state"
@@ -30,6 +33,24 @@ const val TV_REMOTE_MAX_WAIT_MS: Long = 20_000L
 
 /** Requests older/newer than this (TV clock) are rejected. */
 const val TV_REMOTE_MAX_CLOCK_SKEW_MS: Long = 10 * 60_000L
+
+/** Pairing code shown by the TV under the QR (typed on the phone with the TV address). */
+const val TV_REMOTE_PAIRING_CODE_LENGTH: Int = 8
+
+/** No 0/O, 1/I/L: the code is read from the TV screen and typed by hand. */
+const val TV_REMOTE_PAIRING_CODE_ALPHABET: String = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
+
+/** Uppercases and drops spaces/dashes; null when the typed code can not be a pairing code. */
+fun normalizeTvRemotePairingCode(raw: String): String? {
+    val code = raw.filterNot { it.isWhitespace() || it == '-' }.uppercase()
+    if (code.length != TV_REMOTE_PAIRING_CODE_LENGTH) return null
+    if (code.any { it !in TV_REMOTE_PAIRING_CODE_ALPHABET }) return null
+    return code
+}
+
+/** Pairing code as shown on the TV: "ABCD-EFGH". */
+fun formatTvRemotePairingCode(code: String): String =
+    if (code.length == TV_REMOTE_PAIRING_CODE_LENGTH) "${code.take(4)}-${code.drop(4)}" else code
 
 /** Content of the pairing QR code shown by the TV. */
 @Immutable
