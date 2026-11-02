@@ -173,4 +173,5 @@ private fun TrackingProviderId.pickerLogo(): IntegrationLogo? = when (this) {
     TrackingProviderId.MAL -> IntegrationLogo.MyAnimeList
     TrackingProviderId.KITSU -> IntegrationLogo.Kitsu
     TrackingProviderId.ANILIST -> IntegrationLogo.AniList
+    TrackingProviderId.WETRAKR -> IntegrationLogo.WeTrakr
 }

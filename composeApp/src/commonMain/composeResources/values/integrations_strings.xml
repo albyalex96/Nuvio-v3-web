@@ -19,6 +19,8 @@
     <string name="settings_integrations_introdb_description">Submit intro and outro timestamps</string>
     <string name="settings_integrations_myanimelist_description">Sync your anime list with MyAnimeList</string>
     <string name="settings_integrations_kitsu_description">Sync your anime list with Kitsu</string>
+    <string name="compose_settings_page_wetrakr">WeTrakr</string>
+    <string name="settings_integrations_wetrakr_description">Sync your movie and show watchlist with WeTrakr</string>
     <string name="settings_integrations_anilist_description">Sync your anime list with AniList</string>
     <string name="settings_integrations_opensubtitles_description">Search subtitles on OpenSubtitles</string>
     <string name="settings_integrations_subdl_description">Search subtitles on SubDL</string>

@@ -172,6 +172,7 @@ fun LibraryScreen(
     // The Kitsu and AniList lists keep the local source mode: their empty and error texts are picked here.
     val isKitsuView = sourceMode == LibraryViewMode.Anime && selectedAnimeLibrary?.providerId == TrackingProviderId.KITSU
     val isAniListView = sourceMode == LibraryViewMode.Anime && selectedAnimeLibrary?.providerId == TrackingProviderId.ANILIST
+    val isWeTrakrView = sourceMode == LibraryViewMode.Anime && selectedAnimeLibrary?.providerId == TrackingProviderId.WETRAKR
     val animeSectionTitles = rememberAnimeLibrarySectionTitles()
     val viewState = when (sourceMode) {
         LibraryViewMode.Anime -> selectedAnimeLibrary?.state ?: uiState
@@ -516,7 +517,7 @@ fun LibraryScreen(
                             } else {
                                 HomeEmptyStateCard(
                                     modifier = Modifier.padding(horizontal = 16.dp),
-                                    title = if (isKitsuView) stringResource(Res.string.library_kitsu_load_failed) else if (isAniListView) stringResource(Res.string.library_anilist_load_failed) else when (libraryState.sourceMode) {
+                                    title = if (isWeTrakrView) stringResource(Res.string.library_wetrakr_load_failed) else if (isKitsuView) stringResource(Res.string.library_kitsu_load_failed) else if (isAniListView) stringResource(Res.string.library_anilist_load_failed) else when (libraryState.sourceMode) {
                                         LibrarySourceMode.LOCAL -> stringResource(Res.string.library_load_failed)
                                         LibrarySourceMode.TRAKT -> stringResource(Res.string.library_trakt_load_failed)
                                         LibrarySourceMode.SIMKL -> stringResource(Res.string.library_simkl_load_failed)
@@ -535,14 +536,14 @@ fun LibraryScreen(
                         item {
                             HomeEmptyStateCard(
                                 modifier = Modifier.padding(horizontal = 16.dp),
-                                title = if (isKitsuView) stringResource(Res.string.library_kitsu_empty_title) else if (isAniListView) stringResource(Res.string.library_anilist_empty_title) else when (libraryState.sourceMode) {
+                                title = if (isWeTrakrView) stringResource(Res.string.library_wetrakr_empty_title) else if (isKitsuView) stringResource(Res.string.library_kitsu_empty_title) else if (isAniListView) stringResource(Res.string.library_anilist_empty_title) else when (libraryState.sourceMode) {
                                     LibrarySourceMode.LOCAL -> stringResource(Res.string.library_empty_title)
                                     LibrarySourceMode.TRAKT -> stringResource(Res.string.library_trakt_empty_title)
                                     LibrarySourceMode.SIMKL -> stringResource(Res.string.library_simkl_empty_title)
                                     LibrarySourceMode.MDBLIST -> stringResource(Res.string.library_mdblist_empty_title)
                                     LibrarySourceMode.MAL -> stringResource(Res.string.library_mal_empty_title)
                                 },
-                                message = if (isKitsuView) stringResource(Res.string.library_kitsu_empty_message) else if (isAniListView) stringResource(Res.string.library_anilist_empty_message) else when (libraryState.sourceMode) {
+                                message = if (isWeTrakrView) stringResource(Res.string.library_wetrakr_empty_message) else if (isKitsuView) stringResource(Res.string.library_kitsu_empty_message) else if (isAniListView) stringResource(Res.string.library_anilist_empty_message) else when (libraryState.sourceMode) {
                                     LibrarySourceMode.LOCAL -> stringResource(Res.string.library_empty_message)
                                     LibrarySourceMode.TRAKT -> stringResource(Res.string.library_trakt_empty_message)
                                     LibrarySourceMode.SIMKL -> stringResource(Res.string.library_simkl_empty_message)

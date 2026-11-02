@@ -951,6 +951,7 @@ private fun MobileSettingsScreen(
                     SettingsPage.AniSkip -> aniSkipSettingsContent(isTablet = false)
                     SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = false)
                     SettingsPage.AniList -> aniListSettingsContent(isTablet = false)
+                    SettingsPage.WeTrakr -> weTrakrSettingsContent(isTablet = false)
                     SettingsPage.Telegram -> telegramSettingsContent(isTablet = false)
                     SettingsPage.TvRemote -> if (tvPhoneRemoteSettings != null) {
                         tvPhoneRemoteSettings.content.invoke(
@@ -1493,6 +1494,7 @@ private fun TabletSettingsScreen(
                         SettingsPage.AniSkip -> aniSkipSettingsContent(isTablet = true)
                         SettingsPage.Kitsu -> kitsuSettingsContent(isTablet = true)
                         SettingsPage.AniList -> aniListSettingsContent(isTablet = true)
+                        SettingsPage.WeTrakr -> weTrakrSettingsContent(isTablet = true)
                         SettingsPage.Telegram -> telegramSettingsContent(isTablet = true)
                         SettingsPage.TvRemote -> if (tvPhoneRemoteSettings != null) {
                             tvPhoneRemoteSettings.content.invoke(

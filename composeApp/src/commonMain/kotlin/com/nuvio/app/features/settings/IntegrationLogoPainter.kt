@@ -20,6 +20,7 @@ internal enum class IntegrationLogo {
     AniSkip,
     OpenSubtitles,
     Cloudstream,
+    WeTrakr,
 }
 
 @Composable

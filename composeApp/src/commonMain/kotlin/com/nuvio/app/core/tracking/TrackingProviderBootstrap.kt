@@ -22,6 +22,8 @@ import com.nuvio.app.features.trakt.TraktScrobbleRepository
 import com.nuvio.app.features.trakt.TraktTrackingLibraryProvider
 import com.nuvio.app.features.trakt.TraktTrackingProgressProvider
 import com.nuvio.app.features.watching.sync.TraktWatchedSyncAdapter
+import com.nuvio.app.features.wetrakr.WeTrakrAuthRepository
+import com.nuvio.app.features.wetrakr.WeTrakrTrackingLibraryProvider
 
 fun ensureTrackingProvidersRegistered() {
     MdbListTracker.register()
@@ -39,6 +41,8 @@ fun ensureTrackingProvidersRegistered() {
     TrackingProviderRegistry.registerLibraryProvider(KitsuTrackingLibraryProvider)
     AniListAuthRepository.descriptor
     TrackingProviderRegistry.registerLibraryProvider(AniListTrackingLibraryProvider)
+    WeTrakrAuthRepository.descriptor
+    TrackingProviderRegistry.registerLibraryProvider(WeTrakrTrackingLibraryProvider)
     TrackingProviderRegistry.registerLibraryProvider(TraktTrackingLibraryProvider)
     TrackingProviderRegistry.registerLibraryProvider(SimklTrackingLibraryProvider)
     TrackingProviderRegistry.registerWatchedProvider(TraktWatchedSyncAdapter)

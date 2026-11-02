@@ -30,6 +30,7 @@ import nuvio.composeapp.generated.resources.compose_settings_page_myanimelist
 import nuvio.composeapp.generated.resources.compose_settings_page_skipdb
 import nuvio.composeapp.generated.resources.compose_settings_page_aniskip
 import nuvio.composeapp.generated.resources.compose_settings_page_kitsu
+import nuvio.composeapp.generated.resources.compose_settings_page_wetrakr
 import nuvio.composeapp.generated.resources.compose_settings_page_anilist
 import nuvio.composeapp.generated.resources.compose_settings_page_opensubtitles
 import nuvio.composeapp.generated.resources.compose_settings_page_subdl
@@ -265,6 +266,11 @@ internal enum class SettingsPage(
     ),
     AniList(
         titleRes = Res.string.compose_settings_page_anilist,
+        category = SettingsCategory.General,
+        parentPage = Integrations,
+    ),
+    WeTrakr(
+        titleRes = Res.string.compose_settings_page_wetrakr,
         category = SettingsCategory.General,
         parentPage = Integrations,
     ),

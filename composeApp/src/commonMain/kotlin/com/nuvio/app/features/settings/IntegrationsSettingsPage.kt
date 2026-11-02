@@ -13,6 +13,7 @@ import nuvio.composeapp.generated.resources.compose_settings_page_anime_skip
 import nuvio.composeapp.generated.resources.compose_settings_page_discord_rpc
 import nuvio.composeapp.generated.resources.compose_settings_page_introdb
 import nuvio.composeapp.generated.resources.compose_settings_page_kitsu
+import nuvio.composeapp.generated.resources.compose_settings_page_wetrakr
 import nuvio.composeapp.generated.resources.compose_settings_page_myanimelist
 import nuvio.composeapp.generated.resources.compose_settings_page_opensubtitles
 import nuvio.composeapp.generated.resources.compose_settings_page_skipdb
@@ -27,6 +28,7 @@ import nuvio.composeapp.generated.resources.settings_integrations_anime_skip_des
 import nuvio.composeapp.generated.resources.settings_integrations_discord_description
 import nuvio.composeapp.generated.resources.settings_integrations_introdb_description
 import nuvio.composeapp.generated.resources.settings_integrations_kitsu_description
+import nuvio.composeapp.generated.resources.settings_integrations_wetrakr_description
 import nuvio.composeapp.generated.resources.settings_integrations_myanimelist_description
 import nuvio.composeapp.generated.resources.settings_integrations_opensubtitles_description
 import nuvio.composeapp.generated.resources.settings_integrations_section_extra
@@ -146,6 +148,14 @@ internal fun LazyListScope.integrationsContent(
                     iconPainter = integrationLogoPainter(IntegrationLogo.AniList),
                     isTablet = isTablet,
                     onClick = { onPageClick(SettingsPage.AniList) },
+                )
+                SettingsGroupDivider(isTablet = isTablet)
+                SettingsNavigationRow(
+                    title = stringResource(Res.string.compose_settings_page_wetrakr),
+                    description = stringResource(Res.string.settings_integrations_wetrakr_description),
+                    iconPainter = integrationLogoPainter(IntegrationLogo.WeTrakr),
+                    isTablet = isTablet,
+                    onClick = { onPageClick(SettingsPage.WeTrakr) },
                 )
             }
         }

@@ -13,6 +13,7 @@ import nuvio.composeapp.generated.resources.library_anime_section_title
 import nuvio.composeapp.generated.resources.library_source_anilist
 import nuvio.composeapp.generated.resources.library_source_kitsu
 import nuvio.composeapp.generated.resources.library_source_mal
+import nuvio.composeapp.generated.resources.library_source_wetrakr
 import nuvio.composeapp.generated.resources.library_status_completed
 import nuvio.composeapp.generated.resources.library_status_dropped
 import nuvio.composeapp.generated.resources.library_status_on_hold
@@ -31,6 +32,7 @@ internal fun animeLibraryChipStyle(providerId: TrackingProviderId): AnimeLibrary
     TrackingProviderId.MAL -> AnimeLibraryChipStyle(Res.string.library_source_mal, IntegrationLogo.MyAnimeList)
     TrackingProviderId.KITSU -> AnimeLibraryChipStyle(Res.string.library_source_kitsu, IntegrationLogo.Kitsu)
     TrackingProviderId.ANILIST -> AnimeLibraryChipStyle(Res.string.library_source_anilist, IntegrationLogo.AniList)
+    TrackingProviderId.WETRAKR -> AnimeLibraryChipStyle(Res.string.library_source_wetrakr, IntegrationLogo.WeTrakr)
     else -> null
 }
 
@@ -68,6 +70,7 @@ private val animeLibrarySectionTitleResources: Map<String, StringResource> = map
     "anilist:status:on_hold" to Res.string.library_status_on_hold,
     "anilist:status:completed" to Res.string.library_status_completed,
     "anilist:status:dropped" to Res.string.library_status_dropped,
+    "wetrakr:status:planning" to Res.string.library_status_plan_to_watch,
 )
 
 /** Localized title of a library list (a library section or a list picker destination). */

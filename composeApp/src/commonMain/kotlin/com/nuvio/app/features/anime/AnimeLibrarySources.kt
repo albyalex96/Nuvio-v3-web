@@ -12,6 +12,9 @@ import com.nuvio.app.features.mal.MalTrackingLibraryProvider
 import com.nuvio.app.features.mal.isMalLibrarySection
 import com.nuvio.app.features.tracking.TrackingProviderId
 import com.nuvio.app.features.tracking.TrackingRefreshIntent
+import com.nuvio.app.features.wetrakr.WeTrakrAuthRepository
+import com.nuvio.app.features.wetrakr.WeTrakrTrackingLibraryProvider
+import com.nuvio.app.features.wetrakr.isWeTrakrLibrarySection
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -36,7 +39,12 @@ interface AnimeLibrarySource {
 
 /** Every anime tracker with library lists. */
 object AnimeLibrarySources {
-    val all: List<AnimeLibrarySource> = listOf(MalAnimeLibrarySource, KitsuAnimeLibrarySource, AniListAnimeLibrarySource)
+    val all: List<AnimeLibrarySource> = listOf(
+        MalAnimeLibrarySource,
+        KitsuAnimeLibrarySource,
+        AniListAnimeLibrarySource,
+        WeTrakrLibrarySource,
+    )
 
     fun byProvider(providerId: TrackingProviderId): AnimeLibrarySource? =
         all.firstOrNull { it.providerId == providerId }
@@ -91,4 +99,21 @@ private object AniListAnimeLibrarySource : AnimeLibrarySource {
     override fun prepare() = AniListTrackingLibraryProvider.prepare()
 
     override suspend fun refresh(intent: TrackingRefreshIntent) = AniListTrackingLibraryProvider.refresh(intent)
+}
+
+/** WeTrakr is not anime-only, but its watchlist uses the same per-tracker chip and "All" merge. */
+private object WeTrakrLibrarySource : AnimeLibrarySource {
+    override val providerId: TrackingProviderId = TrackingProviderId.WETRAKR
+    override val isConnected: StateFlow<Boolean>
+        get() {
+            WeTrakrAuthRepository.ensureLoaded()
+            return WeTrakrAuthRepository.isAuthenticated
+        }
+    override val libraryState: Flow<LibraryUiState> get() = WeTrakrTrackingLibraryProvider.libraryState
+
+    override fun ownsSection(sectionType: String?): Boolean = isWeTrakrLibrarySection(sectionType)
+
+    override fun prepare() = WeTrakrTrackingLibraryProvider.prepare()
+
+    override suspend fun refresh(intent: TrackingRefreshIntent) = WeTrakrTrackingLibraryProvider.refresh(intent)
 }

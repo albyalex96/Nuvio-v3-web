@@ -9,6 +9,7 @@ import nuvio.composeapp.generated.resources.discord_logo
 import nuvio.composeapp.generated.resources.animeskip_logo
 import nuvio.composeapp.generated.resources.myanimelist_logo
 import nuvio.composeapp.generated.resources.kitsu_logo
+import nuvio.composeapp.generated.resources.wetrakr_logo
 import nuvio.composeapp.generated.resources.anilist_logo
 import nuvio.composeapp.generated.resources.subdl_logo
 import nuvio.composeapp.generated.resources.telegram_logo
@@ -41,4 +42,5 @@ internal actual fun integrationLogoPainter(logo: IntegrationLogo): Painter =
         IntegrationLogo.AniSkip -> painterResource(Res.drawable.aniskip_logo)
         IntegrationLogo.OpenSubtitles -> painterResource(Res.drawable.opensubtitles_logo)
         IntegrationLogo.Cloudstream -> painterResource(Res.drawable.cloudstream_logo)
+        IntegrationLogo.WeTrakr -> painterResource(Res.drawable.wetrakr_logo)
     }

@@ -377,6 +377,7 @@ internal fun settingsSearchEntries(
         PlaybackSearchRow("imdb-datasets", stringResource(Res.string.settings_licenses_attributions_imdb_title), stringResource(Res.string.settings_licenses_attributions_imdb_body)),
         PlaybackSearchRow("myanimelist-attribution", stringResource(Res.string.settings_licenses_attributions_myanimelist_title), stringResource(Res.string.settings_licenses_attributions_myanimelist_body)),
         PlaybackSearchRow("kitsu-attribution", stringResource(Res.string.settings_licenses_attributions_kitsu_title), stringResource(Res.string.settings_licenses_attributions_kitsu_body)),
+        PlaybackSearchRow("wetrakr-attribution", stringResource(Res.string.settings_licenses_attributions_wetrakr_title), stringResource(Res.string.settings_licenses_attributions_wetrakr_body)),
         PlaybackSearchRow("anilist-attribution", stringResource(Res.string.settings_licenses_attributions_anilist_title), stringResource(Res.string.settings_licenses_attributions_anilist_body)),
         PlaybackSearchRow("fribb-attribution", stringResource(Res.string.settings_licenses_attributions_fribb_title), stringResource(Res.string.settings_licenses_attributions_fribb_body)),
         PlaybackSearchRow("kometa-attribution", stringResource(Res.string.settings_licenses_attributions_kometa_title), stringResource(Res.string.settings_licenses_attributions_kometa_body)),
@@ -1382,6 +1383,27 @@ internal fun settingsSearchEntries(
         category = accountCategory,
         icon = Icons.Rounded.Link,
     )
+    val weTrakrPage = stringResource(Res.string.compose_settings_page_wetrakr)
+    addRow(
+        page = SettingsPage.WeTrakr,
+        key = "wetrakr-account",
+        title = stringResource(Res.string.settings_wetrakr_title),
+        description = stringResource(Res.string.settings_wetrakr_sign_in_description),
+        pageLabel = weTrakrPage,
+        section = stringResource(Res.string.settings_tracking_services),
+        category = accountCategory,
+        icon = Icons.Rounded.Link,
+    )
+    addRow(
+        page = SettingsPage.WeTrakr,
+        key = "wetrakr-sync-login",
+        title = stringResource(Res.string.settings_wetrakr_sync_login_title),
+        description = stringResource(Res.string.settings_wetrakr_sync_login_description),
+        pageLabel = weTrakrPage,
+        section = stringResource(Res.string.settings_wetrakr_section),
+        category = accountCategory,
+        icon = Icons.Rounded.Link,
+    )
     val kitsuPage = stringResource(Res.string.compose_settings_page_kitsu)
     addRow(
         page = SettingsPage.Kitsu,
@@ -2099,6 +2121,7 @@ private fun addAdditionalSearchEntries(
     addPage(SettingsPage.MyAnimeList, "myanimelist", stringResource(Res.string.compose_settings_page_myanimelist), stringResource(Res.string.settings_integrations_myanimelist_description), generalCategory, Icons.Rounded.ViewList)
     // Integrations: placeholder pages (work in progress)
     addPage(SettingsPage.Kitsu, "kitsu", stringResource(Res.string.compose_settings_page_kitsu), stringResource(Res.string.settings_integrations_kitsu_description), generalCategory, Icons.Rounded.ViewList)
+    addPage(SettingsPage.WeTrakr, "wetrakr", stringResource(Res.string.compose_settings_page_wetrakr), stringResource(Res.string.settings_integrations_wetrakr_description), generalCategory, Icons.Rounded.ViewList)
     addPage(SettingsPage.AniList, "anilist", stringResource(Res.string.compose_settings_page_anilist), stringResource(Res.string.settings_integrations_anilist_description), generalCategory, Icons.Rounded.ViewList)
     addPage(SettingsPage.Telegram, "telegram", stringResource(Res.string.compose_settings_page_telegram), stringResource(Res.string.settings_integrations_telegram_description), generalCategory, Icons.Rounded.Send)
     if (TelegramSourceResolver.isSupported) {

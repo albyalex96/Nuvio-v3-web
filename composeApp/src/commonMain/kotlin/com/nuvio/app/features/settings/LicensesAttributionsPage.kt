@@ -58,6 +58,7 @@ private const val IntroDbUrl = "https://introdb.app/"
 private const val SkipDbUrl = "https://skipdb.tv"
 private const val MyAnimeListUrl = "https://myanimelist.net"
 private const val KitsuUrl = "https://kitsu.app"
+private const val WeTrakrUrl = "https://wetrakr.com"
 private const val AniListUrl = "https://anilist.co"
 private const val TelegramUrl = "https://telegram.org"
 private const val TdLibLicenseUrl = "https://github.com/tdlib/td/blob/master/LICENSE_1_0.txt"
@@ -528,6 +529,12 @@ private fun attributionItems(): List<AttributionItem> = listOf(
         bodyRes = Res.string.settings_licenses_attributions_anilist_body,
         logo = IntegrationLogo.AniList,
         link = AniListUrl,
+    ),
+    AttributionItem(
+        titleRes = Res.string.settings_licenses_attributions_wetrakr_title,
+        bodyRes = Res.string.settings_licenses_attributions_wetrakr_body,
+        logo = IntegrationLogo.WeTrakr,
+        link = WeTrakrUrl,
     ),
     AttributionItem(
         titleRes = Res.string.settings_licenses_attributions_fribb_title,

@@ -153,6 +153,19 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
             )
         }
 
+        outDir.resolve("com/nuvio/app/features/wetrakr").apply {
+            mkdirs()
+            resolve("WeTrakrConfig.kt").writeText(
+                """
+                |package com.nuvio.app.features.wetrakr
+                |
+                |object WeTrakrConfig {
+                |    const val CLIENT_ID = "${props.getProperty("WETRAKR_CLIENT_ID", "").trim()}"
+                |}
+                """.trimMargin()
+            )
+        }
+
         outDir.resolve("com/nuvio/app/features/telegram").apply {
             mkdirs()
             val telegramApiId = props.getProperty("TELEGRAM_API_ID", "").trim().toIntOrNull() ?: 0

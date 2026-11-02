@@ -19,6 +19,8 @@
     <string name="settings_integrations_introdb_description">Invia i timestamp di intro e sigle finali</string>
     <string name="settings_integrations_myanimelist_description">Sincronizza la tua lista anime con MyAnimeList</string>
     <string name="settings_integrations_kitsu_description">Sincronizza la tua lista anime con Kitsu</string>
+    <string name="compose_settings_page_wetrakr">WeTrakr</string>
+    <string name="settings_integrations_wetrakr_description">Sincronizza la watchlist di film e serie con WeTrakr</string>
     <string name="settings_integrations_anilist_description">Sincronizza la tua lista anime con AniList</string>
     <string name="settings_integrations_opensubtitles_description">Cerca i sottotitoli su OpenSubtitles</string>
     <string name="settings_integrations_subdl_description">Cerca i sottotitoli su SubDL</string>

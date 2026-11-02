@@ -42,6 +42,8 @@ import com.nuvio.app.features.anilist.AniListAuthRepository
 import com.nuvio.app.features.anilist.AniListProfileSync
 import com.nuvio.app.features.kitsu.KitsuAuthRepository
 import com.nuvio.app.features.kitsu.KitsuProfileSync
+import com.nuvio.app.features.wetrakr.WeTrakrAuthRepository
+import com.nuvio.app.features.wetrakr.WeTrakrProfileSync
 import com.nuvio.app.features.mal.MalAuthRepository
 import com.nuvio.app.features.mal.MalProfileSync
 import com.nuvio.app.features.opensubtitles.OpenSubtitlesProfileSync
@@ -241,6 +243,7 @@ object ProfileSettingsSync {
             DiscordRpcRepository.uiState.map(DiscordRpcProfileSync::syncSignature).distinctUntilChanged(),
             MalAuthRepository.uiState.map(MalProfileSync::syncSignature).distinctUntilChanged(),
             KitsuAuthRepository.uiState.map(KitsuProfileSync::syncSignature).distinctUntilChanged(),
+            WeTrakrAuthRepository.uiState.map(WeTrakrProfileSync::syncSignature).distinctUntilChanged(),
             AniListAuthRepository.uiState.map(AniListProfileSync::syncSignature).distinctUntilChanged(),
             AnimeTrackingSettingsRepository.uiState.map { "anime_tracking_$it" }.distinctUntilChanged(),
             TimestampProviderSettingsRepository.uiState.map(TimestampIntegrationsProfileSync::syncSignature).distinctUntilChanged(),
@@ -316,6 +319,7 @@ object ProfileSettingsSync {
                         DiscordRpcProfileSync.exportToSyncPayload() +
                         MalProfileSync.exportToSyncPayload() +
                         KitsuProfileSync.exportToSyncPayload() +
+                        WeTrakrProfileSync.exportToSyncPayload() +
                         AniListProfileSync.exportToSyncPayload() +
                         AnimeTrackingSettingsRepository.exportToSyncPayload() +
                         OpenSubtitlesProfileSync.exportToSyncPayload() +
@@ -392,6 +396,7 @@ object ProfileSettingsSync {
         DiscordRpcProfileSync.applyFromSyncPayload(blob.features.streamBadgeSettings)
         MalProfileSync.applyFromSyncPayload(blob.features.streamBadgeSettings)
         KitsuProfileSync.applyFromSyncPayload(blob.features.streamBadgeSettings)
+        WeTrakrProfileSync.applyFromSyncPayload(blob.features.streamBadgeSettings)
         AniListProfileSync.applyFromSyncPayload(blob.features.streamBadgeSettings)
         AnimeTrackingSettingsRepository.applyFromSyncPayload(blob.features.streamBadgeSettings)
         OpenSubtitlesProfileSync.applyFromSyncPayload(blob.features.streamBadgeSettings)
@@ -470,6 +475,7 @@ object ProfileSettingsSync {
         DiscordRpcRepository.ensureLoaded()
         MalAuthRepository.ensureLoaded()
         KitsuAuthRepository.ensureLoaded()
+        WeTrakrAuthRepository.ensureLoaded()
         AniListAuthRepository.ensureLoaded()
         Top10Repository.ensureLoaded()
     }

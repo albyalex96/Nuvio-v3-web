@@ -40,3 +40,4 @@ iosApp/Configuration/DeviceSigning.local.json
 .mpvkit-build.sparseimage
 **/ALBY_*.md
 **/Version.xcconfig
+local-properties-base64.ps1
