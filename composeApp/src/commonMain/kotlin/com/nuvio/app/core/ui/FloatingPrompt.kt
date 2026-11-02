@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -39,6 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -48,7 +54,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import coil3.compose.AsyncImage
+import com.nuvio.app.tv.LocalTvShell
+import com.nuvio.app.tv.tvFocusOnAppear
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.Res
@@ -58,6 +67,9 @@ import kotlin.math.roundToInt
 
 private const val AutoDismissDelayMs = 15_000L
 private const val SwipeDismissThreshold = 80f
+private val TvPromptMaxWidth = 480.dp
+private val TvDismissKeys = setOf(Key.DirectionUp, Key.DirectionDown, Key.DirectionLeft, Key.DirectionRight)
+private val log = Logger.withTag("FloatingPrompt")
 
 @Composable
 fun NuvioFloatingPrompt(
@@ -79,6 +91,7 @@ fun NuvioFloatingPrompt(
     val hapticFeedback = LocalHapticFeedback.current
     val dragOffsetY = remember { Animatable(0f) }
     var promptHeightPx by remember { mutableIntStateOf(0) }
+    val isTv = LocalTvShell.current != null
     val actionWithHaptic = remember(hapticFeedback, onAction) {
         {
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -107,6 +120,12 @@ fun NuvioFloatingPrompt(
             )
             onDismiss()
         }
+    }
+
+    // TV: Back closes the prompt while it is on screen.
+    PlatformBackHandler(enabled = isTv && visible) {
+        log.d { "Dismissed with Back (TV)" }
+        onDismiss()
     }
 
     val navBarBottom = nuvioBottomNavigationBarInsets()
@@ -163,10 +182,13 @@ fun NuvioFloatingPrompt(
                         }
                     }
                 },
-            contentAlignment = Alignment.BottomCenter,
+            // TV: a compact card in the bottom-right corner instead of a full-width banner.
+            contentAlignment = if (isTv) Alignment.BottomEnd else Alignment.BottomCenter,
         ) {
             Surface(
-                modifier = Modifier.onSizeChanged { promptHeightPx = it.height },
+                modifier = Modifier
+                    .then(if (isTv) Modifier.widthIn(max = TvPromptMaxWidth) else Modifier)
+                    .onSizeChanged { promptHeightPx = it.height },
                 shape = tokens.shapes.card,
                 color = tokens.colors.surfacePopover,
                 tonalElevation = tokens.elevation.playerControls,
@@ -231,7 +253,25 @@ fun NuvioFloatingPrompt(
                         ) {
                             FilledIconButton(
                                 onClick = actionWithHaptic,
-                                modifier = Modifier.size(NuvioTokens.Space.s40 + NuvioTokens.Space.s2),
+                                // TV: the button takes the focus when the prompt appears; any
+                                // D-pad direction closes the prompt.
+                                modifier = Modifier
+                                    .tvFocusOnAppear()
+                                    .then(
+                                        if (isTv) {
+                                            Modifier.onPreviewKeyEvent { event ->
+                                                if (event.key !in TvDismissKeys) return@onPreviewKeyEvent false
+                                                if (event.type == KeyEventType.KeyDown) {
+                                                    log.d { "Dismissed with D-pad ${event.key} (TV)" }
+                                                    onDismiss()
+                                                }
+                                                true
+                                            }
+                                        } else {
+                                            Modifier
+                                        },
+                                    )
+                                    .size(NuvioTokens.Space.s40 + NuvioTokens.Space.s2),
                                 shape = tokens.shapes.avatar,
                             ) {
                                 Icon(
