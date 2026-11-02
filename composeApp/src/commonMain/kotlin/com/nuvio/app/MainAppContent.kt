@@ -1720,6 +1720,9 @@ internal fun MainAppContent(
                                     TvPendingDetailAction.requestPrimaryAction(meta.id)
                                     navController.navigate(DetailRoute(type = meta.type, id = meta.id, title = meta.name))
                                 },
+                                onPosterPlayLongClick = { meta ->
+                                    openPosterActions(PosterActionTarget(preview = meta, heroPlay = true))
+                                },
                                 onLibraryPosterClick = { item ->
                                     navController.navigate(
                                         DetailRoute(type = item.type, id = item.id, title = item.name),
@@ -2121,11 +2124,32 @@ internal fun MainAppContent(
                         selectedPosterActionTarget = null
                         selectedPosterAnchor = null
                     }
+                    // Play button of the TV hero: the play options come first.
+                    val heroPlayActions = if (posterActionTarget.heroPlay) {
+                        val openForPlay = { manual: Boolean ->
+                            TvPendingDetailAction.requestPrimaryAction(preview.id, manual = manual)
+                            navController.navigate(DetailRoute(type = preview.type, id = preview.id, title = preview.name))
+                        }
+                        listOf(
+                            PosterZoomOverlayAction(
+                                icon = Icons.Default.PlayArrow,
+                                label = stringResource(Res.string.action_play),
+                                onSelected = { openForPlay(false) },
+                            ),
+                            PosterZoomOverlayAction(
+                                icon = Icons.Default.Tune,
+                                label = stringResource(Res.string.play_manually),
+                                onSelected = { openForPlay(true) },
+                            ),
+                        )
+                    } else {
+                        emptyList()
+                    }
                     val shownOnTv = TvPosterMenuHook(
                         title = preview.name,
                         subtitle = posterSubtitle,
                         imageUrl = preview.poster,
-                        actions = tvMetaShortcutActions(
+                        actions = heroPlayActions + tvMetaShortcutActions(
                             type = preview.type,
                             id = preview.id,
                             includeDetails = true,

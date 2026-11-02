@@ -202,6 +202,7 @@ internal fun buildTvHomeModel(
     isSaved: (MetaPreview) -> Boolean = { false },
     onToggleSaved: ((MetaPreview) -> Unit)? = null,
     onPlay: ((MetaPreview) -> Unit)? = null,
+    onPlayLongClick: ((MetaPreview) -> Unit)? = null,
 ): TvHomeModel {
     val top10Rows = homeUiState.top10Rows.map { row ->
         TvHomeRow.Top10(key = row.key, title = top10Titles[row.kind].orEmpty(), items = row.items)
@@ -258,6 +259,7 @@ internal fun buildTvHomeModel(
         isSaved = isSaved,
         onToggleSaved = onToggleSaved,
         onPlay = onPlay,
+        onPlayLongClick = onPlayLongClick,
     )
 }
 

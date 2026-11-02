@@ -85,6 +85,8 @@ internal data class PosterActionTarget(
     val preview: MetaPreview,
     val libraryItem: LibraryItem? = null,
     val libraryListKey: String? = null,
+    /** Opened from the play button of the TV hero: the menu starts with the play options. */
+    val heroPlay: Boolean = false,
 )
 
 internal fun PlayerLaunch.toExternalPlayerPlaybackRequest(): ExternalPlayerPlaybackRequest =

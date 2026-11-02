@@ -135,6 +135,7 @@ fun HomeScreen(
     onFirstCatalogRendered: (() -> Unit)? = null,
     onPosterLibraryToggle: ((MetaPreview) -> Unit)? = null,
     onPosterPlay: ((MetaPreview) -> Unit)? = null,
+    onPosterPlayLongClick: ((MetaPreview) -> Unit)? = null,
 ) {
     LaunchedEffect(Unit) {
         AddonRepository.initialize()
@@ -1023,6 +1024,7 @@ fun HomeScreen(
                 isSaved = isPosterSaved,
                 onToggleSaved = onPosterLibraryToggle,
                 onPlay = onPosterPlay,
+                onPlayLongClick = onPosterPlayLongClick,
             ),
         )
         return

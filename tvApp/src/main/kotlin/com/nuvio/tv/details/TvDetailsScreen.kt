@@ -181,9 +181,14 @@ fun TvDetailsScreen(model: TvDetailsModel) {
     val currentModel by rememberUpdatedState(model)
     LaunchedEffect(meta.id, model.isSeries, model.seasons) {
         if (model.isSeries && model.seasons.isEmpty()) return@LaunchedEffect
-        if (!TvPendingDetailAction.consumePrimaryAction(meta.id)) return@LaunchedEffect
+        val manual = TvPendingDetailAction.consumePrimaryActionRequest(meta.id) ?: return@LaunchedEffect
         val current = currentModel
-        if (current.primaryActionEnabled) {
+        val manualAction = current.onPrimaryActionManual
+        if (manual && current.primaryActionEnabled && manualAction != null) {
+            log.i { "Primary action with source choice requested from the home hero: ${current.primaryActionLabel}" }
+            manualAction()
+        } else if (current.primaryActionEnabled) {
+            if (manual) log.w { "Source choice not available: automatic primary action instead" }
             log.i { "Primary action requested from the home hero: ${current.primaryActionLabel}" }
             current.onPrimaryAction()
         } else {

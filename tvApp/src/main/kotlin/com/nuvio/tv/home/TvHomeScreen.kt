@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -166,10 +167,16 @@ private val HERO_ROWS_GAP = 14.dp
 /** Collapse/expand of the hero when the first row leaves or re-enters the screen. */
 private const val HERO_COLLAPSE_ANIMATION_MS = 350
 
-/** OK on the hero opens it on the whole screen: full plot, every detail, play and library buttons. */
+/**
+ * OK on the hero opens it: every detail, play and library buttons. It grows only by the height of
+ * the buttons, so the rows of the home stay on screen.
+ */
 private const val HERO_EXPAND_ANIMATION_MS = 350
 private const val HERO_EXPANDED_TEXT_WIDTH_FRACTION = 0.55f
-private val HERO_EXPANDED_BOTTOM_PADDING = 36.dp
+/** Play button (about 46 dp with its focus scale) plus the spacing around the buttons row. */
+private val HERO_EXPANDED_EXTRA_HEIGHT = 72.dp
+/** The plot of the expanded hero scrolls inside this height (about 5 lines). */
+private val HERO_EXPANDED_PLOT_MAX_HEIGHT = 104.dp
 /** Share of the visible plot scrolled by one D-pad press in the expanded hero. */
 private const val HERO_PLOT_SCROLL_FRACTION = 0.6f
 /** Focus outline around the hero text: drawn this far outside the text, so the text does not move. */
@@ -428,7 +435,7 @@ private fun TvHomeContent(model: TvHomeModel) {
         heroRefocusRequests++
     }
     LaunchedEffect(focus.heroExpanded) {
-        if (focus.heroExpanded) log.i { "Hero expanded on the whole screen" }
+        if (focus.heroExpanded) log.i { "Hero expanded with its buttons" }
     }
     LaunchedEffect(heroRefocusRequests) {
         if (heroRefocusRequests == 0) return@LaunchedEffect
@@ -456,10 +463,11 @@ private fun TvHomeContent(model: TvHomeModel) {
         // NuvioTV keeps the rows in the bottom 52% of the screen (49% with landscape posters).
         val collapsedHeroHeight = maxHeight * (1f - if (settings.landscapePosters) 0.49f else 0.52f)
         val screenHeight = maxHeight
-        // The expanded hero takes the whole screen; read in the layout phase, so the animation
-        // does not recompose the home.
-        val heroHeight = remember(collapsedHeroHeight, screenHeight) {
-            { lerp(collapsedHeroHeight, screenHeight, heroExpandProgress.value) }
+        // The expanded hero grows by the buttons row only; read in the layout phase, so the
+        // animation does not recompose the home.
+        val expandedHeroHeight = minOf(collapsedHeroHeight + HERO_EXPANDED_EXTRA_HEIGHT, screenHeight)
+        val heroHeight = remember(collapsedHeroHeight, expandedHeroHeight) {
+            { lerp(collapsedHeroHeight, expandedHeroHeight, heroExpandProgress.value) }
         }
         if (heroBackdropVisible) {
             Box(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = heroProgress.value }) {
@@ -631,8 +639,10 @@ private fun TvHomeHeroBackdrop(
     fullScreen: Boolean,
     mediaHeight: () -> Dp,
 ) {
-    val shownHero by rememberShownHero(model, focus, heroIndex)
-    val backdrop by remember { derivedStateOf { shownHero?.backdrop } }
+    // Keyed on the state: it is rebuilt when the carousel items arrive or change (enriched metas),
+    // and a derived state reading the first one would keep showing the last focused card.
+    val shownHero = rememberShownHero(model, focus, heroIndex)
+    val backdrop by remember(shownHero) { derivedStateOf { shownHero.value?.backdrop } }
     HeroBackdrop(url = backdrop, fullScreen = fullScreen, mediaHeight = mediaHeight)
 }
 
@@ -679,7 +689,6 @@ private fun TvHomeHero(
                 .fillMaxSize()
                 .padding(
                     bottom = when {
-                        expanded -> HERO_EXPANDED_BOTTOM_PADDING
                         hasCarousel -> HERO_DOTS_BAND
                         else -> HERO_ROWS_GAP
                     },
@@ -753,7 +762,20 @@ private fun HeroExpandedActions(hero: HeroInfo, model: TvHomeModel, onPlayStarte
                     onPlayStarted()
                 }
             },
-            onLongClick = null,
+            onLongClick = when {
+                resumable != null -> model.onContinueWatchingLongClick?.let { longClick ->
+                    {
+                        log.i { "Expanded hero play long press: continue watching menu" }
+                        longClick(resumable)
+                    }
+                }
+                else -> model.onPlayLongClick?.let { longClick ->
+                    {
+                        log.i { "Expanded hero play long press: play options menu" }
+                        longClick(source)
+                    }
+                }
+            },
             modifier = Modifier
                 .focusRequester(playRequester)
                 .focusProperties { start = FocusRequester.Cancel },
@@ -992,8 +1014,8 @@ private fun HeroInfoPanel(
                     .fillMaxWidth(if (expanded) HERO_EXPANDED_TEXT_WIDTH_FRACTION else HERO_TEXT_WIDTH_FRACTION)
                     // NuvioTV `HeroTitleBlock`: anchored above the rows and free to grow upwards, so the
                     // logo, details and the 4 plot lines are never squeezed by the hero height.
-                    // Expanded, the plot scrolls inside the screen and needs the bounded height.
-                    .then(if (expanded) Modifier else Modifier.wrapContentHeight(Alignment.Bottom, unbounded = true))
+                    // Expanded, the buttons are added and the plot scrolls inside a capped height.
+                    .wrapContentHeight(Alignment.Bottom, unbounded = true)
                     .heroOutline(color = outlineColor, alpha = { outlineAlpha.value })
                     // Expanded: up/down scroll the plot and never move the focus out of the hero.
                     .onPreviewKeyEvent { event ->
@@ -1047,12 +1069,12 @@ private fun HeroInfoPanel(
                 }
                 if (!info.description.isNullOrBlank()) {
                     if (expanded) {
-                        // The whole plot; a long one scrolls inside the free height of the screen.
+                        // The whole plot; a long one scrolls inside a few lines (up/down).
                         Text(
                             text = info.description,
                             style = descriptionStyle,
                             color = MaterialTheme.nuvio.colors.textPrimary,
-                            modifier = Modifier.weight(1f, fill = false).verticalScroll(plotScroll),
+                            modifier = Modifier.heightIn(max = HERO_EXPANDED_PLOT_MAX_HEIGHT).verticalScroll(plotScroll),
                         )
                     } else {
                         Text(

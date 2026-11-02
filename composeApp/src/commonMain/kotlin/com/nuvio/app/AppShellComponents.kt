@@ -102,6 +102,8 @@ internal data class AppTabActions(
     /** TV home hero: the card menu's library action, and "play" through the details page. */
     val onPosterLibraryToggle: ((MetaPreview) -> Unit)? = null,
     val onPosterPlay: ((MetaPreview) -> Unit)? = null,
+    /** Long press on the play button of the expanded TV hero: menu with the secondary play options. */
+    val onPosterPlayLongClick: ((MetaPreview) -> Unit)? = null,
     val onLiveTvChannelClick: (LiveTvChannel) -> Unit = {},
     val onSwitchProfile: (() -> Unit)? = null,
     val onSettingsPageClick: ((pageName: String, title: String) -> Unit)? = null,
@@ -153,6 +155,7 @@ internal fun AppTabHost(
                         onFirstCatalogRendered = actions.onInitialHomeContentRendered,
                         onPosterLibraryToggle = actions.onPosterLibraryToggle,
                         onPosterPlay = actions.onPosterPlay,
+                        onPosterPlayLongClick = actions.onPosterPlayLongClick,
                     )
                 }
             }

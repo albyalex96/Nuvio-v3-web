@@ -59,6 +59,7 @@ class TvPosterMenu(
 object TvPendingDetailAction {
     private var randomEpisodeFor: String? = null
     private var primaryActionFor: String? = null
+    private var primaryActionManual: Boolean = false
 
     fun requestRandomEpisode(metaId: String) {
         randomEpisodeFor = metaId
@@ -72,16 +73,21 @@ object TvPendingDetailAction {
         return true
     }
 
-    fun requestPrimaryAction(metaId: String) {
+    /** [manual]: the primary action opens the source choice instead of the automatic play. */
+    fun requestPrimaryAction(metaId: String, manual: Boolean = false) {
         primaryActionFor = metaId
+        primaryActionManual = manual
         randomEpisodeFor = null
     }
 
     /** True once for [metaId] after [requestPrimaryAction]. */
-    fun consumePrimaryAction(metaId: String): Boolean {
-        if (primaryActionFor != metaId) return false
+    fun consumePrimaryAction(metaId: String): Boolean = consumePrimaryActionRequest(metaId) != null
+
+    /** Once for [metaId] after [requestPrimaryAction]: null without a request, else whether it is manual. */
+    fun consumePrimaryActionRequest(metaId: String): Boolean? {
+        if (primaryActionFor != metaId) return null
         primaryActionFor = null
-        return true
+        return primaryActionManual.also { primaryActionManual = false }
     }
 }
 
@@ -164,6 +170,8 @@ data class TvHomeModel(
     val onToggleSaved: ((MetaPreview) -> Unit)? = null,
     /** Opens the details of a title and runs its primary action (play, resume, next episode). */
     val onPlay: ((MetaPreview) -> Unit)? = null,
+    /** Long press on the hero play button: options menu (play, choose source, watched, library…). */
+    val onPlayLongClick: ((MetaPreview) -> Unit)? = null,
 )
 
 private val NoHeroDetails: suspend (MetaPreview) -> MetaPreview = { it }
