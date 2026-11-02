@@ -1,15 +1,31 @@
 package com.nuvio.app.features.settings
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,6 +35,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,26 +46,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
 import com.nuvio.app.core.build.AppFeaturePolicy
-import com.nuvio.app.core.ui.NuvioPrimaryButton
 import com.nuvio.app.core.ui.NuvioStatusModal
-import com.nuvio.app.core.ui.NuvioSurfaceCard
 import com.nuvio.app.core.ui.NuvioTokens
 import com.nuvio.app.core.ui.nuvio
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.action_cancel
-import nuvio.composeapp.generated.resources.compose_settings_page_account
 import nuvio.composeapp.generated.resources.auth_account_deletion_failed
+import nuvio.composeapp.generated.resources.compose_settings_page_account
 import nuvio.composeapp.generated.resources.settings_account_delete_account
 import nuvio.composeapp.generated.resources.settings_account_delete_account_description
 import nuvio.composeapp.generated.resources.settings_account_delete_confirm_message
 import nuvio.composeapp.generated.resources.settings_account_delete_confirm_title
-import nuvio.composeapp.generated.resources.settings_account_email
 import nuvio.composeapp.generated.resources.settings_account_not_signed_in
 import nuvio.composeapp.generated.resources.settings_account_sign_out
 import nuvio.composeapp.generated.resources.settings_account_sign_out_confirm_message
 import nuvio.composeapp.generated.resources.settings_account_sign_out_confirm_title
-import nuvio.composeapp.generated.resources.settings_account_status
 import nuvio.composeapp.generated.resources.settings_account_status_anonymous
 import nuvio.composeapp.generated.resources.settings_account_status_signed_in
 import org.jetbrains.compose.resources.stringResource
@@ -62,7 +76,7 @@ internal fun LazyListScope.accountSettingsContent(
 
 @Composable
 private fun AccountSettingsBody(
-    isTablet: Boolean,
+    @Suppress("UNUSED_PARAMETER") isTablet: Boolean,
 ) {
     val authState by AuthRepository.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -73,49 +87,12 @@ private fun AccountSettingsBody(
     val deleteAccountFallbackMessage = stringResource(Res.string.auth_account_deletion_failed)
     val canDeleteAccount = AppFeaturePolicy.accountDeletionEnabled && authState is AuthState.Authenticated
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        NuvioSurfaceCard {
-            Text(
-                text = stringResource(Res.string.compose_settings_page_account),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(modifier = Modifier.height(14.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        AccountProfileCard(authState = authState)
 
-            when (val state = authState) {
-                is AuthState.Authenticated -> {
-                    AccountInfoRow(
-                        label = stringResource(Res.string.settings_account_status),
-                        value = if (state.isAnonymous) {
-                            stringResource(Res.string.settings_account_status_anonymous)
-                        } else {
-                            stringResource(Res.string.settings_account_status_signed_in)
-                        },
-                        valueColor = MaterialTheme.colorScheme.primary,
-                    )
-                    state.email?.takeUnless { state.isAnonymous }?.let { email ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        AccountInfoRow(
-                            label = stringResource(Res.string.settings_account_email),
-                            value = email,
-                        )
-                    }
-                }
-                else -> {
-                    Text(
-                        text = stringResource(Res.string.settings_account_not_signed_in),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+        if (authState is AuthState.Authenticated) {
+            SignOutButton(onClick = { showSignOutConfirm = true })
         }
-
-        NuvioPrimaryButton(
-            text = stringResource(Res.string.settings_account_sign_out),
-            onClick = { showSignOutConfirm = true },
-        )
 
         if (canDeleteAccount) {
             DeleteAccountCard(
@@ -174,79 +151,213 @@ private fun AccountSettingsBody(
 }
 
 @Composable
-private fun DeleteAccountCard(
-    errorMessage: String?,
-    onDeleteClick: () -> Unit,
-) {
+private fun AccountProfileCard(authState: AuthState) {
     val tokens = MaterialTheme.nuvio
+    val authenticated = authState as? AuthState.Authenticated
+    val email = authenticated?.email?.takeUnless { authenticated.isAnonymous }
+    val initial = email?.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()
 
-    NuvioSurfaceCard {
-        Text(
-            text = stringResource(Res.string.settings_account_delete_account),
-            style = MaterialTheme.typography.titleMedium,
-            color = tokens.colors.textPrimary,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(Res.string.settings_account_delete_account_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = tokens.colors.textMuted,
-        )
-        errorMessage?.let { message ->
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                color = tokens.colors.danger,
-            )
-        }
-        Spacer(modifier = Modifier.height(14.dp))
-        Button(
-            onClick = onDeleteClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(NuvioTokens.Space.s48 + NuvioTokens.Space.s4),
-            shape = tokens.shapes.button,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = tokens.colors.danger,
-                contentColor = tokens.colors.textInverse,
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = tokens.colors.surface,
+        shape = tokens.shapes.card,
+    ) {
+        Box(
+            modifier = Modifier.background(
+                Brush.verticalGradient(
+                    listOf(tokens.colors.accent.copy(alpha = 0.18f), Color.Transparent),
+                ),
             ),
         ) {
-            Text(
-                text = stringResource(Res.string.settings_account_delete_account),
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(88.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                listOf(tokens.colors.accent, tokens.colors.accentStrong),
+                            ),
+                        )
+                        .border(3.dp, tokens.colors.surface.copy(alpha = 0.6f), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (initial != null) {
+                        Text(
+                            text = initial.toString(),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = tokens.colors.onAccent,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Person,
+                            contentDescription = null,
+                            tint = tokens.colors.onAccent,
+                            modifier = Modifier.size(44.dp),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = email ?: stringResource(Res.string.compose_settings_page_account),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = tokens.colors.textPrimary,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                when {
+                    authenticated == null -> AccountStatusChip(
+                        text = stringResource(Res.string.settings_account_not_signed_in),
+                        color = tokens.colors.textMuted,
+                    )
+                    authenticated.isAnonymous -> AccountStatusChip(
+                        text = stringResource(Res.string.settings_account_status_anonymous),
+                        color = tokens.colors.warning,
+                    )
+                    else -> AccountStatusChip(
+                        text = stringResource(Res.string.settings_account_status_signed_in),
+                        color = tokens.colors.success,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun AccountInfoRow(
-    label: String,
-    value: String,
-    valueColor: Color = MaterialTheme.colorScheme.onSurface,
+private fun AccountStatusChip(
+    text: String,
+    color: Color,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(color.copy(alpha = 0.14f))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(color),
         )
         Text(
-            text = value,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-            color = valueColor,
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.End,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            color = color,
         )
+    }
+}
+
+@Composable
+private fun SignOutButton(onClick: () -> Unit) {
+    val tokens = MaterialTheme.nuvio
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(NuvioTokens.Space.s48 + NuvioTokens.Space.s4),
+        shape = tokens.shapes.button,
+        border = BorderStroke(1.dp, tokens.colors.borderDefault),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = tokens.colors.textPrimary),
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.Logout,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = stringResource(Res.string.settings_account_sign_out),
+            style = MaterialTheme.typography.titleMedium,
+        )
+    }
+}
+
+@Composable
+private fun DeleteAccountCard(
+    errorMessage: String?,
+    onDeleteClick: () -> Unit,
+) {
+    val tokens = MaterialTheme.nuvio
+    val danger = tokens.colors.danger
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = danger.copy(alpha = 0.08f),
+        shape = tokens.shapes.card,
+        border = BorderStroke(1.dp, danger.copy(alpha = 0.35f)),
+    ) {
+        Column(modifier = Modifier.padding(tokens.spacing.cardPadding)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = danger,
+                    modifier = Modifier.size(22.dp),
+                )
+                Text(
+                    text = stringResource(Res.string.settings_account_delete_account),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = tokens.colors.textPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(Res.string.settings_account_delete_account_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = tokens.colors.textMuted,
+            )
+            errorMessage?.let { message ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = danger,
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            OutlinedButton(
+                onClick = onDeleteClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(NuvioTokens.Space.s48 + NuvioTokens.Space.s4),
+                shape = tokens.shapes.button,
+                border = BorderStroke(1.dp, danger),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = danger),
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.DeleteOutline,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(Res.string.settings_account_delete_account),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
     }
 }
