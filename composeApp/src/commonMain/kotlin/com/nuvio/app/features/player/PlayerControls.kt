@@ -334,17 +334,31 @@ internal fun PlayerControlsShell(
                             metrics = metrics,
                         )
                     }
-                    PlayerChapterLabel(
-                        chapters = playbackSnapshot.chapters,
-                        positionMs = displayedPositionMs,
-                        metrics = metrics,
-                        onClick = onChaptersClick?.let { openChapters ->
-                            {
-                                onInteraction()
-                                openChapters()
-                            }
-                        },
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            PlayerChapterLabel(
+                                chapters = playbackSnapshot.chapters,
+                                positionMs = displayedPositionMs,
+                                metrics = metrics,
+                                onClick = onChaptersClick?.let { openChapters ->
+                                    {
+                                        onInteraction()
+                                        openChapters()
+                                    }
+                                },
+                            )
+                        }
+                        PlayerEndTimeLabel(
+                            positionMs = displayedPositionMs,
+                            durationMs = playbackSnapshot.durationMs,
+                            playbackSpeed = playbackSnapshot.playbackSpeed,
+                            use24Hour = clock?.use24Hour ?: true,
+                            metrics = metrics,
+                        )
+                    }
                     PlayerTimeline(
                         snapshot = playbackSnapshot,
                         displayedPositionMs = displayedPositionMs,

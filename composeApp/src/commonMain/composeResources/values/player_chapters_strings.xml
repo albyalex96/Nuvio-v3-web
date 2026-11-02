@@ -2,4 +2,5 @@
 <resources>
     <string name="player_chapters">Chapters</string>
     <string name="player_chapter_number">Chapter %1$d</string>
+    <string name="player_ends_at">Ends at %1$s</string>
 </resources>

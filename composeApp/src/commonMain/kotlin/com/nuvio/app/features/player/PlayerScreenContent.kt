@@ -108,7 +108,9 @@ internal fun PlayerScreenContent(args: PlayerScreenArgs) {
             sliderOverlayBottomPadding(metrics)
         } else {
             playerTimelineBottomInsets(metrics).asPaddingValues().calculateBottomPadding() +
-                72.dp + PlayerSliderOverlayGap
+                72.dp + PlayerSliderOverlayGap +
+                // Room for the "Ends at" label above the timeline, kept visible under the next-episode card.
+                PlayerEndTimeLabelReservedHeight
         }
         runtime.sideGestureSystemEdgeExclusionPx = with(density) {
             PlayerSideGestureSystemEdgeExclusion.toPx()
