@@ -6,6 +6,8 @@ name: Build & Release (push)
 # same release as Nuvio-Enhanced-Alby-TV-<version>-<abi>.apk.
 # A release is created only when version.json carries a version that has not been released
 # yet: pushes without a version bump still build and upload the APKs as workflow artifacts.
+# The Windows desktop installer (MSI) is built on a Windows runner (job build-desktop) and attached
+# to the same release as Nuvio-Enhanced-Alby-Desktop-<version>-windows-x64.msi.
 # It can also be started by hand from the Actions tab (Run workflow); there the release can be
 # skipped to only build the APKs.
 
@@ -215,9 +217,61 @@ jobs:
           path: dist-tv/*
           if-no-files-found: error
 
+  build-desktop:
+    name: Build Windows desktop installer
+    needs: build
+    runs-on: windows-latest
+    env:
+      RELEASE_PROPERTIES_BASE64: ${{ secrets.NUVIO_LOCAL_PROPERTIES_BASE64 }}
+      VERSION: ${{ needs.build.outputs.version }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Configure runtime properties
+        # Same local.properties as Android (Supabase, TMDB...); no signing key is needed for the MSI.
+        run: |
+          if [[ -z "${RELEASE_PROPERTIES_BASE64}" ]]; then
+            echo "Missing repository secret: NUVIO_LOCAL_PROPERTIES_BASE64" >&2
+            exit 1
+          fi
+          printf '%s' "${RELEASE_PROPERTIES_BASE64}" | base64 --decode > local.properties
+          sed -i -E '/^[[:space:]]*(sdk\.dir|NUVIO_RELEASE_STORE_FILE)[[:space:]]*=/d' local.properties
+
+      - name: Build MSI
+        # downloadDesktopLibmpv (libmpv-2.dll, verified by SHA-256) runs as part of packaging.
+        run: ./gradlew :composeApp:packageMsi --stacktrace -Dorg.gradle.jvmargs="-Xmx6g -XX:MaxMetaspaceSize=1536m -Dfile.encoding=UTF-8"
+
+      - name: Rename MSI
+        run: |
+          mkdir -p dist-desktop
+          msi="$(ls composeApp/build/compose/binaries/main/msi/*.msi | head -n 1)"
+          cp "${msi}" "dist-desktop/Nuvio-Enhanced-Alby-Desktop-${VERSION}-windows-x64.msi"
+          ls -l dist-desktop
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuvio-${{ needs.build.outputs.version }}-desktop-windows
+          path: dist-desktop/*
+          if-no-files-found: error
+
   release:
     name: Publish GitHub release
-    needs: [build, build-tv]
+    needs: [build, build-tv, build-desktop]
     if: needs.build.outputs.release_exists != 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish_release)
     runs-on: ubuntu-latest
     permissions:
@@ -241,6 +295,12 @@ jobs:
           name: nuvio-${{ needs.build.outputs.version }}-android-tv-full-release
           path: dist
 
+      - name: Download desktop artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: nuvio-${{ needs.build.outputs.version }}-desktop-windows
+          path: dist
+
       - name: Create release
         run: |
           release_args=(
@@ -253,4 +313,4 @@ jobs:
           if [[ "${PRERELEASE}" == "true" ]]; then
             release_args+=(--prerelease)
           fi
-          gh release create "${release_args[@]}" dist/*.apk
+          gh release create "${release_args[@]}" dist/*.apk dist/*.msi

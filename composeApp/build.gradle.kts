@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.TestExecutable
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import java.net.URI
+import java.security.MessageDigest
 import java.util.Properties
 
 abstract class GenerateRuntimeConfigsTask : DefaultTask() {
@@ -414,6 +416,12 @@ kotlin {
         }
     }
     
+    jvm("desktop") {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
+
     val iosTargets = listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -605,6 +613,19 @@ kotlin {
             implementation(libs.supabase.realtime)
             implementation(libs.reorderable)
         }
+        val desktopMain by getting {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:${libs.versions.kotlinx.coroutines.get()}")
+                implementation(libs.ktor.client.okhttp)
+                implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:5.3.2")
+                implementation("net.java.dev.jna:jna:5.17.0")
+                implementation("net.java.dev.jna:jna-platform:5.17.0")
+                implementation(libs.ksoup)
+                implementation(libs.ktor.server.core)
+                implementation(libs.ktor.server.cio)
+            }
+        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${libs.versions.kotlinx.coroutines.get()}")
@@ -637,4 +658,76 @@ configurations.all {
     exclude(group = "androidx.media3", module = "media3-datasource")
     exclude(group = "androidx.media3", module = "media3-datasource-okhttp")
     exclude(group = "androidx.media3", module = "media3-extractor")
+}
+
+// libmpv for the desktop player (Windows). 115 MB, over the GitHub file limit: downloaded at build
+// time from the NuvioDesktop LFS storage and verified against its SHA-256.
+val desktopLibmpvUrl =
+    "https://media.githubusercontent.com/media/NuvioMedia/NuvioDesktop/Dev/composeApp/src/desktopMain/native/windows/runtime/libmpv-2.dll"
+val desktopLibmpvSha256 = "07c68bb211f23a218ded0a36eb12207dc3aeb44e5318ffca6ce9dcc7c3173906"
+val desktopLibmpvFile = layout.projectDirectory.file("desktopNative/windows/libmpv-2.dll")
+
+val downloadDesktopLibmpv by tasks.registering {
+    description = "Downloads libmpv-2.dll for the Windows desktop player."
+    outputs.file(desktopLibmpvFile)
+    val target = desktopLibmpvFile.asFile
+    val url = desktopLibmpvUrl
+    val expected = desktopLibmpvSha256
+    doLast {
+        fun sha256(file: File): String {
+            val digest = MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { input ->
+                val buffer = ByteArray(1 shl 16)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    digest.update(buffer, 0, read)
+                }
+            }
+            return digest.digest().joinToString("") { "%02x".format(it) }
+        }
+        if (target.isFile && sha256(target) == expected) return@doLast
+        target.parentFile.mkdirs()
+        val temp = File(target.parentFile, "${target.name}.download")
+        URI(url).toURL().openStream().use { input -> temp.outputStream().use { input.copyTo(it) } }
+        val actual = sha256(temp)
+        check(actual == expected) {
+            temp.delete()
+            "libmpv-2.dll checksum mismatch: expected $expected, got $actual"
+        }
+        target.delete()
+        check(temp.renameTo(target)) { "Cannot move ${temp.name} to ${target.name}" }
+    }
+}
+
+tasks.matching { it.name == "prepareAppResources" }.configureEach {
+    dependsOn(downloadDesktopLibmpv)
+}
+
+compose.desktop {
+    application {
+        mainClass = "com.nuvio.app.MainKt"
+        jvmArgs += listOf(
+            "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+            "--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED",
+        )
+        nativeDistributions {
+            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi)
+            // desktopNative/windows/libmpv-2.dll -> resources dir of the packaged app.
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("desktopNative"))
+            modules("java.naming", "java.net.http", "jdk.crypto.ec", "java.sql", "jdk.unsupported")
+            packageName = "Nuvio"
+            packageVersion = releaseAppVersionName.substringBefore('-')
+            description = "Nuvio Enhanced media center"
+            vendor = "Nuvio Enhanced"
+            windows {
+                menu = true
+                shortcut = true
+                upgradeUuid = "8f0d6c1e-6a52-4c39-9a57-3c0e2b6d7f41"
+                iconFile.set(project.file("desktopIcons/nuvio.ico"))
+                dirChooser = true
+                perUserInstall = true
+            }
+        }
+    }
 }
