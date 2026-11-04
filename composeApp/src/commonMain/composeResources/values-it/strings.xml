@@ -1351,6 +1351,12 @@
   <string name="settings_licenses_attributions_skipdb_title">SkipDB</string>
   <string name="settings_licenses_attributions_skipdb_body">Nuvio utilizza l'API di SkipDB per i timestamp di intro, riassunti e finali forniti dalla community e utilizzati dai controlli di salto, e per inviare i timestamp quando l'invio è attivo. I dati di SkipDB sono distribuiti con la Open Database License (ODbL 1.0). Nuvio non è affiliato né approvato da SkipDB.</string>
   <string name="settings_licenses_attributions_introdb_body">Nuvio utilizza l'API di IntroDB per i timestamp di intro, riassunti, titoli di coda e anteprime forniti dalla community e utilizzati dai controlli di salto. Nuvio non è affiliato né approvato da IntroDB.</string>
+  <string name="settings_licenses_attributions_libmpv_title">libmpv</string>
+  <string name="settings_licenses_attributions_libmpv_body">Utilizzato per la riproduzione nell'app desktop.</string>
+  <string name="settings_licenses_attributions_libmpv_license">mpv è rilasciato sotto licenza GPL v2 o successiva (LGPL v2.1 o successiva se compilato senza componenti GPL). La libreria inclusa contiene anche FFmpeg.</string>
+  <string name="settings_licenses_attributions_ffmpeg_title">FFmpeg (JavaCPP Presets)</string>
+  <string name="settings_licenses_attributions_ffmpeg_body">Utilizzato per unire i download HLS in un unico file nell'app desktop.</string>
+  <string name="settings_licenses_attributions_ffmpeg_license">FFmpeg è rilasciato sotto licenza LGPL v2.1 o successiva. I binding JavaCPP Presets sono rilasciati sotto licenza Apache 2.0.</string>
   <string name="settings_licenses_attributions_mpvkit_title">MPVKit</string>
   <string name="settings_licenses_attributions_mpvkit_body">Utilizzato per la riproduzione sulle build iOS.</string>
   <string name="settings_licenses_attributions_mpvkit_license">Il solo sorgente di MPVKit è rilasciato sotto licenza LGPL v3.0. Anche i pacchetti di MPVKit, incluse le librerie libmpv e FFmpeg, sono rilasciati sotto licenza LGPL v3.0.</string>

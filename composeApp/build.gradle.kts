@@ -620,6 +620,11 @@ kotlin {
             kotlin.srcDir(desktopBootstrapDir)
             dependencies {
                 implementation(libs.quickjs.kt)
+                // FFmpeg (LGPL build) for the HLS download remux; Windows natives only for now.
+                implementation("org.bytedeco:javacpp:1.5.11")
+                implementation("org.bytedeco:javacpp:1.5.11:windows-x86_64")
+                implementation("org.bytedeco:ffmpeg:7.1-1.5.11")
+                implementation("org.bytedeco:ffmpeg:7.1-1.5.11:windows-x86_64")
                 implementation(compose.desktop.currentOs)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:${libs.versions.kotlinx.coroutines.get()}")
                 implementation(libs.ktor.client.okhttp)

@@ -80,6 +80,7 @@ import com.nuvio.app.core.build.TrailerPlaybackMode
 import com.nuvio.app.core.ui.NuvioTokens
 import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.isDesktop
 import com.nuvio.app.isIos
 import com.nuvio.app.tv.LocalTvShell
 import com.nuvio.app.features.discord.DiscordRpcPlatform
@@ -412,19 +413,35 @@ internal fun settingsSearchEntries(
         PlaybackSearchRow("gemini-attribution", stringResource(Res.string.settings_licenses_attributions_gemini_title), stringResource(Res.string.settings_licenses_attributions_gemini_body)),
         PlaybackSearchRow("openrouter-attribution", stringResource(Res.string.settings_licenses_attributions_openrouter_title), stringResource(Res.string.settings_licenses_attributions_openrouter_body)),
         PlaybackSearchRow("tavily-attribution", stringResource(Res.string.settings_licenses_attributions_tavily_title), stringResource(Res.string.settings_licenses_attributions_tavily_body)),
-        PlaybackSearchRow(
-            if (isIos) "mpvkit-license" else "exoplayer-license",
-            if (isIos) {
-                stringResource(Res.string.settings_licenses_attributions_mpvkit_title)
-            } else {
-                stringResource(Res.string.settings_licenses_attributions_exoplayer_title)
-            },
-            if (isIos) {
-                stringResource(Res.string.settings_licenses_attributions_mpvkit_license)
-            } else {
-                stringResource(Res.string.settings_licenses_attributions_exoplayer_license)
-            },
-        ),
+        when {
+            isDesktop -> PlaybackSearchRow(
+                "libmpv-license",
+                stringResource(Res.string.settings_licenses_attributions_libmpv_title),
+                stringResource(Res.string.settings_licenses_attributions_libmpv_license),
+            )
+            isIos -> PlaybackSearchRow(
+                "mpvkit-license",
+                stringResource(Res.string.settings_licenses_attributions_mpvkit_title),
+                stringResource(Res.string.settings_licenses_attributions_mpvkit_license),
+            )
+            else -> PlaybackSearchRow(
+                "exoplayer-license",
+                stringResource(Res.string.settings_licenses_attributions_exoplayer_title),
+                stringResource(Res.string.settings_licenses_attributions_exoplayer_license),
+            )
+        },
+    ).plus(
+        if (isDesktop) {
+            listOf(
+                PlaybackSearchRow(
+                    "ffmpeg-license",
+                    stringResource(Res.string.settings_licenses_attributions_ffmpeg_title),
+                    stringResource(Res.string.settings_licenses_attributions_ffmpeg_body),
+                ),
+            )
+        } else {
+            emptyList()
+        },
     ).forEach { row ->
         addRow(
             page = SettingsPage.LicensesAttributions,

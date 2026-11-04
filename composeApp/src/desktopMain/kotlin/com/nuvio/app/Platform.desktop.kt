@@ -6,5 +6,6 @@ class DesktopPlatform : Platform {
 
 actual fun getPlatform(): Platform = DesktopPlatform()
 
+internal actual val isDesktop: Boolean = true
 internal actual val isIos: Boolean = false
 internal actual val supportsPosterNavigationMotion: Boolean = false
