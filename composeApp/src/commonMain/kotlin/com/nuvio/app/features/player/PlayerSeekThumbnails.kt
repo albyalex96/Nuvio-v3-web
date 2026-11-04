@@ -118,7 +118,12 @@ internal fun BoxScope.SeekThumbnailPreview(
     /** Mouse over the bar without pressing (desktop): preview of that position. */
     hoverPositionMs: Long? = null,
 ) {
-    val ui = LocalSeekThumbnails.current ?: return
+    val ui = LocalSeekThumbnails.current
+    if (ui == null) {
+        // No previews for this stream (or turned off): the hovered time is still shown.
+        hoverPositionMs?.let { SeekHoverTimeTooltip(it, durationMs) }
+        return
+    }
     val provider = ui.provider
     val dragging = ui.isScrubbing()
     val hovering = !dragging && hoverPositionMs != null
@@ -183,17 +188,44 @@ internal fun BoxScope.SeekThumbnailPreview(
                         .clip(PreviewShape)
                         .border(1.dp, Color.White.copy(alpha = 0.35f), PreviewShape),
                 )
-                Text(
-                    text = formatPlaybackTime(shownPositionMs),
-                    style = MaterialTheme.nuvioTypeScale.labelSm.copy(fontSize = 13.sp),
-                    color = Color.White,
-                    modifier = Modifier
-                        .padding(top = 6.dp)
-                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
-                )
+                SeekTimeLabel(shownPositionMs, Modifier.padding(top = 6.dp))
             }
         }
+    }
+    // Hovering while the picture is still decoding (or cannot be decoded): time only.
+    if (hovering && current == null) SeekHoverTimeTooltip(hoverPositionMs!!, durationMs)
+}
+
+@Composable
+private fun SeekTimeLabel(positionMs: Long, modifier: Modifier = Modifier) {
+    Text(
+        text = formatPlaybackTime(positionMs),
+        style = MaterialTheme.nuvioTypeScale.labelSm.copy(fontSize = 13.sp),
+        color = Color.White,
+        modifier = modifier
+            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    )
+}
+
+/** Small "45:30" bubble above the hovered point of a seek bar. */
+@Composable
+private fun BoxScope.SeekHoverTimeTooltip(positionMs: Long, durationMs: Long) {
+    val fraction = if (durationMs > 0L) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+    Box(
+        modifier = Modifier
+            .matchParentSize()
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(Constraints())
+                val width = constraints.maxWidth
+                layout(width, constraints.maxHeight) {
+                    val x = (width * fraction - placeable.width / 2f).toInt()
+                        .coerceIn(0, (width - placeable.width).coerceAtLeast(0))
+                    placeable.place(x, -placeable.height - PreviewGap.roundToPx())
+                }
+            },
+    ) {
+        SeekTimeLabel(positionMs)
     }
 }
 

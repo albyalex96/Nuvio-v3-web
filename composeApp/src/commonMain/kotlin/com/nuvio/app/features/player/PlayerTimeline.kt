@@ -158,7 +158,9 @@ internal fun PlayerTimeline(
     val isDragged by interactionSource.collectIsDraggedAsState()
     // D-pad focus (TV, keyboard) highlights the timeline like a touch scrub.
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val isInteracting = enabled && durationMs > 0L && (isPressed || isDragged || isFocused)
+    // Mouse over the bar (desktop): thicker track and the preview of the pointed position.
+    var hoverPositionMs by remember { mutableStateOf<Long?>(null) }
+    val isInteracting = enabled && durationMs > 0L && (isPressed || isDragged || isFocused || hoverPositionMs != null)
     val trackThickness by animateDpAsState(
         targetValue = if (isInteracting) 10.dp else 6.dp,
         animationSpec = tween(durationMillis = if (isInteracting) 140 else 180),
@@ -166,7 +168,7 @@ internal fun PlayerTimeline(
     )
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Box(Modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().seekBarMouseHover(durationMs) { hoverPositionMs = it }) {
             Slider(
                 value = displayedPositionMs.coerceIn(0L, durationMs).toFloat(),
                 onValueChange = { value ->
@@ -236,7 +238,11 @@ internal fun PlayerTimeline(
                     .semantics { contentDescription = description },
             )
             if (enabled && durationMs > 0L) {
-                SeekThumbnailPreview(positionMs = displayedPositionMs.coerceIn(0L, durationMs), durationMs = durationMs)
+                SeekThumbnailPreview(
+                    positionMs = displayedPositionMs.coerceIn(0L, durationMs),
+                    durationMs = durationMs,
+                    hoverPositionMs = hoverPositionMs?.coerceIn(0L, durationMs),
+                )
             }
         }
     }
