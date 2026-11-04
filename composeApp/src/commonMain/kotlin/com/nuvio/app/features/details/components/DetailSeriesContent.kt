@@ -1,5 +1,6 @@
 package com.nuvio.app.features.details.components
 
+import com.nuvio.app.core.ui.mouseDragScroll
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -600,7 +601,7 @@ private fun SeasonTextChipScrollRow(
 
     LazyRow(
         state = seasonListState,
-        modifier = Modifier
+        modifier = Modifier.mouseDragScroll(seasonListState)
             .nuvioHorizontalScrollBleed(horizontalScrollPadding)
             .fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = horizontalScrollPadding),
@@ -673,7 +674,7 @@ private fun SeasonPosterScrollRow(
 
     LazyRow(
         state = seasonListState,
-        modifier = Modifier
+        modifier = Modifier.mouseDragScroll(seasonListState)
             .nuvioHorizontalScrollBleed(horizontalScrollPadding)
             .fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = horizontalScrollPadding),
@@ -827,7 +828,7 @@ private fun EpisodeHorizontalRow(
 
     LazyRow(
         state = listState,
-        modifier = Modifier
+        modifier = Modifier.mouseDragScroll(listState)
             .nuvioHorizontalScrollBleed(horizontalScrollPadding)
             .fillMaxWidth(),
         contentPadding = PaddingValues(

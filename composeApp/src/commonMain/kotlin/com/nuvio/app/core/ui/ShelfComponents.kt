@@ -91,7 +91,7 @@ fun <T> NuvioShelfSection(
             )
         }
         LazyRow(
-            modifier = rowModifier,
+            modifier = rowModifier.mouseDragScroll(state),
             state = state,
             contentPadding = rowContentPadding,
             horizontalArrangement = Arrangement.spacedBy(itemSpacing),

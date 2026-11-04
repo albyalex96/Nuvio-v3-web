@@ -1,5 +1,6 @@
 package com.nuvio.app.features.details.components
 
+import com.nuvio.app.core.ui.mouseDragScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -212,8 +213,10 @@ fun DetailTrailersSection(
 
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val sizing = trailerSectionSizing(maxWidth.value, userCornerRadius)
+            val dragRowState = androidx.compose.foundation.lazy.rememberLazyListState()
             LazyRow(
-                modifier = Modifier
+                state = dragRowState,
+                modifier = Modifier.mouseDragScroll(dragRowState)
                     .nuvioHorizontalScrollBleed(horizontalScrollPadding)
                     .fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = horizontalScrollPadding),

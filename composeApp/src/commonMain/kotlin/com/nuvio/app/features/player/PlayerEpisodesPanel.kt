@@ -1,5 +1,6 @@
 package com.nuvio.app.features.player
 
+import com.nuvio.app.core.ui.mouseDragScroll
 import com.nuvio.app.core.format.formatEpisodeCodeWithSelectedFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -215,7 +216,7 @@ private fun EpisodesListPanelContent(
         if (availableSeasons.isNotEmpty()) {
             LazyRow(
                 state = seasonListState,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.mouseDragScroll(seasonListState).fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
             ) {
