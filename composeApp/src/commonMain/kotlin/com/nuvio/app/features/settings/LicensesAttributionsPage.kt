@@ -206,7 +206,8 @@ private fun LicensesAttributionsBody(
                     isTablet = isTablet,
                 )
             }
-            if (seekThumbnailsSupported) {
+            // Nuvio Arc is the Android preview decoder; desktop previews use FFmpeg.
+            if (seekThumbnailsSupported && !isDesktop) {
                 PlainStackDivider()
                 LicenseRow(
                     item = LicenseItem(

@@ -62,15 +62,18 @@ internal fun SeekThumbnailSettingsSection(
                 isTablet = isTablet,
                 onCheckedChange = PlayerSettingsRepository::setSeekThumbnailsEnabled,
             )
-            SettingsGroupDivider(isTablet = isTablet)
-            SettingsSwitchRow(
-                title = stringResource(Res.string.settings_playback_seek_thumbnails_wifi_only),
-                description = stringResource(Res.string.settings_playback_seek_thumbnails_wifi_only_description),
-                checked = settings.seekThumbnailsWifiOnly,
-                enabled = usable,
-                isTablet = isTablet,
-                onCheckedChange = PlayerSettingsRepository::setSeekThumbnailsWifiOnly,
-            )
+            // A PC is on Ethernet or home Wi-Fi: no mobile data to save there.
+            if (!com.nuvio.app.isDesktop) {
+                SettingsGroupDivider(isTablet = isTablet)
+                SettingsSwitchRow(
+                    title = stringResource(Res.string.settings_playback_seek_thumbnails_wifi_only),
+                    description = stringResource(Res.string.settings_playback_seek_thumbnails_wifi_only_description),
+                    checked = settings.seekThumbnailsWifiOnly,
+                    enabled = usable,
+                    isTablet = isTablet,
+                    onCheckedChange = PlayerSettingsRepository::setSeekThumbnailsWifiOnly,
+                )
+            }
             SettingsGroupDivider(isTablet = isTablet)
             SettingsNavigationRow(
                 title = stringResource(Res.string.settings_playback_seek_thumbnails_size),

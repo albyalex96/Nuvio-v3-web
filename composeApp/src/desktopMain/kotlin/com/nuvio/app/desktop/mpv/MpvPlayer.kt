@@ -1,6 +1,7 @@
 package com.nuvio.app.desktop.mpv
 
 import co.touchlab.kermit.Logger
+import com.nuvio.app.desktop.compat.toNativeMediaLocation
 import com.sun.jna.Memory
 import com.sun.jna.Native
 import com.sun.jna.Pointer
@@ -77,10 +78,10 @@ internal class MpvPlayer private constructor(
         errorMessage.set(null)
         setProperty("http-header-fields", headers.entries.joinToString(",") { (k, v) -> escapeListItem("$k: $v") })
         setProperty("start", startSeconds?.takeIf { it > 0.0 }?.let { "+$it" } ?: "none")
-        setProperty("audio-files", audioUrl.orEmpty())
+        setProperty("audio-files", audioUrl?.toNativeMediaLocation().orEmpty())
         pendingAfterLoad.set(afterLoad)
         log.i { "Loading media (audio track: ${audioUrl != null}, start: ${startSeconds ?: 0.0}s)" }
-        command("loadfile", url, "replace")
+        command("loadfile", url.toNativeMediaLocation(), "replace")
     }
 
     fun command(vararg args: String): Int {

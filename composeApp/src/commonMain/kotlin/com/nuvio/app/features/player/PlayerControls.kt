@@ -933,8 +933,9 @@ internal fun PlayerSeekBar(
     val seekDurationMs = durationMs.coerceAtLeast(1L)
     val chapterMarks = remember(chapters, durationMs) { chapters.chapterMarkFractions(durationMs) }
     val seekDescription = stringResource(Res.string.player_seek_position)
+    var hoverPositionMs by remember { mutableStateOf<Long?>(null) }
     Column(modifier = modifier) {
-        Box(Modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().seekBarMouseHover(durationMs) { hoverPositionMs = it }) {
             Slider(
                 modifier = sliderModifier
                     .fillMaxWidth()
@@ -949,7 +950,11 @@ internal fun PlayerSeekBar(
                 track = { sliderState -> PlayerProgressTrack(sliderState, chapterMarks) },
             )
             if (durationMs > 0L) {
-                SeekThumbnailPreview(positionMs = displayedPositionMs.coerceIn(0L, durationMs), durationMs = durationMs)
+                SeekThumbnailPreview(
+                    positionMs = displayedPositionMs.coerceIn(0L, durationMs),
+                    durationMs = durationMs,
+                    hoverPositionMs = hoverPositionMs?.coerceIn(0L, durationMs),
+                )
             }
         }
         Row(

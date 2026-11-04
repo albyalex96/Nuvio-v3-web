@@ -407,7 +407,7 @@ internal fun settingsSearchEntries(
         PlaybackSearchRow("okhttp-license", stringResource(Res.string.settings_licenses_attributions_okhttp_title), stringResource(Res.string.settings_licenses_attributions_okhttp_license))
             .takeIf { dnsOverHttpsSettingsVisible },
         PlaybackSearchRow("nuvio-arc-license", stringResource(Res.string.settings_licenses_attributions_nuvio_arc_title), stringResource(Res.string.settings_licenses_attributions_nuvio_arc_body))
-            .takeIf { seekThumbnailsSupported },
+            .takeIf { seekThumbnailsSupported && !isDesktop },
         PlaybackSearchRow("cerebras-attribution", stringResource(Res.string.settings_licenses_attributions_cerebras_title), stringResource(Res.string.settings_licenses_attributions_cerebras_body)),
         PlaybackSearchRow("groq-attribution", stringResource(Res.string.settings_licenses_attributions_groq_title), stringResource(Res.string.settings_licenses_attributions_groq_body)),
         PlaybackSearchRow("gemini-attribution", stringResource(Res.string.settings_licenses_attributions_gemini_title), stringResource(Res.string.settings_licenses_attributions_gemini_body)),
@@ -1781,9 +1781,10 @@ private fun addAdditionalSearchEntries(
     }
     val seekThumbnailSection = stringResource(Res.string.settings_playback_section_seek_thumbnails)
     val seekThumbnailRows = if (seekThumbnailsSupported) {
-        listOf(
+        listOfNotNull(
             PlaybackSearchRow("seek-thumbnails", stringResource(Res.string.settings_playback_seek_thumbnails), stringResource(Res.string.settings_playback_seek_thumbnails_description)),
-            PlaybackSearchRow("seek-thumbnails-wifi-only", stringResource(Res.string.settings_playback_seek_thumbnails_wifi_only), stringResource(Res.string.settings_playback_seek_thumbnails_wifi_only_description)),
+            PlaybackSearchRow("seek-thumbnails-wifi-only", stringResource(Res.string.settings_playback_seek_thumbnails_wifi_only), stringResource(Res.string.settings_playback_seek_thumbnails_wifi_only_description))
+                .takeIf { !isDesktop },
             PlaybackSearchRow("seek-thumbnails-size", stringResource(Res.string.settings_playback_seek_thumbnails_size)),
         )
     } else {

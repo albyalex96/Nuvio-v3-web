@@ -1,5 +1,9 @@
 package com.nuvio.app.features.player
 
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -111,15 +115,22 @@ private val PreviewShape = RoundedCornerShape(10.dp)
 internal fun BoxScope.SeekThumbnailPreview(
     positionMs: Long,
     durationMs: Long,
+    /** Mouse over the bar without pressing (desktop): preview of that position. */
+    hoverPositionMs: Long? = null,
 ) {
     val ui = LocalSeekThumbnails.current ?: return
     val provider = ui.provider
-    val scrubbing = ui.isScrubbing()
+    val dragging = ui.isScrubbing()
+    val hovering = !dragging && hoverPositionMs != null
+    val scrubbing = dragging || hovering
+    LaunchedEffect(provider, hoverPositionMs, dragging) {
+        if (!dragging && hoverPositionMs != null) provider.request(hoverPositionMs)
+    }
     val tv = LocalTvShell.current != null
     var lingering by remember { mutableStateOf(false) }
     // While it lingers the preview keeps the chosen position: the player may still report the old one.
     val lastScrubMs = remember { LongArray(1) }
-    if (scrubbing) lastScrubMs[0] = positionMs
+    if (scrubbing) lastScrubMs[0] = if (hovering) hoverPositionMs!! else positionMs
     LaunchedEffect(provider, scrubbing) {
         if (scrubbing) {
             lingering = false
@@ -134,7 +145,11 @@ internal fun BoxScope.SeekThumbnailPreview(
     }
     val frame by provider.frame.collectAsState()
     val current = frame
-    val shownPositionMs = if (scrubbing) positionMs else lastScrubMs[0]
+    val shownPositionMs = when {
+        hovering -> hoverPositionMs!!
+        scrubbing -> positionMs
+        else -> lastScrubMs[0]
+    }
     val fraction = if (durationMs > 0L) (shownPositionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
     Box(
         modifier = Modifier
@@ -181,3 +196,29 @@ internal fun BoxScope.SeekThumbnailPreview(
         }
     }
 }
+
+/**
+ * Reports the position under the mouse while it moves over a seek bar without a button pressed
+ * (null when it leaves): the preview then follows the pointer, like on video sites.
+ */
+internal fun Modifier.seekBarMouseHover(durationMs: Long, onHover: (Long?) -> Unit): Modifier =
+    pointerInput(durationMs) {
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                val change = event.changes.firstOrNull() ?: continue
+                if (change.type != PointerType.Mouse) continue
+                when (event.type) {
+                    PointerEventType.Exit -> onHover(null)
+                    PointerEventType.Enter, PointerEventType.Move -> {
+                        if (change.pressed || size.width <= 0 || durationMs <= 0L) {
+                            onHover(null)
+                        } else {
+                            val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                            onHover((durationMs * fraction).toLong())
+                        }
+                    }
+                }
+            }
+        }
+    }

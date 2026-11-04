@@ -19,6 +19,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import co.touchlab.kermit.Logger
+import com.nuvio.app.desktop.compat.toNativeMediaLocation
 import com.nuvio.app.desktop.mpv.MpvPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -98,7 +99,7 @@ actual fun PlatformPlayerSurface(
                 startSeconds = startMs?.let { it / 1000.0 },
             ) {
                 externalSubtitles.forEach { subtitle ->
-                    player.command("sub-add", subtitle.url, "auto", subtitle.name ?: subtitle.language, subtitle.language)
+                    player.command("sub-add", subtitle.url.toNativeMediaLocation(), "auto", subtitle.name ?: subtitle.language, subtitle.language)
                 }
                 if (requestKey != null) latestOnInitialPositionHandled.value(requestKey, startMs != null)
             }
@@ -295,7 +296,7 @@ private class DesktopMpvController(private val player: MpvPlayer) : PlayerEngine
     }
 
     override fun setSubtitleUri(url: String) {
-        player.command("sub-add", url, "select")
+        player.command("sub-add", url.toNativeMediaLocation(), "select")
     }
 
     override fun clearExternalSubtitle() {
