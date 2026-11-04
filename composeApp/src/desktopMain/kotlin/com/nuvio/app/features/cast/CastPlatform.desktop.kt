@@ -3,6 +3,7 @@ package com.nuvio.app.features.cast
 import co.touchlab.kermit.Logger
 import com.nuvio.app.core.mediaproxy.LanMediaProxy
 import com.nuvio.app.desktop.cast.CastChannel
+import com.nuvio.app.desktop.cast.CastMdnsQuery
 import com.nuvio.app.desktop.cast.CastMessage
 import com.nuvio.app.desktop.cast.DEFAULT_MEDIA_RECEIVER
 import com.nuvio.app.desktop.cast.NS_RECEIVER
@@ -51,7 +52,10 @@ internal actual object CastPlatform {
 
     private val receivers = ConcurrentHashMap<String, Receiver>()
     private var discoveryClients = 0
-    private var jmdns: JmDNS? = null
+    private val jmdnsInstances = mutableListOf<JmDNS>()
+
+    @Volatile
+    private var discoveryGeneration = 0
 
     @Volatile
     private var session: DesktopCastSession? = null
@@ -62,20 +66,41 @@ internal actual object CastPlatform {
     actual fun startDiscovery() {
         discoveryClients += 1
         if (discoveryClients > 1) return
+        val generation = ++discoveryGeneration
         thread(name = "nuvio-cast-discovery", isDaemon = true) {
-            runCatching {
-                val address = lanInterfaceAddress()
-                log.i { "Searching for cast receivers on ${address?.hostAddress ?: "default interface"}" }
-                val dns = if (address != null) JmDNS.create(address) else JmDNS.create()
-                synchronized(this) {
-                    if (discoveryClients == 0) {
-                        dns.close()
-                        return@thread
+            val addresses = lanInterfaceAddresses()
+            log.i { "Searching for cast receivers on ${addresses.joinToString { it.hostAddress }.ifEmpty { "default interface" }}" }
+            // Passive listener on UDP 5353 for every LAN adapter (the first one may be the wrong one).
+            (addresses.ifEmpty { listOf(null) }).forEach { address ->
+                runCatching {
+                    val dns = if (address != null) JmDNS.create(address) else JmDNS.create()
+                    synchronized(this) {
+                        if (generation != discoveryGeneration) {
+                            dns.close()
+                            return@runCatching
+                        }
+                        jmdnsInstances += dns
                     }
-                    jmdns = dns
+                    dns.addServiceListener(SERVICE_TYPE, serviceListener)
+                }.onFailure { error -> log.w(error) { "mDNS listener could not start on ${address?.hostAddress}" } }
+            }
+            // Active queries: their unicast answers pass the Windows firewall, which often blocks 5353.
+            var round = 0
+            while (generation == discoveryGeneration) {
+                addresses.forEach { address ->
+                    runCatching { CastMdnsQuery.query(address, listenMs = 1_500) }
+                        .onSuccess { found ->
+                            if (generation != discoveryGeneration) return@onSuccess
+                            found.forEach { addReceiver(it.id, it.name, it.model, it.capabilities, it.host, it.port, "active query") }
+                        }
+                        .onFailure { error -> if (round == 0) log.w(error) { "Active cast query failed on ${address.hostAddress}" } }
                 }
-                dns.addServiceListener(SERVICE_TYPE, serviceListener)
-            }.onFailure { error -> log.w(error) { "Cast discovery could not start" } }
+                if (round == 0 && receivers.isEmpty()) {
+                    log.w { "No cast receiver answered yet: check that the PC is on the same network and that the firewall allows Nuvio" }
+                }
+                round++
+                Thread.sleep(if (round < 4) 2_000L else 8_000L)
+            }
         }
     }
 
@@ -83,11 +108,14 @@ internal actual object CastPlatform {
     actual fun stopDiscovery() {
         discoveryClients = (discoveryClients - 1).coerceAtLeast(0)
         if (discoveryClients > 0) return
-        val dns = jmdns
-        jmdns = null
+        discoveryGeneration++
+        val instances = jmdnsInstances.toList()
+        jmdnsInstances.clear()
         receivers.clear()
         publishDevices()
-        if (dns != null) thread(name = "nuvio-cast-discovery-stop", isDaemon = true) { runCatching { dns.close() } }
+        if (instances.isNotEmpty()) {
+            thread(name = "nuvio-cast-discovery-stop", isDaemon = true) { instances.forEach { runCatching { it.close() } } }
+        }
     }
 
     actual fun selectDevice(deviceId: String) {
@@ -225,28 +253,50 @@ internal actual object CastPlatform {
         override fun serviceResolved(event: ServiceEvent) {
             val info = event.info ?: return
             val host = info.inet4Addresses.firstOrNull()?.hostAddress ?: info.hostAddresses.firstOrNull() ?: return
-            val id = info.getPropertyString("id") ?: info.name
-            // Cast groups and speakers without video ("ca" capability bit 0 = video out) are skipped.
-            val capabilities = info.getPropertyString("ca")?.toIntOrNull()
-            if (capabilities != null && capabilities and 1 == 0) return
-            val name = info.getPropertyString("fn") ?: info.name
-            val model = info.getPropertyString("md")
-            if (receivers.containsKey(id)) return
-            log.i { "Found cast receiver $name ($model)" }
-            receivers[id] = Receiver(CastDevice(id = id, name = name, description = model), host, info.port)
-            publishDevices()
+            addReceiver(
+                id = info.getPropertyString("id") ?: info.name,
+                name = info.getPropertyString("fn") ?: info.name,
+                model = info.getPropertyString("md"),
+                capabilities = info.getPropertyString("ca")?.toIntOrNull(),
+                host = host,
+                port = info.port,
+                source = "mDNS listener",
+            )
         }
     }
 
-    /** IPv4 address of the first active LAN interface (mDNS on the wrong adapter finds nothing). */
-    private fun lanInterfaceAddress(): InetAddress? = runCatching {
+    private fun addReceiver(
+        id: String,
+        name: String,
+        model: String?,
+        capabilities: Int?,
+        host: String,
+        port: Int,
+        source: String,
+    ) {
+        // Cast groups and speakers without video ("ca" capability bit 0 = video out) are skipped.
+        if (capabilities != null && capabilities and 1 == 0) {
+            log.d { "Skipping $name: no video output (ca=$capabilities)" }
+            return
+        }
+        if (receivers.containsKey(id)) return
+        log.i { "Found cast receiver $name ($model) at $host:$port via $source" }
+        receivers[id] = Receiver(CastDevice(id = id, name = name, description = model), host, port)
+        publishDevices()
+    }
+
+    /** IPv4 addresses of the active LAN interfaces (mDNS on the wrong adapter finds nothing). */
+    private fun lanInterfaceAddresses(): List<InetAddress> = runCatching {
         NetworkInterface.getNetworkInterfaces().toList()
             .filter { it.isUp && !it.isLoopback && !it.isVirtual && it.supportsMulticast() }
             .filterNot { iface ->
                 val name = "${iface.name} ${iface.displayName}".lowercase()
-                listOf("vmware", "virtualbox", "hyper-v", "vethernet", "docker", "wsl", "tap", "tun", "vpn").any { it in name }
+                // Whole words only: "tap"/"tun" used to match real adapters too.
+                val words = name.split(Regex("[^a-z0-9-]+")).toSet()
+                listOf("vmware", "virtualbox", "hyper-v", "vethernet", "docker", "wsl", "tap", "tun", "vpn").any { it in words }
             }
             .flatMap { it.inetAddresses.toList() }
-            .firstOrNull { it is Inet4Address && it.isSiteLocalAddress }
-    }.getOrNull()
+            .filter { it is Inet4Address && it.isSiteLocalAddress }
+            .distinct()
+    }.getOrDefault(emptyList())
 }
