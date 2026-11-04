@@ -1,5 +1,10 @@
 package com.nuvio.app.core.ui
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
+import androidx.compose.foundation.hoverable
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -154,6 +159,7 @@ fun NuvioPosterCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(shape.aspectRatio)
+                .desktopPosterHoverScale(posterCardStyle.hoverScaleEnabled)
                 .clip(cardShape)
                 .background(tokens.colors.surface)
                 .nuvioCardDepth(
@@ -389,4 +395,38 @@ private fun NuvioPosterShape.cardWidth(basePosterWidthDp: Int): Dp =
         NuvioPosterShape.Poster -> basePosterWidthDp.dp
         NuvioPosterShape.Square -> basePosterWidthDp.dp
         NuvioPosterShape.Landscape -> landscapePosterWidth(basePosterWidthDp)
+    }
+
+private const val DesktopPosterHoverScale = 1.045f
+
+/** Desktop: the poster grows a little while the mouse is over it. */
+@Composable
+internal fun Modifier.desktopPosterHoverScale(enabled: Boolean = true): Modifier {
+    if (!enabled || !com.nuvio.app.isDesktop) return this
+    val interaction = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (hovered) DesktopPosterHoverScale else 1f,
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+        ),
+    )
+    return this
+        .then(
+            if (hovered || scale != 1f) {
+                Modifier
+                    .posterHoverScaleLayer(scale)
+                    .zIndex(1f)
+            } else {
+                Modifier
+            },
+        )
+        .hoverable(interaction)
+}
+
+private fun Modifier.posterHoverScaleLayer(scale: Float): Modifier =
+    graphicsLayer {
+        scaleX = scale
+        scaleY = scale
     }

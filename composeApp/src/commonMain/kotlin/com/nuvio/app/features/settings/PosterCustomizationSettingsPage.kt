@@ -105,6 +105,14 @@ import nuvio.composeapp.generated.resources.settings_card_depth_surface_trailers
 import nuvio.composeapp.generated.resources.settings_card_depth_title
 import nuvio.composeapp.generated.resources.settings_poster_card_radius
 import nuvio.composeapp.generated.resources.settings_poster_card_style
+import nuvio.composeapp.generated.resources.settings_poster_mouse_section
+import nuvio.composeapp.generated.resources.settings_playback_subtitle_size_per_device_description
+import nuvio.composeapp.generated.resources.settings_poster_hover_scale
+import nuvio.composeapp.generated.resources.settings_poster_hover_preview
+import nuvio.composeapp.generated.resources.settings_poster_hover_preview_description
+import nuvio.composeapp.generated.resources.settings_poster_hover_preview_delay
+import nuvio.composeapp.generated.resources.settings_poster_hover_preview_trailer
+import nuvio.composeapp.generated.resources.settings_poster_hover_preview_trailer_sound
 import nuvio.composeapp.generated.resources.settings_poster_card_width
 import nuvio.composeapp.generated.resources.settings_poster_custom
 import nuvio.composeapp.generated.resources.settings_poster_description
@@ -160,7 +168,7 @@ internal fun LazyListScope.posterCustomizationSettingsContent(
             SettingsGroup(isTablet = isTablet) {
                 PosterCardStyleControls(
                     isTablet = isTablet,
-                    widthDp = uiState.widthDp,
+                    widthDp = uiState.presetWidthDp,
                     cornerRadiusDp = uiState.cornerRadiusDp,
                     catalogLandscapeModeEnabled = uiState.catalogLandscapeModeEnabled,
                     hideLabelsEnabled = uiState.hideLabelsEnabled,
@@ -171,6 +179,16 @@ internal fun LazyListScope.posterCustomizationSettingsContent(
                     onHideLabelsChange = PosterCardStyleRepository::setHideLabelsEnabled,
                     onAlwaysShowLandscapeClearlogoChange = PosterCardStyleRepository::setAlwaysShowLandscapeClearlogo,
                 )
+            }
+        }
+    }
+    if (com.nuvio.app.isDesktop) {
+        item {
+            val mouseUiState = com.nuvio.app.core.ui.rememberPosterCardStyleUiState()
+            SettingsSection(title = stringResource(Res.string.settings_poster_mouse_section), isTablet = isTablet) {
+                SettingsGroup(isTablet = isTablet) {
+                    PosterMouseControls(isTablet = isTablet, uiState = mouseUiState)
+                }
             }
         }
     }
@@ -769,6 +787,12 @@ private fun PosterCardStyleControls(
             options = widthOptions,
             onSelected = onWidthSelected,
         )
+        // Phones, tablets, TVs and desktop each keep their own width (desktop draws it 1.4x bigger).
+        Text(
+            text = stringResource(Res.string.settings_playback_subtitle_size_per_device_description),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         PosterStyleOptionRow(
             title = stringResource(Res.string.settings_poster_card_radius),
             selectedValue = cornerRadiusDp,
@@ -968,3 +992,54 @@ private data class PresetOption(
     val label: String,
     val value: Int,
 )
+
+/** Desktop only: what happens when the mouse passes over a poster. */
+@Composable
+private fun PosterMouseControls(isTablet: Boolean, uiState: PosterCardStyleUiState) {
+    val delayOptions = listOf(500, 1_000, 2_000, 3_000, 5_000).map { millis ->
+        val seconds = if (millis % 1_000 == 0) "${millis / 1_000}" else "${millis / 1_000},${(millis % 1_000) / 100}"
+        PresetOption("$seconds s", millis)
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = if (isTablet) 20.dp else 16.dp, vertical = if (isTablet) 18.dp else 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        PosterToggleRow(
+            title = stringResource(Res.string.settings_poster_hover_scale),
+            checked = uiState.hoverScaleEnabled,
+            onCheckedChange = PosterCardStyleRepository::setHoverScaleEnabled,
+        )
+        PosterToggleRow(
+            title = stringResource(Res.string.settings_poster_hover_preview),
+            checked = uiState.hoverPreviewEnabled,
+            onCheckedChange = PosterCardStyleRepository::setHoverPreviewEnabled,
+        )
+        Text(
+            text = stringResource(Res.string.settings_poster_hover_preview_description),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (uiState.hoverPreviewEnabled) {
+            PosterStyleOptionRow(
+                title = stringResource(Res.string.settings_poster_hover_preview_delay),
+                selectedValue = uiState.hoverPreviewOpenDelayMillis,
+                options = delayOptions,
+                onSelected = PosterCardStyleRepository::setHoverPreviewOpenDelayMillis,
+            )
+            PosterToggleRow(
+                title = stringResource(Res.string.settings_poster_hover_preview_trailer),
+                checked = uiState.hoverPreviewTrailerEnabled,
+                onCheckedChange = PosterCardStyleRepository::setHoverPreviewTrailerEnabled,
+            )
+            if (uiState.hoverPreviewTrailerEnabled) {
+                PosterToggleRow(
+                    title = stringResource(Res.string.settings_poster_hover_preview_trailer_sound),
+                    checked = uiState.hoverPreviewTrailerSoundEnabled,
+                    onCheckedChange = PosterCardStyleRepository::setHoverPreviewTrailerSoundEnabled,
+                )
+            }
+        }
+    }
+}

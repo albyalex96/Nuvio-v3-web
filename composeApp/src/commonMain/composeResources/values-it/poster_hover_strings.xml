@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_poster_mouse_section">Mouse</string>
+    <string name="settings_poster_hover_scale">Ingrandisci le locandine al passaggio</string>
+    <string name="settings_poster_hover_preview">Anteprima al passaggio</string>
+    <string name="settings_poster_hover_preview_description">Quando il mouse resta su una locandina si apre una scheda con dettagli e azioni rapide</string>
+    <string name="settings_poster_hover_preview_delay">Ritardo dell'anteprima</string>
+    <string name="settings_poster_hover_preview_trailer">Riproduci il trailer nell'anteprima</string>
+    <string name="settings_poster_hover_preview_trailer_sound">Audio del trailer</string>
+</resources>

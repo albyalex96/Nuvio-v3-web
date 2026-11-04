@@ -1050,7 +1050,7 @@ internal fun settingsSearchEntries(
 
     val posterSection = stringResource(Res.string.settings_poster_card_style)
     listOf(
-        PlaybackSearchRow("poster-width", stringResource(Res.string.settings_poster_card_width)),
+        PlaybackSearchRow("poster-width", stringResource(Res.string.settings_poster_card_width), stringResource(Res.string.settings_playback_subtitle_size_per_device_description)),
         PlaybackSearchRow("poster-radius", stringResource(Res.string.settings_poster_card_radius)),
         PlaybackSearchRow("poster-landscape", stringResource(Res.string.settings_poster_landscape_mode)),
         PlaybackSearchRow("poster-hide-labels", stringResource(Res.string.settings_poster_hide_labels)),
@@ -1751,6 +1751,18 @@ private fun addAdditionalSearchEntries(
         PlaybackSearchRow("poster-landscape-clearlogo", stringResource(Res.string.settings_poster_always_show_landscape_clearlogo), "", stringResource(Res.string.settings_poster_card_style)),
     ).forEach { item ->
         row(SettingsPage.PosterCustomization, item.key, item.title, item.description, posterStylePage, item.sectionOverride.orEmpty(), icon = Icons.Rounded.Tune)
+    }
+    if (com.nuvio.app.isDesktop) {
+        val mouseSection = stringResource(Res.string.settings_poster_mouse_section)
+        listOf(
+            PlaybackSearchRow("poster-hover-scale", stringResource(Res.string.settings_poster_hover_scale), "", mouseSection),
+            PlaybackSearchRow("poster-hover-preview", stringResource(Res.string.settings_poster_hover_preview), stringResource(Res.string.settings_poster_hover_preview_description), mouseSection),
+            PlaybackSearchRow("poster-hover-preview-delay", stringResource(Res.string.settings_poster_hover_preview_delay), "", mouseSection),
+            PlaybackSearchRow("poster-hover-preview-trailer", stringResource(Res.string.settings_poster_hover_preview_trailer), "", mouseSection),
+            PlaybackSearchRow("poster-hover-preview-trailer-sound", stringResource(Res.string.settings_poster_hover_preview_trailer_sound), "", mouseSection),
+        ).forEach { item ->
+            row(SettingsPage.PosterCustomization, item.key, item.title, item.description, posterStylePage, item.sectionOverride.orEmpty(), icon = Icons.Rounded.Tune)
+        }
     }
 
     // Detail page

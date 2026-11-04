@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_poster_mouse_section">Mouse</string>
+    <string name="settings_poster_hover_scale">Enlarge posters on hover</string>
+    <string name="settings_poster_hover_preview">Preview on hover</string>
+    <string name="settings_poster_hover_preview_description">After the mouse rests on a poster, a card with details and quick actions opens</string>
+    <string name="settings_poster_hover_preview_delay">Preview delay</string>
+    <string name="settings_poster_hover_preview_trailer">Play the trailer in the preview</string>
+    <string name="settings_poster_hover_preview_trailer_sound">Trailer sound</string>
+</resources>

@@ -39,10 +39,11 @@ fun HomePosterCard(
     // A custom landscape poster already carries the title, a letterboxed poster too.
     val showOverlay = isLandscapeMode && showLandscapeOverlay && !fitPosterInLandscape && effectiveLandscapePoster.isNullOrBlank()
 
+    HomePosterHoverPreview(item = item, isWatched = isWatched, onClick = onClick, modifier = modifier) { hoverModifier ->
     NuvioPosterCard(
         title = item.name,
         imageUrl = imageUrl,
-        modifier = modifier,
+        modifier = hoverModifier,
         fallbackImageUrl = fallbackImageUrl,
         shape = when {
             isLandscapeMode -> NuvioPosterShape.Landscape
@@ -58,6 +59,7 @@ fun HomePosterCard(
         onClick = onClick,
         onLongClick = onLongClick,
     )
+    }
 }
 
 /**
