@@ -4,6 +4,18 @@ import com.nuvio.app.core.format.formatEpisodeCodeWithSelectedFormat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,6 +75,7 @@ internal fun TabletStreamsLayout(
     seasonNumber: Int?,
     episodeNumber: Int?,
     episodeTitle: String?,
+    overview: String?,
     uiState: StreamsUiState,
     debridEnabled: Boolean,
     appendInstantServiceToDefaultName: Boolean,
@@ -147,19 +160,32 @@ internal fun TabletStreamsLayout(
                     .padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                if (isEpisode && seasonNumber != null && episodeNumber != null) {
-                    TabletEpisodeInfoPanel(
-                        logo = logo,
-                        seasonNumber = seasonNumber,
-                        episodeNumber = episodeNumber,
-                        episodeTitle = episodeTitle,
-                        showTitle = title,
-                    )
-                } else {
-                    TabletMovieInfoPanel(
-                        title = title,
-                        logo = logo,
-                    )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    if (isEpisode && seasonNumber != null && episodeNumber != null) {
+                        TabletEpisodeInfoPanel(
+                            logo = logo,
+                            seasonNumber = seasonNumber,
+                            episodeNumber = episodeNumber,
+                            episodeTitle = episodeTitle,
+                            showTitle = title,
+                        )
+                    } else {
+                        TabletMovieInfoPanel(
+                            title = title,
+                            logo = logo,
+                        )
+                    }
+                    overview?.trim()?.takeIf { it.isNotEmpty() }?.let { plot ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        TabletOverviewPanel(
+                            overview = plot,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                    }
                 }
             }
 
@@ -352,6 +378,67 @@ private fun TabletEpisodeInfoPanel(
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
+ * Full plot under the info panel. The text scrolls by touch and, on TV, with the D-pad:
+ * when focused, Up/Down scroll the text and are consumed only while there is still room
+ * to scroll, so focus can leave the panel at the edges; Left/Right move focus as usual.
+ */
+@Composable
+private fun TabletOverviewPanel(
+    overview: String,
+    modifier: Modifier = Modifier,
+) {
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    var focused by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(12.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth(0.8f)
+            .clip(shape)
+            .background(Color.Black.copy(alpha = if (focused) 0.35f else 0.2f))
+            .border(
+                width = 2.dp,
+                color = if (focused) MaterialTheme.colorScheme.primary else Color.Transparent,
+                shape = shape,
+            )
+            .onFocusChanged { focused = it.isFocused }
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                val step = 120f
+                when (event.key) {
+                    Key.DirectionDown -> if (scrollState.canScrollForward) {
+                        scope.launch { scrollState.animateScrollBy(step) }
+                        true
+                    } else {
+                        false
+                    }
+                    Key.DirectionUp -> if (scrollState.canScrollBackward) {
+                        scope.launch { scrollState.animateScrollBy(-step) }
+                        true
+                    } else {
+                        false
+                    }
+                    else -> false
+                }
+            }
+            .focusable()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+    ) {
+        Text(
+            text = overview,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                shadow = Shadow(color = Color.Black, offset = Offset(0f, 0f), blurRadius = 4f),
+            ),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+            textAlign = TextAlign.Start,
         )
     }
 }

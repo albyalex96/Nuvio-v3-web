@@ -806,6 +806,7 @@ internal fun StreamDestination(
                 episodeNumber = launch.episodeNumber,
                 episodeTitle = launch.episodeTitle,
                 episodeThumbnail = launch.episodeThumbnail,
+                overview = pauseDescription,
                 resumePositionMs = launch.resumePositionMs,
                 resumeProgressFraction = launch.resumeProgressFraction,
                 manualSelection = launch.manualSelection,
