@@ -3,6 +3,10 @@ package com.nuvio.app
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
@@ -69,7 +73,17 @@ fun main(args: Array<String>) {
                     PlayerWindowFullscreen.reportState(placement == WindowPlacement.Fullscreen)
                 }
             }
-            App()
+            // Right click is a long press (RightClickAsLongPress): a short timeout opens menus quickly.
+            val base = LocalViewConfiguration.current
+            val viewConfiguration = remember(base) { DesktopViewConfiguration(base) }
+            CompositionLocalProvider(LocalViewConfiguration provides viewConfiguration) {
+                App()
+            }
         }
     }
+}
+
+/** Desktop timings: [longPressTimeoutMillis] matches [com.nuvio.app.desktop.RightClickAsLongPress]. */
+private class DesktopViewConfiguration(base: ViewConfiguration) : ViewConfiguration by base {
+    override val longPressTimeoutMillis: Long = com.nuvio.app.desktop.RightClickAsLongPress.LONG_PRESS_TIMEOUT_MS
 }

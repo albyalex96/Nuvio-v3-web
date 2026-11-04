@@ -20,8 +20,11 @@ import javax.swing.Timer
 internal object RightClickAsLongPress {
     private val log = Logger.withTag("DesktopInput")
 
-    /** A bit more than Compose's long-press timeout (500 ms). */
-    private const val MIN_HOLD_MS = 650
+    /** Long-press timeout of the desktop window (Compose default 500 ms): right click menus open sooner. */
+    const val LONG_PRESS_TIMEOUT_MS = 200L
+
+    /** A bit more than [LONG_PRESS_TIMEOUT_MS], so a quick right click still counts as a long press. */
+    private const val MIN_HOLD_MS = 260
 
     fun install() {
         Toolkit.getDefaultToolkit().systemEventQueue.push(TranslatingQueue())
