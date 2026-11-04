@@ -1,62 +1,55 @@
 package com.nuvio.app.features.plugins
 
-import com.nuvio.app.core.storage.DesktopStorage
-import java.util.Locale
+import com.nuvio.app.desktop.compat.Context
+import com.nuvio.app.desktop.compat.SharedPreferences
 
 internal object PluginStorage {
+    private const val preferencesName = "nuvio_plugins"
     private const val pluginsStateKey = "plugins_state"
-    private val store = DesktopStorage.store("nuvio_plugins")
+    private const val scraperCodeDirectoryName = "nuvio_plugin_scrapers"
+
+    private var preferences: SharedPreferences? = null
+    private var scraperCodeStore: PluginScraperCodeFileStore? = null
+
+    fun initialize(context: Context) {
+        preferences = context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
+        scraperCodeStore = PluginScraperCodeFileStore(context.filesDir.resolve(scraperCodeDirectoryName))
+    }
 
     fun loadState(profileId: Int): String? =
-        store.getString("${pluginsStateKey}_$profileId")
+        preferences?.getString("${pluginsStateKey}_$profileId", null)
 
     fun saveState(profileId: Int, payload: String) {
-        store.putString("${pluginsStateKey}_$profileId", payload)
+        preferences
+            ?.edit()
+            ?.putString("${pluginsStateKey}_$profileId", payload)
+            ?.apply()
     }
 
     fun hasScraperCode(profileId: Int, scraperId: String): Boolean =
-        store.contains(scraperCodeKey(profileId, scraperId))
+        scraperCodeStore?.contains(profileId, scraperId) == true
 
     fun loadScraperCode(profileId: Int, scraperId: String): String? =
-        store.getString(scraperCodeKey(profileId, scraperId))
+        scraperCodeStore?.load(profileId, scraperId)
 
     fun saveScraperCode(
         profileId: Int,
         scraperId: String,
         code: String,
         overwrite: Boolean,
-    ): Boolean {
-        val key = scraperCodeKey(profileId, scraperId)
-        if (!overwrite && store.contains(key)) return true
-        return runCatching { store.putString(key, code) }.isSuccess
-    }
+    ): Boolean = scraperCodeStore?.save(profileId, scraperId, code, overwrite) == true
 
     fun loadScraperSettings(scraperId: String): String? =
-        store.getString("settings_${scraperId}")
+        preferences?.getString("settings_${scraperId}", null)
 
     fun saveScraperSettings(scraperId: String, payload: String) {
-        store.putString("settings_${scraperId}", payload)
-    }
-
-    private fun scraperCodeKey(profileId: Int, scraperId: String): String =
-        "scraper_code_${profileId}_${pluginDigestHex("SHA256", scraperId)}"
-}
-
-internal fun currentPluginPlatform(): String = "desktop"
-
-internal fun currentPluginPlatformTags(): Set<String> {
-    val osName = System.getProperty("os.name").orEmpty().lowercase(Locale.ROOT)
-    val osTag = when {
-        osName.contains("mac") || osName.contains("darwin") -> "macos"
-        osName.contains("win") -> "windows"
-        osName.contains("linux") -> "linux"
-        else -> null
-    }
-    return buildSet {
-        add(currentPluginPlatform())
-        add("jvm")
-        osTag?.let(::add)
+        preferences
+            ?.edit()
+            ?.putString("settings_${scraperId}", payload)
+            ?.apply()
     }
 }
+
+internal fun currentPluginPlatform(): String = "android"
 
 internal fun currentEpochMillis(): Long = System.currentTimeMillis()

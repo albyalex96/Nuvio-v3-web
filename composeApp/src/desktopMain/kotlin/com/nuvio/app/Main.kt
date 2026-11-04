@@ -12,6 +12,7 @@ import com.nuvio.app.core.logging.AppLogger
 import com.nuvio.app.core.network.dns.DnsOverHttpsRepository
 import com.nuvio.app.desktop.DesktopStorageBootstrap
 import com.nuvio.app.desktop.compat.DesktopPreferencesRegistry
+import com.nuvio.app.features.plugins.configureDesktopQuickJsLibrary
 import org.jetbrains.compose.resources.painterResource
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.app_logo_wordmark
@@ -23,6 +24,8 @@ fun main(args: Array<String>) {
     DesktopStorageBootstrap.initialize()
     AppLogger.install(debuggable = System.getProperty("nuvio.debug") == "true")
     DnsOverHttpsRepository.ensureLoaded()
+    runCatching { configureDesktopQuickJsLibrary() }
+        .onFailure { log.e(it) { "QuickJS native library not available: plugins disabled" } }
     log.i { "Starting Nuvio desktop (${System.getProperty("os.name")}, Java ${System.getProperty("java.version")})" }
 
     args.firstOrNull { it.startsWith("nuvio://") || it.startsWith("stremio://") }?.let { url ->

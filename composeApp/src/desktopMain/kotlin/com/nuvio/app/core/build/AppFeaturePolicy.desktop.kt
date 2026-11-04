@@ -1,7 +1,9 @@
 package com.nuvio.app.core.build
 
 actual object AppFeaturePolicy {
-    actual val pluginsEnabled: Boolean = false
+    // JS scraper plugins run on QuickJS (native library shipped in the quickjs-kt jar).
+    // CloudStream providers are Android DEX: listed, but not loadable on desktop.
+    actual val pluginsEnabled: Boolean = true
     actual val supportersContributorsPageEnabled: Boolean = true
     actual val donationActionsEnabled: Boolean = false
     actual val donationProgressEnabled: Boolean = true

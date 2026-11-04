@@ -614,7 +614,10 @@ kotlin {
             implementation(libs.reorderable)
         }
         val desktopMain by getting {
+            // Full flavour shared code: JS scraper plugins (QuickJS) and the in-app trailer resolver.
+            kotlin.srcDir(fullCommonSourceDir)
             dependencies {
+                implementation(libs.quickjs.kt)
                 implementation(compose.desktop.currentOs)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:${libs.versions.kotlinx.coroutines.get()}")
                 implementation(libs.ktor.client.okhttp)

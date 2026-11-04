@@ -6,12 +6,13 @@ import java.security.SecureRandom
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
-import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 private val secureRandom = SecureRandom()
 
@@ -22,8 +23,9 @@ internal fun pluginGetRandomValues(length: Int): ByteArray {
     return bytes
 }
 
-internal fun pluginDigest(algorithm: String, data: ByteArray): ByteArray =
-    MessageDigest.getInstance(normalizeDigestAlgorithm(algorithm)).digest(data)
+internal fun pluginDigest(algorithm: String, data: ByteArray): ByteArray {
+    return MessageDigest.getInstance(normalizeDigestAlgorithm(algorithm)).digest(data)
+}
 
 internal fun pluginPbkdf2(
     password: ByteArray,
@@ -38,15 +40,17 @@ internal fun pluginPbkdf2(
     val prfAlgo = normalizeHmacAlgorithm(algorithm)
     val mac = Mac.getInstance(prfAlgo)
     mac.init(SecretKeySpec(password, prfAlgo))
-
+    
     val hLen = mac.macLength
     val dkLen = keySizeBits / 8
     val dk = ByteArray(dkLen)
+    
     val blocks = (dkLen + hLen - 1) / hLen
     val u = ByteArray(hLen)
     val t = ByteArray(hLen)
+    
     val blockIndexBytes = ByteArray(4)
-
+    
     for (i in 1..blocks) {
         mac.reset()
         mac.update(salt)
@@ -55,11 +59,11 @@ internal fun pluginPbkdf2(
         blockIndexBytes[2] = (i ushr 8).toByte()
         blockIndexBytes[3] = i.toByte()
         mac.update(blockIndexBytes)
-
+        
         val u1 = mac.doFinal()
         u1.copyInto(t)
         u1.copyInto(u)
-
+        
         for (j in 2..iterations) {
             mac.reset()
             val uj = mac.doFinal(u)
@@ -68,12 +72,12 @@ internal fun pluginPbkdf2(
                 t[k] = (t[k].toInt() xor uj[k].toInt()).toByte()
             }
         }
-
+        
         val offset = (i - 1) * hLen
         val len = minOf(hLen, dkLen - offset)
         t.copyInto(dk, destinationOffset = offset, startIndex = 0, endIndex = len)
     }
-
+    
     return dk
 }
 
@@ -90,11 +94,15 @@ internal fun pluginAesEncrypt(
     }
     val cipher = Cipher.getInstance(normalizedMode)
     val keySpec = SecretKeySpec(key, "AES")
-
-    when {
-        normalizedMode.contains("ECB") -> cipher.init(Cipher.ENCRYPT_MODE, keySpec)
-        normalizedMode.contains("GCM") -> cipher.init(Cipher.ENCRYPT_MODE, keySpec, GCMParameterSpec(128, iv))
-        else -> cipher.init(Cipher.ENCRYPT_MODE, keySpec, IvParameterSpec(iv))
+    
+    if (normalizedMode.contains("ECB")) {
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec)
+    } else if (normalizedMode.contains("GCM")) {
+        val gcmSpec = GCMParameterSpec(128, iv)
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec)
+    } else {
+        val ivSpec = IvParameterSpec(iv)
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
     }
 
     return cipher.doFinal(data)
@@ -113,11 +121,15 @@ internal fun pluginAesDecrypt(
     }
     val cipher = Cipher.getInstance(normalizedMode)
     val keySpec = SecretKeySpec(key, "AES")
-
-    when {
-        normalizedMode.contains("ECB") -> cipher.init(Cipher.DECRYPT_MODE, keySpec)
-        normalizedMode.contains("GCM") -> cipher.init(Cipher.DECRYPT_MODE, keySpec, GCMParameterSpec(128, iv))
-        else -> cipher.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(iv))
+    
+    if (normalizedMode.contains("ECB")) {
+        cipher.init(Cipher.DECRYPT_MODE, keySpec)
+    } else if (normalizedMode.contains("GCM")) {
+        val gcmSpec = GCMParameterSpec(128, iv)
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec)
+    } else {
+        val ivSpec = IvParameterSpec(iv)
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
     }
 
     return cipher.doFinal(data)
@@ -153,7 +165,9 @@ internal fun pluginVerify(algorithm: String, publicKey: ByteArray, signature: By
 
 internal fun pluginDigestHex(algorithm: String, data: String): String {
     val digest = pluginDigest(algorithm, data.encodeToByteArray())
-    return digest.toHexString()
+    return digest.joinToString(separator = "") { byte ->
+        byte.toUByte().toString(16).padStart(2, '0')
+    }
 }
 
 internal fun pluginHmac(algorithm: String, key: ByteArray, data: ByteArray): ByteArray {
@@ -165,11 +179,13 @@ internal fun pluginHmac(algorithm: String, key: ByteArray, data: ByteArray): Byt
 
 internal fun pluginHmacHex(algorithm: String, key: String, data: String): String {
     val digest = pluginHmac(algorithm, key.encodeToByteArray(), data.encodeToByteArray())
-    return digest.toHexString()
+    return digest.joinToString(separator = "") { byte ->
+        byte.toUByte().toString(16).padStart(2, '0')
+    }
 }
 
-private fun normalizeDigestAlgorithm(algorithm: String): String =
-    when (algorithm.normalizedAlgorithmToken()) {
+private fun normalizeDigestAlgorithm(algorithm: String): String {
+    return when (algorithm.normalizedAlgorithmToken()) {
         "MD5" -> "MD5"
         "SHA1" -> "SHA-1"
         "SHA256" -> "SHA-256"
@@ -177,9 +193,10 @@ private fun normalizeDigestAlgorithm(algorithm: String): String =
         "SHA512" -> "SHA-512"
         else -> error("Unsupported digest algorithm: $algorithm")
     }
+}
 
-private fun normalizeHmacAlgorithm(algorithm: String): String =
-    when (algorithm.normalizedAlgorithmToken().removePrefix("HMAC")) {
+private fun normalizeHmacAlgorithm(algorithm: String): String {
+    return when (algorithm.normalizedAlgorithmToken().removePrefix("HMAC")) {
         "MD5" -> "HmacMD5"
         "SHA1" -> "HmacSHA1"
         "SHA256" -> "HmacSHA256"
@@ -187,6 +204,7 @@ private fun normalizeHmacAlgorithm(algorithm: String): String =
         "SHA512" -> "HmacSHA512"
         else -> error("Unsupported HMAC algorithm: $algorithm")
     }
+}
 
 private fun normalizeAesTransformation(mode: String): String {
     val normalized = mode.normalizedAlgorithmToken()
@@ -213,22 +231,27 @@ private fun String.normalizedAlgorithmToken(): String =
         .replace("/", "")
         .replace(" ", "")
 
+@OptIn(ExperimentalEncodingApi::class)
 internal fun pluginBase64Encode(data: String): String =
-    Base64.getEncoder().encodeToString(data.encodeToByteArray())
+    Base64.encode(data.encodeToByteArray())
 
+@OptIn(ExperimentalEncodingApi::class)
 internal fun pluginBase64Decode(data: String): String {
     var normalized = data.trim().replace("\n", "").replace("\r", "").replace(" ", "")
+    // Robust URL-safe base64 decoding fallback
     normalized = normalized.replace("-", "+").replace("_", "/")
     val padNeeded = (4 - (normalized.length % 4)) % 4
     if (padNeeded > 0) {
         normalized += "=".repeat(padNeeded)
     }
-    val decoded = Base64.getDecoder().decode(normalized)
+    val decoded = Base64.decode(normalized)
     return decoded.decodeToString()
 }
 
 internal fun pluginUtf8ToHex(value: String): String =
-    value.encodeToByteArray().toHexString()
+    value.encodeToByteArray().joinToString(separator = "") { byte ->
+        byte.toUByte().toString(16).padStart(2, '0')
+    }
 
 internal fun pluginHexToByteArray(hex: String): ByteArray {
     val normalized = hex.trim().lowercase()
@@ -245,10 +268,6 @@ internal fun pluginHexToByteArray(hex: String): ByteArray {
     return out
 }
 
-internal fun pluginHexToUtf8(hex: String): String =
-    pluginHexToByteArray(hex).decodeToString()
-
-private fun ByteArray.toHexString(): String =
-    joinToString(separator = "") { byte ->
-        byte.toUByte().toString(16).padStart(2, '0')
-    }
+internal fun pluginHexToUtf8(hex: String): String {
+    return pluginHexToByteArray(hex).decodeToString()
+}
