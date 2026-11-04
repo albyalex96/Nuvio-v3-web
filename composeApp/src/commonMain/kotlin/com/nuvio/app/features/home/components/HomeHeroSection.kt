@@ -325,6 +325,8 @@ fun HomeHeroSection(
                     if (items.size > 1) {
                         Spacer(modifier = Modifier.height(if (layout.isTablet) 14.dp else 12.dp))
                         Row(
+                            // Centered on the hero width also on wide layouts, where the text is start-aligned.
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {

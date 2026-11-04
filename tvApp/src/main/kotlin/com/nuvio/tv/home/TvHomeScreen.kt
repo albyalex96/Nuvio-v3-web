@@ -857,7 +857,8 @@ private fun HeroCarouselDots(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints.copy(minHeight = 0))
+                // minWidth 0: with the full width the Row would pack the dots at the start.
+                val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
                 val bandTop = (heroBottom() - HERO_DOTS_BAND).roundToPx()
                 val y = bandTop + (HERO_DOTS_BAND.roundToPx() - placeable.height) / 2
                 layout(constraints.maxWidth, constraints.maxHeight) {
