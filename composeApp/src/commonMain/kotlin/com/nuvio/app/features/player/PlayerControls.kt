@@ -235,7 +235,10 @@ internal fun PlayerControlsShell(
                         partyActive = partyActive,
                         onCastClick = onCastClick,
                         castActive = castActive,
-                        leadingContent = clock?.takeIf { it.position == PlayerClockPosition.TopEnd }?.let { topEndClock ->
+                        leadingContent = clock?.takeIf {
+                            it.position == PlayerClockPosition.TopEnd &&
+                                !(showParentalGuide && parentalWarnings.isNotEmpty())
+                        }?.let { topEndClock ->
                             {
                                 PlayerClock(
                                     use24Hour = topEndClock.use24Hour,
@@ -417,8 +420,11 @@ internal fun PlayerControlsShell(
             }
 
             // Top-end clocks sit in the button row; the legacy header shows a top-start clock above the title.
+            // The parental guide overlay occupies the top-start corner: hide a clock there while it is shown.
+            val parentalGuideCoversClock = !useLegacyLayout && showParentalGuide && parentalWarnings.isNotEmpty()
             if (showPlaybackControls && clock != null && clock.position != PlayerClockPosition.TopEnd &&
-                !(useLegacyLayout && clock.position == PlayerClockPosition.TopStart)
+                !(useLegacyLayout && clock.position == PlayerClockPosition.TopStart) &&
+                !(parentalGuideCoversClock && clock.position == PlayerClockPosition.TopStart)
             ) {
                 val toolbarHeight = metrics.headerIconSize + 16.dp
                 val topInset = Modifier
