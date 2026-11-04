@@ -124,6 +124,10 @@ internal object AppUpdaterRepository {
         supportedAbis: List<String>,
         tvApp: Boolean,
     ): GitHubAssetDto? {
+        // Desktop: the Windows installer attached to the same release.
+        if (com.nuvio.app.isDesktop) {
+            return assets.firstOrNull { it.name.endsWith(".msi", ignoreCase = true) }
+        }
         val apkAssets = assets.filter { asset ->
             asset.name.endsWith(".apk", ignoreCase = true) ||
                 asset.contentType == "application/vnd.android.package-archive"
