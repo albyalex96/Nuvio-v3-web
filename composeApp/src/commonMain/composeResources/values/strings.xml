@@ -548,6 +548,7 @@
     <string name="compose_settings_root_tracking_description">Connect tracking providers and choose which one powers your Library and Continue Watching.</string>
     <string name="settings_search_empty">No settings found.</string>
     <string name="settings_search_placeholder">Search settings...</string>
+    <string name="settings_search_only_enhanced">Show only Enhanced features</string>
     <string name="settings_search_results_section">RESULTS</string>
     <string name="settings_search_show_all">Show all results (%1$d)</string>
     <string name="settings_search_show_all_description">Keep typing to narrow the search</string>

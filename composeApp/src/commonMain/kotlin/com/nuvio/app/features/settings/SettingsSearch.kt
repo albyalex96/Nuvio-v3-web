@@ -7,6 +7,11 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
@@ -2314,15 +2319,19 @@ internal fun LazyListScope.settingsSearchRootContent(
     if (showSearchField || !queryBlank) {
         item(key = "settings-search-field") {
             SettingsSearchRevealItem(animate = animateSearchField) {
-                SettingsSearchField(
-                    query = query,
-                    onQueryChange = onQueryChange,
-                )
+                Column {
+                    SettingsSearchField(
+                        query = query,
+                        onQueryChange = onQueryChange,
+                    )
+                    SettingsSearchEnhancedToggle()
+                }
             }
         }
     }
 
-    if (queryBlank) return
+    // With the "Only Enhanced" filter on, an empty query lists every Enhanced setting.
+    if (queryBlank && !SettingsSearchEnhancedFilter.onlyEnhanced) return
 
     item(key = "settings-search-results") {
         // The index is resolved here, outside the scope that reads the query, so typing doesn't rebuild it.
@@ -2343,15 +2352,21 @@ private fun SettingsSearchResults(
     onTargetClick: (SettingsSearchTarget) -> Unit,
 ) {
     val currentQuery = query()
-    val results = remember(currentQuery, entries) {
-        settingsSearchResults(
-            query = currentQuery,
-            entries = entries,
-        )
+    val onlyEnhanced = SettingsSearchEnhancedFilter.onlyEnhanced
+    val results = remember(currentQuery, entries, onlyEnhanced) {
+        if (onlyEnhanced) {
+            val enhancedEntries = entries.filter { it.isEnhancedFeature }
+            if (currentQuery.isBlank()) enhancedEntries else settingsSearchResults(currentQuery, enhancedEntries)
+        } else {
+            settingsSearchResults(
+                query = currentQuery,
+                entries = entries,
+            )
+        }
     }
     // The results live in one card (one lazy item): composing hundreds of rows for a one-letter query
     // blocked the main thread and the typed letters. Show the best matches first, the rest on request.
-    var showAll by remember(currentQuery) { mutableStateOf(false) }
+    var showAll by remember(currentQuery, onlyEnhanced) { mutableStateOf(false) }
     val shownResults = if (showAll) results else results.take(SettingsSearchResultsLimit)
     if (results.isEmpty()) {
         SettingsSearchEmptyState(isTablet = isTablet)
@@ -2480,6 +2495,38 @@ private fun SettingsSearchField(
             cursorColor = tokens.colors.accent,
         ),
     )
+}
+
+@Composable
+private fun SettingsSearchEnhancedToggle() {
+    val tokens = MaterialTheme.nuvio
+    val checked = SettingsSearchEnhancedFilter.onlyEnhanced
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+            .toggleable(
+                value = checked,
+                role = Role.Checkbox,
+                onValueChange = { SettingsSearchEnhancedFilter.onlyEnhanced = it },
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = null,
+            colors = CheckboxDefaults.colors(
+                checkedColor = tokens.colors.accent,
+                uncheckedColor = tokens.colors.textMuted,
+            ),
+            modifier = Modifier.padding(12.dp),
+        )
+        Text(
+            text = stringResource(Res.string.settings_search_only_enhanced),
+            style = MaterialTheme.typography.bodyMedium,
+            color = tokens.colors.textPrimary,
+        )
+    }
 }
 
 @Composable

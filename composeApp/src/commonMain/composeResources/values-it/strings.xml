@@ -1320,6 +1320,7 @@
   <string name="compose_settings_page_licenses_attributions">Licenze e attribuzione</string>
   <string name="settings_search_empty">Nessuna impostazione trovata.</string>
   <string name="settings_search_placeholder">Cerca impostazioni...</string>
+  <string name="settings_search_only_enhanced">Mostra solo le funzioni Enhanced</string>
   <string name="settings_search_results_section">RISULTATI</string>
   <string name="settings_search_show_all">Mostra tutti i risultati (%1$d)</string>
   <string name="settings_search_show_all_description">Continua a scrivere per restringere la ricerca</string>
