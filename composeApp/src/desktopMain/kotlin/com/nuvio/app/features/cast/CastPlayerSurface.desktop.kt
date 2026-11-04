@@ -11,6 +11,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import co.touchlab.kermit.Logger
+import com.nuvio.app.core.mediaproxy.LanMediaProxy
+import com.nuvio.app.core.mediaproxy.MediaProxyHandle
+import com.nuvio.app.core.mediaproxy.MediaProxyOptions
+import com.nuvio.app.core.mediaproxy.MediaProxyScope
+import com.nuvio.app.core.mediaproxy.MediaProxySettingsRepository
+import com.nuvio.app.core.mediaproxy.MediaProxySource
 import com.nuvio.app.desktop.cast.CastMessage
 import com.nuvio.app.desktop.cast.NS_MEDIA
 import com.nuvio.app.desktop.cast.string
@@ -81,17 +87,12 @@ internal actual fun CastPlayerSurface(
             latestOnError(loadFailed)
             return@DisposableEffect onDispose {}
         }
-        if (request.needsLanProxy) {
-            // This device cannot serve local or header-protected streams to the receiver yet.
-            log.w { "The stream needs the LAN proxy, not available on desktop" }
-            latestOnError(lanUnavailable)
-            return@DisposableEffect onDispose {}
-        }
         val remote = DesktopCastPlayback(
             session = session,
             request = request,
             scope = scope,
             loadFailedMessage = loadFailed,
+            lanUnavailableMessage = lanUnavailable,
             onSnapshot = { latestOnSnapshot(it) },
             onError = { latestOnError(it) },
             onLoaded = { initialPositionRequestKey?.let { key -> latestOnInitialPositionHandled(key, true) } },
@@ -127,6 +128,7 @@ private class DesktopCastPlayback(
     private val request: CastMediaRequest,
     private val scope: CoroutineScope,
     private val loadFailedMessage: String,
+    private val lanUnavailableMessage: String,
     private val onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
     private val onError: (String) -> Unit,
     private val onLoaded: () -> Unit,
@@ -153,6 +155,10 @@ private class DesktopCastPlayback(
     private var audioPreferenceApplied = false
     private var userSelectedAudio = false
     private var publisher: Job? = null
+    @Volatile private var proxyHandle: MediaProxyHandle? = null
+
+    /** What the receiver plays: the original link, or the LAN proxy one. */
+    @Volatile private var loadedContentUrl: String = request.sourceUrl
 
     private val listener: (CastMessage) -> Unit = { message -> if (message.namespace == NS_MEDIA) onMediaMessage(message) }
 
@@ -182,6 +188,29 @@ private class DesktopCastPlayback(
             log.i { "Stopping the stream on the receiver" }
             mediaCommand("STOP")
         }
+        releaseProxy()
+    }
+
+    /**
+     * Local files and links that need headers cannot be opened by the receiver: this PC serves
+     * them on the LAN (same proxy as Android), adding the headers.
+     */
+    private fun registerProxy(): MediaProxyHandle? {
+        releaseProxy()
+        val url = request.sourceUrl.trim()
+        val isHttp = url.startsWith("http://", ignoreCase = true) || url.startsWith("https://", ignoreCase = true)
+        val source = if (isHttp) {
+            MediaProxySource.Remote(url, request.requestHeaders, request.responseHeaders)
+        } else {
+            MediaProxySource.LocalFile(url)
+        }
+        return LanMediaProxy.register(source, MediaProxyOptions(scope = MediaProxyScope.Lan, label = "Cast"))
+            .also { proxyHandle = it }
+    }
+
+    private fun releaseProxy() {
+        proxyHandle?.let(LanMediaProxy::unregister)
+        proxyHandle = null
     }
 
     fun applyPlayWhenReady(playWhenReady: Boolean) {
@@ -201,7 +230,25 @@ private class DesktopCastPlayback(
                 null
             }
             if (released) return@launch
-            log.i { "Loading on the receiver: type=$contentType live=${request.isLive} start=${startPositionMs}ms autoplay=$autoplay" }
+            val useProxy = request.needsLanProxy || MediaProxySettingsRepository.settings.value.castAlwaysProxy
+            val contentUrl = if (useProxy) {
+                val handle = registerProxy()
+                if (released) {
+                    releaseProxy()
+                    return@launch
+                }
+                if (handle == null) {
+                    log.w { "The stream needs the LAN proxy but this PC has no local network address" }
+                    errorReported = true
+                    onError(lanUnavailableMessage)
+                    return@launch
+                }
+                handle.url
+            } else {
+                request.sourceUrl
+            }
+            loadedContentUrl = contentUrl
+            log.i { "Loading on the receiver: type=$contentType live=${request.isLive} proxied=$useProxy start=${startPositionMs}ms autoplay=$autoplay" }
             val requestId = channel.newRequestId()
             loadRequestId = requestId
             channel.send(
@@ -214,8 +261,8 @@ private class DesktopCastPlayback(
                     put("autoplay", autoplay)
                     put("currentTime", if (request.isLive) 0.0 else startPositionMs / 1000.0)
                     putJsonObject("media") {
-                        put("contentId", request.sourceUrl)
-                        put("contentUrl", request.sourceUrl)
+                        put("contentId", contentUrl)
+                        put("contentUrl", contentUrl)
                         put("contentType", contentType)
                         put("streamType", if (request.isLive) "LIVE" else "BUFFERED")
                         hlsFormats?.let { formats ->
@@ -262,7 +309,7 @@ private class DesktopCastPlayback(
             "MEDIA_STATUS" -> {
                 val status = (message.payload["status"] as? JsonArray)?.firstOrNull() as? JsonObject ?: return
                 val contentId = ((status["media"] as? JsonObject)?.string("contentId"))
-                if (contentId != null && contentId != request.sourceUrl) {
+                if (contentId != null && contentId != loadedContentUrl) {
                     // Another sender replaced the stream.
                     loaded = false
                     onSnapshot(PlayerPlaybackSnapshot(isLoading = false, isPlaying = false))
