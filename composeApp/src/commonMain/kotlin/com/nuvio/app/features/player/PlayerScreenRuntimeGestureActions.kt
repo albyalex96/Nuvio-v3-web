@@ -371,3 +371,13 @@ internal fun PlayerScreenRuntime.rememberSurfaceGestureCallbacks(): PlayerSurfac
 }
 
 private val PendingSeekWindow = 1_500.milliseconds
+
+/** Mouse movement shows the controls (or the lock badge) and restarts the auto-hide timer. */
+internal fun PlayerScreenRuntime.revealControlsForMouse() {
+    if (playerControlsLocked) {
+        lockedOverlayVisible = true
+    } else {
+        controlsVisible = true
+        controlsActivityTick += 1
+    }
+}

@@ -145,6 +145,7 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
         modifier = Modifier
             .fillMaxSize()
             .onSizeChanged { layoutSize = it }
+            .onPlayerMouseMove { revealControlsForMouse() }
             .playerSurfaceTapGestures(
                 layoutSize = layoutSize,
                 playbackGesturesEnabled = playbackGesturesEnabled,
