@@ -23,11 +23,16 @@ enum class SeekThumbnailSize(val widthDp: Int) {
 enum class SeekThumbnailDevice(internal val storageSuffix: String) {
     Mobile("mobile"),
     Tv("tv"),
+    Desktop("desktop"),
 }
 
 /** Class of this device; the TV app always counts as TV. */
 internal fun currentSeekThumbnailDevice(): SeekThumbnailDevice =
-    if (TvAppRuntime.isTvApp) SeekThumbnailDevice.Tv else SeekThumbnailDevice.Mobile
+    when {
+        TvAppRuntime.isTvApp -> SeekThumbnailDevice.Tv
+        com.nuvio.app.isDesktop -> SeekThumbnailDevice.Desktop
+        else -> SeekThumbnailDevice.Mobile
+    }
 
 /** Preview options of one device class, synced with the profile. */
 @Serializable

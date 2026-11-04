@@ -3146,4 +3146,5 @@ internal fun subtitleSizeTitleRes(formFactor: SubtitleSizeFormFactor): StringRes
     SubtitleSizeFormFactor.Mobile -> Res.string.settings_playback_subtitle_size_mobile
     SubtitleSizeFormFactor.Tablet -> Res.string.settings_playback_subtitle_size_tablet
     SubtitleSizeFormFactor.Tv -> Res.string.settings_playback_subtitle_size_tv
+    SubtitleSizeFormFactor.Desktop -> Res.string.settings_playback_subtitle_size_desktop
 }

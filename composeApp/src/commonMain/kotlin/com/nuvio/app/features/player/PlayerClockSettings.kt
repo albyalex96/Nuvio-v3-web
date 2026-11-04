@@ -19,11 +19,16 @@ enum class PlayerClockPosition {
 enum class PlayerClockDevice(internal val storageSuffix: String) {
     Mobile("mobile"),
     Tv("tv"),
+    Desktop("desktop"),
 }
 
 /** Class of this device; the TV app always counts as TV. */
 internal fun currentPlayerClockDevice(): PlayerClockDevice =
-    if (TvAppRuntime.isTvApp) PlayerClockDevice.Tv else PlayerClockDevice.Mobile
+    when {
+        TvAppRuntime.isTvApp -> PlayerClockDevice.Tv
+        com.nuvio.app.isDesktop -> PlayerClockDevice.Desktop
+        else -> PlayerClockDevice.Mobile
+    }
 
 /** Clock options of one device class, synced with the profile so both can be edited anywhere. */
 @Serializable

@@ -3,6 +3,7 @@
     <string name="settings_playback_subtitle_size_mobile">Dimensione sottotitoli (telefono)</string>
     <string name="settings_playback_subtitle_size_tablet">Dimensione sottotitoli (tablet)</string>
     <string name="settings_playback_subtitle_size_tv">Dimensione sottotitoli (TV)</string>
+    <string name="settings_playback_subtitle_size_desktop">Dimensione sottotitoli (desktop)</string>
     <string name="settings_playback_subtitle_size_this_device">%1$s · questo dispositivo</string>
     <string name="settings_playback_subtitle_size_per_device_description">Ogni tipo di dispositivo ha la sua dimensione, sincronizzata col profilo</string>
 </resources>
