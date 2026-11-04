@@ -154,13 +154,6 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
                     ?.let { Modifier.pointerHoverIcon(it) }
                     ?: Modifier,
             )
-            .playerRightButtonHold(
-                enabled = playbackGesturesEnabled,
-                playerControlsLockedState = gestureCallbacks.playerControlsLocked,
-                activateHoldToSpeedState = gestureCallbacks.activateHoldToSpeed,
-                deactivateHoldToSpeedState = gestureCallbacks.deactivateHoldToSpeed,
-                revealLockedOverlayState = gestureCallbacks.revealLockedOverlay,
-            )
             .playerSurfaceTapGestures(
                 layoutSize = layoutSize,
                 playbackGesturesEnabled = playbackGesturesEnabled,

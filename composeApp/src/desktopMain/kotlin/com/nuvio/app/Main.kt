@@ -41,6 +41,8 @@ fun main(args: Array<String>) {
         Thread { runCatching { DesktopPreferencesRegistry.flush() } },
     )
 
+    com.nuvio.app.desktop.RightClickAsLongPress.install()
+
     application {
         val windowState = rememberWindowState(
             size = DpSize(1280.dp, 800.dp),
