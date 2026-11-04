@@ -91,6 +91,7 @@ internal fun PlayerScreenRuntime.attachSelectedAddonSubtitleWithAutoSync(url: St
     playerController?.setSubtitleUriWithSelectedAutoSync(url)
 }
 
+/** The user's own pick for this content: sync it at start, never swap in another subtitle. */
 internal fun PlayerScreenRuntime.maybeAutoSyncRestoredSubtitleAtStart(url: String): Boolean {
     if (isIntegrationSubtitlePlaceholderUrl(url)) return false
     val controller = playerController ?: return false
@@ -98,7 +99,7 @@ internal fun PlayerScreenRuntime.maybeAutoSyncRestoredSubtitleAtStart(url: Strin
     if (!AutoSyncPreferencesRepository.claimStartupRun(hashCode(), activePlaybackIdentity)) {
         return false
     }
-    controller.setSubtitleUriWithAutoSync(url)
+    controller.setSubtitleUriWithSelectedAutoSync(url)
     return true
 }
 
