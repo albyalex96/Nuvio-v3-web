@@ -6,6 +6,9 @@ import com.nuvio.app.desktop.compat.DesktopContext
 internal object DesktopStorageBootstrap {
     fun initialize() {
         com.nuvio.app.core.auth.AuthStorage.initialize(DesktopContext)
+        com.nuvio.app.core.logging.AppLogFileStorage.initialize(DesktopContext)
+        com.nuvio.app.core.logging.AppLogPlatform.initialize(DesktopContext)
+        com.nuvio.app.core.logging.AppLoggerSettingsStorage.initialize(DesktopContext)
         com.nuvio.app.core.network.ServerConfigurationStorage.initialize(DesktopContext)
         com.nuvio.app.core.network.dns.DnsOverHttpsStorage.initialize(DesktopContext)
         com.nuvio.app.core.poster.CustomPosterUrlStorage.initialize(DesktopContext)
@@ -17,6 +20,7 @@ internal object DesktopStorageBootstrap {
         com.nuvio.app.features.addons.AddonHttpClientProvider.initialize(DesktopContext)
         com.nuvio.app.features.addons.AddonStorage.initialize(DesktopContext)
         com.nuvio.app.features.ai.AiAssistantStorage.initialize(DesktopContext)
+        com.nuvio.app.features.anilist.AniListAuthStorage.initialize(DesktopContext)
         com.nuvio.app.features.anime.AnimeTrackingStorage.initialize(DesktopContext)
         com.nuvio.app.features.collection.CollectionMobileSettingsStorage.initialize(DesktopContext)
         com.nuvio.app.features.collection.CollectionStorage.initialize(DesktopContext)
@@ -26,9 +30,11 @@ internal object DesktopStorageBootstrap {
         com.nuvio.app.features.downloads.DownloadsStorage.initialize(DesktopContext)
         com.nuvio.app.features.home.HomeCatalogSettingsStorage.initialize(DesktopContext)
         com.nuvio.app.features.home.Top10Storage.initialize(DesktopContext)
+        com.nuvio.app.features.kitsu.KitsuAuthStorage.initialize(DesktopContext)
         com.nuvio.app.features.library.LibraryDisplaySettingsStorage.initialize(DesktopContext)
         com.nuvio.app.features.library.LibraryStorage.initialize(DesktopContext)
         com.nuvio.app.features.livetv.LiveTvStorage.initialize(DesktopContext)
+        com.nuvio.app.features.mal.MalAuthStorage.initialize(DesktopContext)
         com.nuvio.app.features.mdblist.MdbListSettingsStorage.initialize(DesktopContext)
         com.nuvio.app.features.mdblist.PlatformMdbListSyncStorage.initialize(DesktopContext)
         com.nuvio.app.features.membership.MemberAssetStorage.initialize(DesktopContext)
@@ -38,6 +44,7 @@ internal object DesktopStorageBootstrap {
         com.nuvio.app.features.player.PlayerSettingsStorage.initialize(DesktopContext)
         com.nuvio.app.features.player.PlayerTrackPreferenceStorage.initialize(DesktopContext)
         com.nuvio.app.features.player.skip.TimestampProviderStorage.initialize(DesktopContext)
+        com.nuvio.app.features.plugins.PluginStorage.initialize(DesktopContext)
         com.nuvio.app.features.profiles.AvatarStorage.initialize(DesktopContext)
         com.nuvio.app.features.profiles.ProfilePinCacheStorage.initialize(DesktopContext)
         com.nuvio.app.features.profiles.ProfileStorage.initialize(DesktopContext)
@@ -62,5 +69,6 @@ internal object DesktopStorageBootstrap {
         com.nuvio.app.features.watchprogress.ContinueWatchingPreferencesStorage.initialize(DesktopContext)
         com.nuvio.app.features.watchprogress.ResumePromptStorage.initialize(DesktopContext)
         com.nuvio.app.features.watchprogress.WatchProgressStorage.initialize(DesktopContext)
+        com.nuvio.app.features.wetrakr.WeTrakrAuthStorage.initialize(DesktopContext)
     }
 }
