@@ -158,8 +158,6 @@ private const val HERO_FOLLOW_DELAY_MS = 220L
 /** NuvioTV `HeroCarousel`: slides advance by themselves every 10 s. */
 private const val HERO_AUTO_ADVANCE_MS = 10_000L
 private const val HERO_FOCUS_KEY = "hero"
-/** The carousel dots sit low, partly in the gap above the first row, to leave room to the plot. */
-private val HERO_DOTS_OFFSET = 8.dp
 /** Space kept free under the hero text for the carousel dots. */
 private val HERO_DOTS_BAND = 12.dp
 private val HERO_ROWS_GAP = 14.dp
@@ -591,6 +589,16 @@ private fun TvHomeContent(model: TvHomeModel) {
                 }
             }
         }
+        if (hasCarousel && heroBackdropVisible) {
+            HeroCarouselDots(
+                model = model,
+                focus = focus,
+                heroIndex = heroIndex,
+                heroBottom = { heroHeight() * heroProgress.value },
+                alpha = { heroProgress.value },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 
@@ -699,10 +707,6 @@ private fun TvHomeHero(
         // keeps the preview of the card focused last.
         if (hasCarousel || shownHero?.source != null) {
             HeroCarouselFocusTarget(
-                count = carouselItems.size,
-                activeIndex = activeIndex,
-                visible = carouselActive && !expanded,
-                focused = focus.heroFocused,
                 modifier = Modifier
                     .fillMaxSize()
                     .focusProperties { canFocus = !heroHidden() && !focus.heroExpanded }
@@ -806,10 +810,6 @@ private val ConfirmKeys = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
  */
 @Composable
 private fun HeroCarouselFocusTarget(
-    count: Int,
-    activeIndex: Int,
-    visible: Boolean,
-    focused: Boolean,
     onPrevious: () -> Boolean,
     onNext: () -> Boolean,
     onClick: () -> Unit,
@@ -831,31 +831,55 @@ private fun HeroCarouselFocusTarget(
                 }
             }
             .focusable(),
-    ) {
-        if (visible && count > 1) {
-            val accent = MaterialTheme.nuvio.colors.accent
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .offset(y = HERO_DOTS_OFFSET),
-            ) {
-                repeat(count) { index ->
-                    val active = index == activeIndex
-                    Box(
-                        modifier = Modifier
-                            .size(width = if (active) 32.dp else 12.dp, height = if (active) 6.dp else 4.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(
-                                when {
-                                    active && focused -> accent
-                                    active -> Color.White.copy(alpha = 0.85f)
-                                    else -> Color.White.copy(alpha = 0.3f)
-                                },
-                            ),
-                    )
+    )
+}
+
+/**
+ * Indicator dots of the hero carousel (NuvioTV `HeroCarousel`), centered horizontally in the band
+ * kept free under the hero text. Drawn above the rows, so the first row never covers them.
+ */
+@Composable
+private fun HeroCarouselDots(
+    model: TvHomeModel,
+    focus: TvHomeFocusState,
+    heroIndex: MutableIntState,
+    heroBottom: () -> Dp,
+    alpha: () -> Float,
+    modifier: Modifier = Modifier,
+) {
+    val count = model.heroItems.size
+    if (count <= 1 || focus.focusedHero != null || focus.heroExpanded) return
+    val activeIndex = activeHeroIndex(heroIndex.intValue, count)
+    val focused = focus.heroFocused
+    val accent = MaterialTheme.nuvio.colors.accent
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints.copy(minHeight = 0))
+                val bandTop = (heroBottom() - HERO_DOTS_BAND).roundToPx()
+                val y = bandTop + (HERO_DOTS_BAND.roundToPx() - placeable.height) / 2
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    placeable.place((constraints.maxWidth - placeable.width) / 2, y)
                 }
             }
+            .graphicsLayer { this.alpha = alpha() },
+    ) {
+        repeat(count) { index ->
+            val active = index == activeIndex
+            Box(
+                modifier = Modifier
+                    .size(width = if (active) 32.dp else 12.dp, height = if (active) 6.dp else 4.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(
+                        when {
+                            active && focused -> accent
+                            active -> Color.White.copy(alpha = 0.85f)
+                            else -> Color.White.copy(alpha = 0.3f)
+                        },
+                    ),
+            )
         }
     }
 }
@@ -1414,6 +1438,20 @@ private fun HeroInfo.withDetails(details: MetaPreview): HeroInfo {
             detailsMeta
         },
         description = description?.takeIf { it.isNotBlank() } ?: details.description,
+        backdrop = details.heroBackdrop(fallback = backdrop, keepOwn = continueWatching),
         detailsLoaded = true,
     )
+}
+
+/**
+ * NuvioTV draws the hero over the backdrop of the enriched title (`backdropUrl` of the details)
+ * and falls back to the image of the card. A continue watching card keeps its own artwork
+ * (episode still or background) unless it only had the poster.
+ */
+private fun MetaPreview.heroBackdrop(fallback: String?, keepOwn: Boolean): String? {
+    val enriched = (banner ?: landscapePoster)?.takeIf { it.isNotBlank() }
+    return when {
+        keepOwn && !fallback.isNullOrBlank() && fallback != poster -> fallback
+        else -> enriched ?: fallback
+    }
 }

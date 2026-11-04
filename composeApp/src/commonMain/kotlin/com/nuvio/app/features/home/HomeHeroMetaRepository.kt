@@ -155,6 +155,8 @@ internal fun MetaPreview.withHeroMeta(meta: HomeHeroMeta): MetaPreview {
         // Only filled when missing (continue watching items of the TV hero have neither).
         releaseInfo = releaseInfo?.takeIf { it.isNotBlank() } ?: details?.releaseInfo,
         description = description?.takeIf { it.isNotBlank() } ?: details?.description,
+        // NuvioTV draws the hero over the backdrop of the details when the catalog has none.
+        banner = banner?.takeIf { it.isNotBlank() } ?: details?.background?.takeIf { it.isNotBlank() },
         externalRatings = meta.ratings,
     )
 }
