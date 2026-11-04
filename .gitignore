@@ -43,4 +43,4 @@ iosApp/Configuration/DeviceSigning.local.json
 local-properties-base64.ps1
 
 # Desktop: libmpv (115 MB) is downloaded by :composeApp:downloadDesktopLibmpv
-composeApp/desktopNative/
+composeApp/desktopNative/windows/libmpv-2.dll

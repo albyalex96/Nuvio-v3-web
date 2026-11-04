@@ -620,6 +620,8 @@ kotlin {
             kotlin.srcDir(desktopBootstrapDir)
             dependencies {
                 implementation(libs.quickjs.kt)
+                // Nuvio Engine (P2P) JVM bindings; the native nuvio_engine.dll is in desktopNative/windows.
+                implementation(files("libs/nuvio-engine-jvm-0.1.6.jar"))
                 // FFmpeg (LGPL build) for the HLS download remux; Windows natives only for now.
                 implementation("org.bytedeco:javacpp:1.5.11")
                 implementation("org.bytedeco:javacpp:1.5.11:windows-x86_64")

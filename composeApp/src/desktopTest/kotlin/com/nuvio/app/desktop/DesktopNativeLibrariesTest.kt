@@ -1,6 +1,8 @@
 package com.nuvio.app.desktop
 
 import com.dokar.quickjs.quickJs
+import com.nuvio.engine.NuvioEngineRuntime
+import java.io.File
 import com.nuvio.app.features.downloads.DownloadsPlatformDownloader
 import com.nuvio.app.features.plugins.configureDesktopQuickJsLibrary
 import kotlinx.coroutines.runBlocking
@@ -20,5 +22,11 @@ class DesktopNativeLibrariesTest {
         configureDesktopQuickJsLibrary()
         val result = quickJs { evaluate<Int>("1 + 2") }
         assertEquals(3, result)
+    }
+
+    @Test
+    fun torrentEngineLibraryLoads() {
+        val runtime = NuvioEngineRuntime.load(File("desktopNative/windows/nuvio_engine.dll").absoluteFile)
+        assertTrue(runtime.version.isNotBlank())
     }
 }
