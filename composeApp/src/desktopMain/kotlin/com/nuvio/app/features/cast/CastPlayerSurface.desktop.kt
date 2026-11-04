@@ -223,7 +223,7 @@ private class DesktopCastPlayback(
         loaded = false
         errorReported = false
         scope.launch(Dispatchers.Default) {
-            val contentType = castContentTypeFor(request)
+            val contentType = castContentTypeFor(request) ?: probeCastContentType(request)
             val hlsFormats = if (contentType == "application/x-mpegurl") {
                 runCatching { detectCastHlsFormats(request.sourceUrl, request.requestHeaders) }.getOrNull()
             } else {
@@ -512,7 +512,8 @@ private fun CastHlsSegmentFormat.castName(): String = when (this) {
  * Content type for the Default Media Receiver: adaptive formats keep their own type, everything
  * progressive goes as MP4/WebM (older Chromecasts refuse "video/x-matroska" even when they can play it).
  */
-private fun castContentTypeFor(request: CastMediaRequest): String {
+/** Type from the declared headers or the link's extension; null when only a probe can tell. */
+private fun castContentTypeFor(request: CastMediaRequest): String? {
     val declared = (request.responseHeaders.entries.firstOrNull { it.key.equals("Content-Type", true) }?.value
         ?: request.streamType).orEmpty().lowercase()
     val path = request.sourceUrl.substringBefore('?').substringBefore('#').lowercase()
@@ -521,6 +522,41 @@ private fun castContentTypeFor(request: CastMediaRequest): String {
         "dash" in declared || declared == "mpd" || path.endsWith(".mpd") -> "application/dash+xml"
         "webm" in declared || path.endsWith(".webm") -> "video/webm"
         declared.startsWith("audio/") -> declared
-        else -> "video/mp4"
+        declared.startsWith("video/") -> declared
+        VIDEO_EXTENSIONS.any { path.endsWith(it) } -> "video/mp4"
+        else -> null
     }
+}
+
+private val VIDEO_EXTENSIONS = listOf(".mp4", ".m4v", ".mkv", ".mov", ".avi", ".ts")
+
+/**
+ * Links without an extension (e.g. HLS playlists served from an API path) are fetched briefly with
+ * their headers: announcing a playlist as video/mp4 makes the receiver fail right away.
+ */
+private fun probeCastContentType(request: CastMediaRequest): String {
+    val url = request.sourceUrl
+    if (!url.startsWith("http://", ignoreCase = true) && !url.startsWith("https://", ignoreCase = true)) return "video/mp4"
+    val detected = runCatching {
+        val builder = okhttp3.Request.Builder().url(url).header("Range", "bytes=0-2047")
+        request.requestHeaders.forEach { (name, value) ->
+            if (!name.equals("Range", true) && !name.equals("Accept-Encoding", true)) builder.header(name, value)
+        }
+        com.nuvio.app.core.network.nuvioSharedOkHttpClient.newCall(builder.build()).execute().use { response ->
+            val type = response.header("Content-Type").orEmpty().lowercase()
+            val head = response.body?.source()?.let { source ->
+                source.request(2048)
+                source.buffer.snapshot().utf8().take(2048)
+            }.orEmpty().trimStart { it == '\uFEFF' || it.isWhitespace() }
+            when {
+                "mpegurl" in type || head.startsWith("#EXTM3U") -> "application/x-mpegurl"
+                "dash" in type || head.startsWith("<?xml") && "<MPD" in head || head.startsWith("<MPD") -> "application/dash+xml"
+                "webm" in type -> "video/webm"
+                type.startsWith("audio/") || type.startsWith("video/") -> type.substringBefore(';').trim()
+                else -> null
+            }
+        }
+    }.onFailure { error -> log.w(error) { "Could not probe the stream type" } }.getOrNull()
+    log.i { "Probed stream type: ${detected ?: "unknown, using video/mp4"}" }
+    return detected ?: "video/mp4"
 }
