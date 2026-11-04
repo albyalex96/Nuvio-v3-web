@@ -33,6 +33,9 @@ import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.CastConnected
 import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.FullscreenExit
+import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Tv
@@ -654,6 +657,19 @@ private fun PlayerHeader(
                             buttonSize = metrics.headerIconSize + 16.dp,
                             iconSize = metrics.headerIconSize,
                             onClick = onVideoSettingsClick,
+                        )
+                    }
+                    if (PlayerWindowFullscreen.isSupported) {
+                        // Desktop: same as F / double click.
+                        val fullscreen by PlayerWindowFullscreen.isFullscreen.collectAsState()
+                        PlayerHeaderIconButton(
+                            icon = if (fullscreen) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen,
+                            contentDescription = stringResource(
+                                if (fullscreen) Res.string.trailer_exit_fullscreen else Res.string.trailer_enter_fullscreen,
+                            ),
+                            buttonSize = metrics.headerIconSize + 16.dp,
+                            iconSize = metrics.headerIconSize,
+                            onClick = { PlayerWindowFullscreen.toggle() },
                         )
                     }
                     NuvioBackButton(
