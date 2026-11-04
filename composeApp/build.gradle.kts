@@ -633,6 +633,8 @@ kotlin {
                 implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:5.3.2")
                 implementation("net.java.dev.jna:jna:5.17.0")
                 implementation("net.java.dev.jna:jna-platform:5.17.0")
+                // mDNS discovery of Chromecast receivers (Apache 2.0).
+                implementation("org.jmdns:jmdns:3.5.9")
                 implementation(libs.ksoup)
                 implementation(libs.ktor.server.core)
                 implementation(libs.ktor.server.cio)

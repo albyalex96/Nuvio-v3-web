@@ -438,6 +438,11 @@ internal fun settingsSearchEntries(
                     stringResource(Res.string.settings_licenses_attributions_ffmpeg_title),
                     stringResource(Res.string.settings_licenses_attributions_ffmpeg_body),
                 ),
+                PlaybackSearchRow(
+                    "jmdns-license",
+                    stringResource(Res.string.settings_licenses_attributions_jmdns_title),
+                    stringResource(Res.string.settings_licenses_attributions_jmdns_body),
+                ),
             )
         } else {
             emptyList()

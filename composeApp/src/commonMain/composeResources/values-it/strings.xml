@@ -1354,6 +1354,9 @@
   <string name="settings_licenses_attributions_libmpv_title">libmpv</string>
   <string name="settings_licenses_attributions_libmpv_body">Utilizzato per la riproduzione nell'app desktop.</string>
   <string name="settings_licenses_attributions_libmpv_license">mpv è rilasciato sotto licenza GPL v2 o successiva (LGPL v2.1 o successiva se compilato senza componenti GPL). La libreria inclusa contiene anche FFmpeg.</string>
+  <string name="settings_licenses_attributions_jmdns_title">JmDNS</string>
+  <string name="settings_licenses_attributions_jmdns_body">Utilizzato per trovare i dispositivi Chromecast sulla rete locale nell'app desktop.</string>
+  <string name="settings_licenses_attributions_jmdns_license">JmDNS è rilasciato sotto licenza Apache 2.0.</string>
   <string name="settings_licenses_attributions_ffmpeg_title">FFmpeg (JavaCPP Presets)</string>
   <string name="settings_licenses_attributions_ffmpeg_body">Utilizzato per unire i download HLS in un unico file nell'app desktop.</string>
   <string name="settings_licenses_attributions_ffmpeg_license">FFmpeg è rilasciato sotto licenza LGPL v2.1 o successiva. I binding JavaCPP Presets sono rilasciati sotto licenza Apache 2.0.</string>

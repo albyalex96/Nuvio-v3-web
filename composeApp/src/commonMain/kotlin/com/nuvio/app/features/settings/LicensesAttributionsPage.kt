@@ -82,6 +82,7 @@ private const val NuvioArcRepositoryUrl = "https://github.com/ysosrs123/NuvioTV-
 private const val MpvKitUrl = "https://github.com/mpvkit/MPVKit"
 private const val MpvUrl = "https://github.com/mpv-player/mpv"
 private const val FfmpegPresetsUrl = "https://github.com/bytedeco/javacpp-presets/tree/master/ffmpeg"
+private const val JmdnsUrl = "https://github.com/jmdns/jmdns"
 private const val ApacheLicenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"
 private const val HazeLicenseUrl = "https://github.com/chrisbanes/haze/blob/1.7.2/LICENSE"
 private const val DnsOverHttpsRfcUrl = "https://datatracker.ietf.org/doc/html/rfc8484"
@@ -202,6 +203,16 @@ private fun LicensesAttributionsBody(
                         bodyRes = Res.string.settings_licenses_attributions_ffmpeg_body,
                         licenseRes = Res.string.settings_licenses_attributions_ffmpeg_license,
                         link = FfmpegPresetsUrl,
+                    ),
+                    isTablet = isTablet,
+                )
+                PlainStackDivider()
+                LicenseRow(
+                    item = LicenseItem(
+                        titleRes = Res.string.settings_licenses_attributions_jmdns_title,
+                        bodyRes = Res.string.settings_licenses_attributions_jmdns_body,
+                        licenseRes = Res.string.settings_licenses_attributions_jmdns_license,
+                        link = JmdnsUrl,
                     ),
                     isTablet = isTablet,
                 )
