@@ -2123,6 +2123,7 @@ private fun addAdditionalSearchEntries(
         PlaybackSearchRow("opensubtitles-languages", stringResource(Res.string.opensubtitles_languages), stringResource(Res.string.opensubtitles_languages_description)),
         PlaybackSearchRow("opensubtitles-hearing-impaired", stringResource(Res.string.opensubtitles_hearing_impaired), stringResource(Res.string.opensubtitles_hearing_impaired_description)),
         PlaybackSearchRow("opensubtitles-machine-translated", stringResource(Res.string.opensubtitles_machine_translated), stringResource(Res.string.opensubtitles_machine_translated_description)),
+        PlaybackSearchRow("opensubtitles-autosync", stringResource(Res.string.opensubtitles_autosync), stringResource(Res.string.opensubtitles_autosync_description)),
     ).forEach { item ->
         row(SettingsPage.OpenSubtitles, item.key, item.title, item.description, openSubtitlesPage, openSubtitlesSearchSection, icon = Icons.Rounded.Subtitles)
     }
@@ -2141,6 +2142,7 @@ private fun addAdditionalSearchEntries(
         PlaybackSearchRow("subdl-hearing-impaired", stringResource(Res.string.subdl_hearing_impaired), stringResource(Res.string.subdl_hearing_impaired_description)),
         PlaybackSearchRow("subdl-ai-translated", stringResource(Res.string.subdl_ai_translated), stringResource(Res.string.subdl_ai_translated_description)),
         PlaybackSearchRow("subdl-season-packs", stringResource(Res.string.subdl_season_packs), stringResource(Res.string.subdl_season_packs_description)),
+        PlaybackSearchRow("subdl-autosync", stringResource(Res.string.subdl_autosync), stringResource(Res.string.subdl_autosync_description)),
     ).forEach { item ->
         row(SettingsPage.SubDl, item.key, item.title, item.description, subDlPage, subDlSearchSection, icon = Icons.Rounded.Subtitles)
     }

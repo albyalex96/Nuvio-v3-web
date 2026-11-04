@@ -967,6 +967,7 @@ private fun ExoPlayerSurface(
                         selectedExternalSubtitleMimeType = resolvedMime
                         Logger.d(TAG) { "setSubtitleUri: currentPosition=$currentPosition, wasPlaying=$wasPlaying" }
                         val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse(url))
+                            .setId(addonSubtitleTrackId(url))
                             .setMimeType(resolvedMime)
                             .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
                             .setRoleFlags(C.ROLE_FLAG_SUBTITLE)

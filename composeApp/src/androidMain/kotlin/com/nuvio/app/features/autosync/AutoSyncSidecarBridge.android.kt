@@ -72,7 +72,11 @@ internal suspend fun replaceAutoSyncSidecarSubtitle(
 
     val retimed = try {
         val body = rawBody ?: withContext(Dispatchers.IO) {
-            httpGetTextWithHeaders(url = url, headers = headers)
+            if (url.startsWith("file:", ignoreCase = true)) {
+                java.io.File(java.net.URI(url)).readText()
+            } else {
+                httpGetTextWithHeaders(url = url, headers = headers)
+            }
         }
         val parsed = withContext(autoSyncCpuDispatcher) {
             parseSidecarTimedCuesRobust(body, url).cues

@@ -6,9 +6,41 @@ import androidx.compose.runtime.LaunchedEffect
 import com.nuvio.app.features.autosync.AutoSyncPlayerController
 import com.nuvio.app.features.autosync.AutoSyncPreferencesRepository
 import com.nuvio.app.features.autosync.AutoSyncSubtitleCandidate
+import co.touchlab.kermit.Logger
+import com.nuvio.app.features.opensubtitles.OpenSubtitlesRepository
+import com.nuvio.app.features.opensubtitles.isOpenSubtitlesPlaceholderUrl
+import com.nuvio.app.features.subdl.SubDlRepository
+import com.nuvio.app.features.subdl.isSubDlPlaceholderUrl
 import kotlinx.coroutines.flow.collect
 
-// Integration files (OpenSubtitles, SubDL) are left out: each check would spend a quota-limited download.
+private val autoSyncIntegrationLog = Logger.withTag("AutoSyncIntegrations")
+
+/**
+ * Whether AutoSync may check the integration subtitle at [url] (OpenSubtitles, SubDL): off by
+ * default, each integration page has a switch. Add-on subtitles are always allowed.
+ */
+internal fun isIntegrationAutoSyncAllowed(url: String): Boolean = when {
+    isOpenSubtitlesPlaceholderUrl(url) -> OpenSubtitlesRepository.snapshot().autoSyncEnabled
+    isSubDlPlaceholderUrl(url) -> SubDlRepository.snapshot().autoSyncEnabled
+    else -> true
+}
+
+/**
+ * Downloads the integration file (one download of its quota, then cached) and checks it with
+ * AutoSync as the user's pick: it is never swapped for another subtitle.
+ */
+private fun PlayerScreenRuntime.attachIntegrationSubtitleWithAutoSync(
+    url: String,
+    controller: PlayerEngineController,
+) {
+    autoSyncIntegrationLog.i { "AutoSync on integration subtitle $url" }
+    attachExternalSubtitleUrl(url) { localUri ->
+        controller.setSubtitleUriWithSelectedAutoSync(localUri)
+    }
+}
+
+// Integration files (OpenSubtitles, SubDL) are never alternatives: each check would spend a quota-limited
+// download. With their AutoSync switch on, only the file the user picked is checked.
 private fun List<AddonSubtitle>.toAutoSyncCandidates(): List<AutoSyncSubtitleCandidate> =
     filter { it.source == AddonSubtitleSource.Addon }.map { subtitle ->
         AutoSyncSubtitleCandidate(
@@ -84,8 +116,13 @@ internal fun PlayerScreenRuntime.BindAutoSyncRuntimeEffects() {
 internal fun PlayerScreenRuntime.attachSelectedAddonSubtitleWithAutoSync(url: String) {
     subtitleAutoSyncState = SubtitleAutoSyncUiState()
     if (isIntegrationSubtitlePlaceholderUrl(url)) {
-        // Cached local file: AutoSync only works on remote add-on subtitles.
-        attachExternalSubtitleUrl(url) { playerController?.setSubtitleUri(it) }
+        val controller = playerController
+        if (controller != null && isIntegrationAutoSyncAllowed(url)) {
+            attachIntegrationSubtitleWithAutoSync(url, controller)
+        } else {
+            // AutoSync is off for this integration: attach the file as it is.
+            attachExternalSubtitleUrl(url) { playerController?.setSubtitleUri(it) }
+        }
         return
     }
     playerController?.setSubtitleUriWithSelectedAutoSync(url)
@@ -93,13 +130,18 @@ internal fun PlayerScreenRuntime.attachSelectedAddonSubtitleWithAutoSync(url: St
 
 /** The user's own pick for this content: sync it at start, never swap in another subtitle. */
 internal fun PlayerScreenRuntime.maybeAutoSyncRestoredSubtitleAtStart(url: String): Boolean {
-    if (isIntegrationSubtitlePlaceholderUrl(url)) return false
+    val isIntegration = isIntegrationSubtitlePlaceholderUrl(url)
+    if (isIntegration && !isIntegrationAutoSyncAllowed(url)) return false
     val controller = playerController ?: return false
     if (controller !is AutoSyncPlayerController) return false
     if (!AutoSyncPreferencesRepository.claimStartupRun(hashCode(), activePlaybackIdentity)) {
         return false
     }
-    controller.setSubtitleUriWithSelectedAutoSync(url)
+    if (isIntegration) {
+        attachIntegrationSubtitleWithAutoSync(url, controller)
+    } else {
+        controller.setSubtitleUriWithSelectedAutoSync(url)
+    }
     return true
 }
 
@@ -107,7 +149,8 @@ internal fun PlayerScreenRuntime.maybeAutoSyncPreferredSubtitleAtStart(
     subtitle: AddonSubtitle,
 ): Boolean {
     if (isUserExplicitSubtitleSelection) return false
-    if (isIntegrationSubtitlePlaceholderUrl(subtitle.url)) return false
+    val isIntegration = isIntegrationSubtitlePlaceholderUrl(subtitle.url)
+    if (isIntegration && !isIntegrationAutoSyncAllowed(subtitle.url)) return false
     val preferredLanguage =
         normalizeLanguageCode(playerSettingsUiState.preferredSubtitleLanguage) ?: return false
     if (
@@ -123,6 +166,11 @@ internal fun PlayerScreenRuntime.maybeAutoSyncPreferredSubtitleAtStart(
     if (!AutoSyncPreferencesRepository.claimStartupRun(hashCode(), activePlaybackIdentity)) {
         return false
     }
-    controller.setSubtitleUriWithAutoSync(subtitle.url)
+    if (isIntegration) {
+        // Other integration files are never tried: each one would spend a download.
+        attachIntegrationSubtitleWithAutoSync(subtitle.url, controller)
+    } else {
+        controller.setSubtitleUriWithAutoSync(subtitle.url)
+    }
     return true
 }

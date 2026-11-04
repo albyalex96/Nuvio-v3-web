@@ -14,5 +14,7 @@
     <string name="opensubtitles_hearing_impaired_description">Include subtitles with sound descriptions (SDH)</string>
     <string name="opensubtitles_machine_translated">Automatic translations</string>
     <string name="opensubtitles_machine_translated_description">Include subtitles translated by AI or machine translation</string>
+    <string name="opensubtitles_autosync">Auto Sync</string>
+    <string name="opensubtitles_autosync_description">Let Auto Sync align the OpenSubtitles file you pick with the video. Other OpenSubtitles files are never tried, so no extra downloads are spent</string>
     <string name="opensubtitles_download_failed">Could not download the OpenSubtitles subtitle (daily limit reached or invalid key)</string>
 </resources>

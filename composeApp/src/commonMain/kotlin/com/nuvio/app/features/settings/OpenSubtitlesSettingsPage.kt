@@ -49,6 +49,8 @@ import nuvio.composeapp.generated.resources.opensubtitles_languages_clear
 import nuvio.composeapp.generated.resources.opensubtitles_languages_player_default
 import nuvio.composeapp.generated.resources.opensubtitles_machine_translated
 import nuvio.composeapp.generated.resources.opensubtitles_machine_translated_description
+import nuvio.composeapp.generated.resources.opensubtitles_autosync
+import nuvio.composeapp.generated.resources.opensubtitles_autosync_description
 import nuvio.composeapp.generated.resources.opensubtitles_section_search
 import nuvio.composeapp.generated.resources.settings_playback_not_set
 import org.jetbrains.compose.resources.stringResource
@@ -135,6 +137,17 @@ private fun OpenSubtitlesSettingsSection(
                     checked = settings.includeMachineTranslated,
                     isTablet = isTablet,
                     onCheckedChange = OpenSubtitlesRepository::setIncludeMachineTranslated,
+                )
+                SettingsGroupDivider(isTablet = isTablet)
+                SettingsSwitchRow(
+                    title = stringResource(Res.string.opensubtitles_autosync),
+                    description = stringResource(Res.string.opensubtitles_autosync_description),
+                    checked = settings.autoSyncEnabled,
+                    isTablet = isTablet,
+                    onCheckedChange = { enabled ->
+                        log.i { "OpenSubtitles AutoSync ${if (enabled) "enabled" else "disabled"}" }
+                        OpenSubtitlesRepository.setAutoSyncEnabled(enabled)
+                    },
                 )
             }
         }

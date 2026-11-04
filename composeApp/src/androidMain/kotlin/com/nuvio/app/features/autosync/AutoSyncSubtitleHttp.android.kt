@@ -10,7 +10,12 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.IOException
+import java.io.InputStream
+import java.net.URI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * AutoSync-only subtitle HTTP path.
@@ -31,6 +36,9 @@ internal object AutoSyncSubtitleHttp {
         maxResponseBodyBytes: Int,
         languageHint: String? = null,
     ): RawHttpResponse {
+        if (url.startsWith("file:", ignoreCase = true)) {
+            return readLocalFile(url, maxResponseBodyBytes, languageHint)
+        }
         val requestBuilder = Request.Builder()
             .url(url)
             .get()
@@ -112,15 +120,46 @@ internal object AutoSyncSubtitleHttp {
         }
     }
 
+    /** Cached integration files (OpenSubtitles, SubDL) are local: OkHttp cannot read file://. */
+    private suspend fun readLocalFile(
+        url: String,
+        maxBytes: Int,
+        languageHint: String?,
+    ): RawHttpResponse = withContext(Dispatchers.IO) {
+        val file = File(URI(url))
+        if (!file.isFile) {
+            return@withContext RawHttpResponse(
+                status = 404,
+                statusText = "Not Found",
+                url = url,
+                body = "",
+                headers = emptyMap(),
+            )
+        }
+        val body = file.inputStream().use { stream ->
+            readStreamLimited(stream, file.length(), maxBytes, languageHint)
+        }
+        RawHttpResponse(status = 200, statusText = "OK", url = url, body = body, headers = emptyMap())
+    }
+
     private fun readResponseBodyLimited(
         body: ResponseBody?,
         maxBytes: Int,
         languageHint: String?,
     ): String {
         if (body == null) return ""
+        return body.byteStream().use { stream ->
+            readStreamLimited(stream, body.contentLength(), maxBytes, languageHint)
+        }
+    }
 
+    private fun readStreamLimited(
+        stream: InputStream,
+        contentLength: Long,
+        maxBytes: Int,
+        languageHint: String?,
+    ): String {
         val limit = maxBytes.coerceAtLeast(0)
-        val contentLength = body.contentLength()
         val initialCapacity =
             when {
                 limit == 0 -> 0
@@ -133,7 +172,7 @@ internal object AutoSyncSubtitleHttp {
         var remaining = limit
         var truncated = false
 
-        body.byteStream().use { stream ->
+        run {
             while (remaining > 0) {
                 val read = stream.read(
                     buffer,

@@ -14,5 +14,7 @@
     <string name="opensubtitles_hearing_impaired_description">Includi i sottotitoli con la descrizione dei suoni (SDH)</string>
     <string name="opensubtitles_machine_translated">Traduzioni automatiche</string>
     <string name="opensubtitles_machine_translated_description">Includi i sottotitoli tradotti con l'IA o con la traduzione automatica</string>
+    <string name="opensubtitles_autosync">Sincronizzazione automatica</string>
+    <string name="opensubtitles_autosync_description">Consenti alla sincronizzazione automatica di allineare al video il file di OpenSubtitles che scegli. Gli altri file di OpenSubtitles non vengono mai provati, quindi non si consumano download in più</string>
     <string name="opensubtitles_download_failed">Impossibile scaricare il sottotitolo di OpenSubtitles (limite giornaliero raggiunto o chiave non valida)</string>
 </resources>

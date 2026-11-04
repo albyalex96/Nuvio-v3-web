@@ -126,6 +126,17 @@ private fun SubDlSettingsSection(
                     isTablet = isTablet,
                     onCheckedChange = SubDlRepository::setIncludeSeasonPacks,
                 )
+                SettingsGroupDivider(isTablet = isTablet)
+                SettingsSwitchRow(
+                    title = stringResource(Res.string.subdl_autosync),
+                    description = stringResource(Res.string.subdl_autosync_description),
+                    checked = settings.autoSyncEnabled,
+                    isTablet = isTablet,
+                    onCheckedChange = { enabled ->
+                        log.i { "SubDL AutoSync ${if (enabled) "enabled" else "disabled"}" }
+                        SubDlRepository.setAutoSyncEnabled(enabled)
+                    },
+                )
             }
         }
     }

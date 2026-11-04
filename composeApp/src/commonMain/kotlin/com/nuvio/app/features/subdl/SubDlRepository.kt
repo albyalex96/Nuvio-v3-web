@@ -24,6 +24,8 @@ internal data class SubDlSettings(
     val includeHearingImpaired: Boolean = true,
     val includeAiTranslated: Boolean = false,
     val includeSeasonPacks: Boolean = true,
+    /** AutoSync may check the file the user picks (one download, like attaching it). */
+    val autoSyncEnabled: Boolean = false,
 ) {
     val isUsable: Boolean
         get() = enabled && apiKey.isNotBlank()
@@ -90,6 +92,8 @@ internal object SubDlRepository {
     fun setIncludeAiTranslated(include: Boolean) = update { it.copy(includeAiTranslated = include) }
 
     fun setIncludeSeasonPacks(include: Boolean) = update { it.copy(includeSeasonPacks = include) }
+
+    fun setAutoSyncEnabled(enabled: Boolean) = update { it.copy(autoSyncEnabled = enabled) }
 
     private fun update(transform: (SubDlSettings) -> SubDlSettings) {
         ensureLoaded()

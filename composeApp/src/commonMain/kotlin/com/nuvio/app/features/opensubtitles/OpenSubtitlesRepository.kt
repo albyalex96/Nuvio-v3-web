@@ -23,6 +23,8 @@ internal data class OpenSubtitlesSettings(
     val languages: List<String> = emptyList(),
     val includeHearingImpaired: Boolean = true,
     val includeMachineTranslated: Boolean = false,
+    /** AutoSync may check the file the user picks (one download, like attaching it). */
+    val autoSyncEnabled: Boolean = false,
 ) {
     val isUsable: Boolean
         get() = enabled && apiKey.isNotBlank()
@@ -90,6 +92,8 @@ internal object OpenSubtitlesRepository {
     fun setIncludeHearingImpaired(include: Boolean) = update { it.copy(includeHearingImpaired = include) }
 
     fun setIncludeMachineTranslated(include: Boolean) = update { it.copy(includeMachineTranslated = include) }
+
+    fun setAutoSyncEnabled(enabled: Boolean) = update { it.copy(autoSyncEnabled = enabled) }
 
     private fun update(transform: (OpenSubtitlesSettings) -> OpenSubtitlesSettings) {
         ensureLoaded()

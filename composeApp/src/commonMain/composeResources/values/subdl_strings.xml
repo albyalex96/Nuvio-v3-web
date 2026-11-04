@@ -16,5 +16,7 @@
     <string name="subdl_ai_translated_description">Include subtitles translated by AI</string>
     <string name="subdl_season_packs">Season packs</string>
     <string name="subdl_season_packs_description">Include archives with a whole season: the episode file is picked automatically</string>
+    <string name="subdl_autosync">Auto Sync</string>
+    <string name="subdl_autosync_description">Let Auto Sync align the SubDL file you pick with the video. Other SubDL files are never tried, so no extra downloads are spent</string>
     <string name="subdl_download_failed">Could not download the SubDL subtitle (daily limit reached or file unavailable)</string>
 </resources>
