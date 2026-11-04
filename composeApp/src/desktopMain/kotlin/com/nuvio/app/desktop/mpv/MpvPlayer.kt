@@ -31,6 +31,10 @@ internal class MpvPlayer private constructor(
     private val targetSize = AtomicReference(Size(0, 0))
     private val errorMessage = AtomicReference<String?>(null)
     private val pendingAfterLoad = AtomicReference<(() -> Unit)?>(null)
+    private val fileLoaded = AtomicBoolean(false)
+
+    /** Absolute seek asked before mpv finished opening the file: applied once it is loaded. */
+    private val pendingSeekSeconds = AtomicReference<String?>(null)
 
     /** Two bitmaps used alternately: mpv writes one while Compose draws the other. */
     private val bitmaps = arrayOf(Bitmap(), Bitmap())
@@ -80,12 +84,21 @@ internal class MpvPlayer private constructor(
         setProperty("start", startSeconds?.takeIf { it > 0.0 }?.let { "+$it" } ?: "none")
         setProperty("audio-files", audioUrl?.toNativeMediaLocation().orEmpty())
         pendingAfterLoad.set(afterLoad)
+        fileLoaded.set(false)
+        pendingSeekSeconds.set(null)
         log.i { "Loading media (audio track: ${audioUrl != null}, start: ${startSeconds ?: 0.0}s)" }
         command("loadfile", url.toNativeMediaLocation(), "replace")
     }
 
     fun command(vararg args: String): Int {
         if (released.get()) return -1
+        // mpv refuses seeks while the file is still opening ("error running command"):
+        // keep the last absolute one for later, drop relative ones (no position to move from).
+        if (args.firstOrNull() == "seek" && !fileLoaded.get()) {
+            if (args.getOrNull(2) == "absolute") pendingSeekSeconds.set(args.getOrNull(1))
+            log.d { "Seek before load ${if (args.getOrNull(2) == "absolute") "deferred" else "ignored"}" }
+            return 0
+        }
         val result = mpv.mpv_command(handle, arrayOf(*args, null))
         if (result < 0) log.w { "Command ${args.firstOrNull()} failed: ${mpv.mpv_error_string(result)}" }
         return result
@@ -206,6 +219,8 @@ internal class MpvPlayer private constructor(
                 LibMpv.EVENT_SHUTDOWN -> return
                 LibMpv.EVENT_FILE_LOADED -> {
                     log.i { "File loaded" }
+                    fileLoaded.set(true)
+                    pendingSeekSeconds.getAndSet(null)?.let { command("seek", it, "absolute") }
                     pendingAfterLoad.getAndSet(null)?.invoke()
                 }
                 LibMpv.EVENT_END_FILE -> {
