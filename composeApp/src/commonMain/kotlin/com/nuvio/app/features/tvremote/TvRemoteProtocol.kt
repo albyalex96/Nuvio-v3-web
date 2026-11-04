@@ -27,6 +27,9 @@ const val TV_REMOTE_PATH_PAIR: String = "/v1/pair"
 const val TV_REMOTE_PATH_STATE: String = "/v1/state"
 const val TV_REMOTE_PATH_COMMAND: String = "/v1/command"
 const val TV_REMOTE_PATH_FORGET: String = "/v1/forget"
+/** Telegram login of the TV driven from the phone (number, code, 2FA password, QR approval). */
+const val TV_REMOTE_PATH_TELEGRAM_STATE: String = "/v1/telegram/state"
+const val TV_REMOTE_PATH_TELEGRAM_ACTION: String = "/v1/telegram/action"
 
 /** Longest a state request waits on the TV for a change. */
 const val TV_REMOTE_MAX_WAIT_MS: Long = 20_000L
@@ -201,6 +204,63 @@ enum class TvRemoteCommandError {
 data class TvRemoteForgetRequest(
     val timestampMs: Long,
     val requestId: String,
+)
+
+/** Login step of the Telegram client on the TV. */
+@Serializable
+enum class TvRemoteTelegramStep {
+    /** Telegram is not available on the TV (not configured, unsupported CPU). */
+    Unavailable,
+    /** The client is starting (or has not been started yet). */
+    Starting,
+    WaitPhone,
+    WaitCode,
+    /** Waiting for the approval of the QR link by a logged-in Telegram device. */
+    WaitQr,
+    WaitPassword,
+    Ready,
+    Error,
+}
+
+@Serializable
+data class TvRemoteTelegramStateRequest(
+    val timestampMs: Long,
+    val requestId: String,
+)
+
+@Immutable
+@Serializable
+data class TvRemoteTelegramState(
+    val step: TvRemoteTelegramStep,
+    val codeLength: Int? = null,
+    /** `tg://login?token=…` while [step] is [TvRemoteTelegramStep.WaitQr]. */
+    val qrLink: String? = null,
+    /** Name of the logged-in account while [step] is [TvRemoteTelegramStep.Ready]. */
+    val accountName: String? = null,
+    /** TDLib error message while [step] is [TvRemoteTelegramStep.Error]. */
+    val error: String? = null,
+)
+
+@Serializable
+enum class TvRemoteTelegramActionType {
+    /** Starts the TV client (login from the beginning). */
+    Start,
+    SubmitPhone,
+    SubmitCode,
+    SubmitPassword,
+    /** Switches the TV login to a QR link, approved afterwards by the phone account. */
+    RequestQr,
+    /** Reads the current step again after an error. */
+    Retry,
+}
+
+@Serializable
+data class TvRemoteTelegramActionRequest(
+    val timestampMs: Long,
+    val requestId: String,
+    val action: TvRemoteTelegramActionType,
+    /** Phone number, code or password (sealed like every request body). */
+    val value: String? = null,
 )
 
 /** What the TV player is showing: display metadata only. */

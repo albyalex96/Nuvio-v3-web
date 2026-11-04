@@ -176,6 +176,10 @@ object TelegramClient {
     fun submitPassword(password: String) =
         sendAuthStep("2FA password", TdApi.CheckAuthenticationPassword(password))
 
+    /** Switches the login to a QR link (approved by another logged-in Telegram device). */
+    fun requestQrLogin() =
+        sendAuthStep("QR login", TdApi.RequestQrCodeAuthentication(LongArray(0)))
+
     suspend fun sendRequest(
         function: TdApi.Function<out TdApi.Object>,
         timeoutMs: Long = 10_000L,

@@ -17,6 +17,16 @@ import com.nuvio.app.features.tvremote.TV_REMOTE_PATH_COMMAND
 import com.nuvio.app.features.tvremote.TV_REMOTE_PATH_FORGET
 import com.nuvio.app.features.tvremote.TV_REMOTE_PATH_PAIR
 import com.nuvio.app.features.tvremote.TV_REMOTE_PATH_STATE
+import com.nuvio.app.features.tvremote.TV_REMOTE_PATH_TELEGRAM_ACTION
+import com.nuvio.app.features.tvremote.TV_REMOTE_PATH_TELEGRAM_STATE
+import com.nuvio.app.features.tvremote.TvRemotePairedPhones
+import com.nuvio.app.features.tvremote.TvRemoteTelegramActionRequest
+import com.nuvio.app.features.tvremote.TvRemoteTelegramActionType
+import com.nuvio.app.features.tvremote.TvRemoteTelegramState
+import com.nuvio.app.features.tvremote.TvRemoteTelegramStateRequest
+import com.nuvio.app.features.tvremote.TvRemoteTelegramStep
+import com.nuvio.app.features.telegram.TelegramAuthState
+import com.nuvio.app.features.telegram.TelegramRepository
 import com.nuvio.app.features.tvremote.TvRemoteCommandError
 import com.nuvio.app.features.tvremote.TvRemoteCommandRequest
 import com.nuvio.app.features.tvremote.TvRemoteCommandResponse
@@ -86,6 +96,9 @@ object TvPhoneRemote {
     private const val SAMPLER_IDLE_MS = 60_000L
     private const val CONNECTED_WINDOW_MS = 30_000L
     private const val MAX_REMEMBERED_REQUESTS = 512
+    private const val MAX_TELEGRAM_VALUE_CHARS = 256
+    private const val TELEGRAM_CLIENT_START_MS = 10_000L
+    private const val TELEGRAM_STEP_WAIT_MS = 6_000L
 
     data class UiState(
         val running: Boolean = false,
@@ -143,6 +156,7 @@ object TvPhoneRemote {
         store = TvRemoteStore(appContext)
         val phones = store.phones()
         _state.update { it.copy(tvName = store.tvName, phones = phones) }
+        scope.launch { state.collect { TvRemotePairedPhones.count.value = it.phones.size } }
         log.i { "Phone remote initialized (${phones.size} paired phones)" }
         if (phones.isNotEmpty()) ensureServer()
     }
@@ -265,6 +279,8 @@ object TvPhoneRemote {
                         post(TV_REMOTE_PATH_STATE) { handleSealed(TV_REMOTE_PATH_STATE) }
                         post(TV_REMOTE_PATH_COMMAND) { handleSealed(TV_REMOTE_PATH_COMMAND) }
                         post(TV_REMOTE_PATH_FORGET) { handleSealed(TV_REMOTE_PATH_FORGET) }
+                        post(TV_REMOTE_PATH_TELEGRAM_STATE) { handleSealed(TV_REMOTE_PATH_TELEGRAM_STATE) }
+                        post(TV_REMOTE_PATH_TELEGRAM_ACTION) { handleSealed(TV_REMOTE_PATH_TELEGRAM_ACTION) }
                     }
                 }
                 engine.start(wait = false)
@@ -334,9 +350,73 @@ object TvPhoneRemote {
                 withContext(Dispatchers.Main) { forgetPhone(envelope.clientId) }
                 call.respond(HttpStatusCode.NoContent)
             }
+            TV_REMOTE_PATH_TELEGRAM_STATE -> {
+                openOrNull(key, path, TvRemoteTelegramStateRequest.serializer(), envelope) ?: return
+                markSeen(envelope.clientId)
+                respondSealed(key, envelope.clientId, path, TvRemoteTelegramState.serializer(), telegramState())
+            }
+            TV_REMOTE_PATH_TELEGRAM_ACTION -> {
+                val request = openOrNull(key, path, TvRemoteTelegramActionRequest.serializer(), envelope) ?: return
+                markSeen(envelope.clientId)
+                val duplicate = synchronized(lock) {
+                    if (handledRequests.containsKey(request.requestId)) true else {
+                        handledRequests[request.requestId] = System.currentTimeMillis()
+                        false
+                    }
+                }
+                if (!duplicate) runTelegramAction(request)
+                respondSealed(key, envelope.clientId, path, TvRemoteTelegramState.serializer(), telegramState())
+            }
             else -> call.respond(HttpStatusCode.NotFound)
         }
     }
+
+    // region Telegram login from the phone
+
+    private fun telegramState(): TvRemoteTelegramState =
+        when (val auth = TelegramRepository.authState.value) {
+            TelegramAuthState.Idle, TelegramAuthState.Initializing -> TvRemoteTelegramState(TvRemoteTelegramStep.Starting)
+            TelegramAuthState.NotConfigured, TelegramAuthState.Unavailable -> TvRemoteTelegramState(TvRemoteTelegramStep.Unavailable)
+            TelegramAuthState.WaitPhone -> TvRemoteTelegramState(TvRemoteTelegramStep.WaitPhone)
+            is TelegramAuthState.WaitCode -> TvRemoteTelegramState(TvRemoteTelegramStep.WaitCode, codeLength = auth.codeLength)
+            is TelegramAuthState.WaitQr -> TvRemoteTelegramState(TvRemoteTelegramStep.WaitQr, qrLink = auth.link)
+            TelegramAuthState.WaitPassword -> TvRemoteTelegramState(TvRemoteTelegramStep.WaitPassword)
+            is TelegramAuthState.Ready -> TvRemoteTelegramState(
+                TvRemoteTelegramStep.Ready,
+                accountName = auth.firstName.ifBlank { auth.userId.toString() },
+            )
+            is TelegramAuthState.Error -> TvRemoteTelegramState(TvRemoteTelegramStep.Error, error = auth.message)
+        }
+
+    private suspend fun runTelegramAction(request: TvRemoteTelegramActionRequest) {
+        val value = request.value?.trim()?.take(MAX_TELEGRAM_VALUE_CHARS)
+        log.i { "Telegram login step ${request.action} received from the phone" }
+        val before = TelegramRepository.authState.value
+        if (!TelegramRepository.isClientReady()) {
+            TelegramRepository.startAuth()
+            if (withTimeoutOrNull(TELEGRAM_CLIENT_START_MS) { TelegramRepository.awaitClient() } == null) {
+                log.w { "Telegram client not started in time for ${request.action}" }
+                return
+            }
+        }
+        when (request.action) {
+            TvRemoteTelegramActionType.Start -> Unit
+            TvRemoteTelegramActionType.Retry -> TelegramRepository.retry()
+            TvRemoteTelegramActionType.RequestQr -> TelegramRepository.requestQrLogin()
+            TvRemoteTelegramActionType.SubmitPhone ->
+                value?.takeIf { it.isNotEmpty() }?.let(TelegramRepository::submitPhone)
+            TvRemoteTelegramActionType.SubmitCode ->
+                value?.takeIf { it.isNotEmpty() }?.let(TelegramRepository::submitCode)
+            TvRemoteTelegramActionType.SubmitPassword ->
+                value?.takeIf { it.isNotEmpty() }?.let(TelegramRepository::submitPassword)
+        }
+        // Answers with the next step when TDLib moves on quickly (it usually does).
+        withTimeoutOrNull(TELEGRAM_STEP_WAIT_MS) {
+            TelegramRepository.authState.first { it != before && it != TelegramAuthState.Initializing }
+        }
+    }
+
+    // endregion
 
     private suspend fun RoutingContext.handlePair(envelope: TvRemoteEnvelope) {
         val (qrKey, codeKey) = synchronized(lock) { pairingKey to pairingCodeKey }
@@ -422,6 +502,8 @@ object TvPhoneRemote {
             is TvRemoteStateRequest -> request.timestampMs
             is TvRemoteCommandRequest -> request.timestampMs
             is TvRemoteForgetRequest -> request.timestampMs
+            is TvRemoteTelegramStateRequest -> request.timestampMs
+            is TvRemoteTelegramActionRequest -> request.timestampMs
             else -> 0L
         }
         if (!isFresh(timestamp)) {

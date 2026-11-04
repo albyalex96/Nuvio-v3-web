@@ -127,6 +127,12 @@ interface PhoneTvRemoteClient {
     /** Turns the notification / lock screen controls on or off. */
     fun setBackgroundControls(enabled: Boolean)
 
+    /** Telegram login step of the paired TV; null when the TV can not be reached. */
+    suspend fun telegramState(): TvRemoteTelegramState?
+
+    /** Sends a Telegram login step to the paired TV; returns the new TV state (null on failure). */
+    suspend fun telegramAction(action: TvRemoteTelegramActionType, value: String? = null): TvRemoteTelegramState?
+
     /** Full screen QR scanner; [onResult] receives the scanned text (null when closed). */
     @Composable
     fun QrScanner(onResult: (String?) -> Unit)
@@ -139,6 +145,11 @@ object PhoneTvRemote {
     /** The phone remote is offered: Android full distribution, phone/tablet app (not the TV app). */
     val activeClient: PhoneTvRemoteClient?
         get() = client?.takeIf { !TvAppRuntime.isTvApp }
+}
+
+/** TV side: phones paired with the TV remote (set by the TV app), used by the Telegram page. */
+object TvRemotePairedPhones {
+    val count = kotlinx.coroutines.flow.MutableStateFlow(0)
 }
 
 /** Parses "host" or "host:port" (IPv6 as "[::1]:port"); null when it is not valid. */

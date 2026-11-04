@@ -56,6 +56,26 @@ object TelegramRepository {
     fun submitCode(code: String) = TelegramClient.submitCode(code)
     fun submitPassword(password: String) = TelegramClient.submitPassword(password)
 
+    fun requestQrLogin() = TelegramClient.requestQrLogin()
+
+    /**
+     * Approves, with the account logged in here, the QR login [link] of another device
+     * (the TV): returns null on success, the Telegram error message otherwise.
+     */
+    suspend fun confirmQrLogin(link: String): String? {
+        if (!isAuthenticated()) return "Telegram is not connected on this device"
+        if (!link.startsWith("tg://login?token=")) return "Invalid login link"
+        return try {
+            TelegramClient.sendRequest(TdApi.ConfirmQrCodeAuthentication(link))
+                ?: return "Telegram did not answer"
+            log.i { "QR login of another device approved" }
+            null
+        } catch (error: TelegramApiException) {
+            log.w(error) { "QR login approval failed" }
+            error.message ?: "Telegram error"
+        }
+    }
+
     fun disconnect() {
         log.i { "Disconnecting the Telegram account" }
         TelegramStreamingProxy.stop()

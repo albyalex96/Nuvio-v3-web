@@ -31,4 +31,22 @@
     <string name="settings_licenses_attributions_tdlib_title">TDLib</string>
     <string name="settings_licenses_attributions_tdlib_body">L'integrazione con Telegram usa TDLib (Telegram Database Library) per l'accesso, la ricerca dei messaggi e il download dei file.</string>
     <string name="settings_licenses_attributions_tdlib_license">Distribuita con licenza Boost Software License 1.0.</string>
+    <string name="settings_telegram_phone_login_title">Accedi dal telefono</string>
+    <string name="settings_telegram_phone_login_body">Completa l'accesso a Telegram da Nuvio sul telefono abbinato: lì inserisci numero, codice e password a due fattori, oppure approvi con l'account Telegram già collegato sul telefono. Tutto viaggia cifrato nella tua rete locale.</string>
+    <string name="settings_telegram_phone_login_button">Accedi dal telefono</string>
+    <string name="settings_telegram_phone_login_waiting">Sul telefono apri Impostazioni → Telegram → Telegram sulla TV e segui i passaggi.</string>
+    <string name="settings_telegram_phone_login_needs_pairing">Abbina prima il telefono: apri Impostazioni → Telecomando TV su questa TV e abbinala a Nuvio sul telefono.</string>
+    <string name="settings_telegram_manual_login_title">Oppure accedi da qui</string>
+    <string name="settings_telegram_tv_section">Telegram sulla TV</string>
+    <string name="settings_telegram_tv_description">Accedi a Telegram sulla TV abbinata (%1$s) da questo telefono, tramite il collegamento del telecomando nella tua rete locale.</string>
+    <string name="settings_telegram_tv_unreachable">Non riesco a raggiungere la TV. Apri Nuvio sulla TV e tienila sulla stessa rete.</string>
+    <string name="settings_telegram_tv_unavailable">Telegram non è disponibile sulla TV.</string>
+    <string name="settings_telegram_tv_starting">Avvio di Telegram sulla TV…</string>
+    <string name="settings_telegram_tv_connected">La TV è collegata a Telegram come %1$s.</string>
+    <string name="settings_telegram_tv_approve_title">Approva con il tuo account</string>
+    <string name="settings_telegram_tv_approve_body">Telegram è collegato su questo telefono come %1$s: approva l'accesso della TV con questo account, senza codice.</string>
+    <string name="settings_telegram_tv_approve_button">Approva l'accesso della TV</string>
+    <string name="settings_telegram_tv_manual_title">Oppure accedi con il numero di telefono</string>
+    <string name="settings_telegram_tv_qr_waiting">La TV aspetta l'approvazione. Se ci mette troppo, approva il link dall'app Telegram ufficiale: %1$s</string>
+    <string name="settings_telegram_tv_start">Avvia l'accesso sulla TV</string>
 </resources>

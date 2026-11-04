@@ -63,6 +63,33 @@ import nuvio.composeapp.generated.resources.settings_telegram_send_code
 import nuvio.composeapp.generated.resources.settings_telegram_submit_password
 import nuvio.composeapp.generated.resources.settings_telegram_unavailable
 import nuvio.composeapp.generated.resources.settings_telegram_verify_code
+import nuvio.composeapp.generated.resources.settings_telegram_phone_login_title
+import nuvio.composeapp.generated.resources.settings_telegram_phone_login_body
+import nuvio.composeapp.generated.resources.settings_telegram_phone_login_button
+import nuvio.composeapp.generated.resources.settings_telegram_phone_login_waiting
+import nuvio.composeapp.generated.resources.settings_telegram_phone_login_needs_pairing
+import nuvio.composeapp.generated.resources.settings_telegram_manual_login_title
+import nuvio.composeapp.generated.resources.settings_telegram_tv_section
+import nuvio.composeapp.generated.resources.settings_telegram_tv_description
+import nuvio.composeapp.generated.resources.settings_telegram_tv_unreachable
+import nuvio.composeapp.generated.resources.settings_telegram_tv_unavailable
+import nuvio.composeapp.generated.resources.settings_telegram_tv_starting
+import nuvio.composeapp.generated.resources.settings_telegram_tv_connected
+import nuvio.composeapp.generated.resources.settings_telegram_tv_approve_title
+import nuvio.composeapp.generated.resources.settings_telegram_tv_approve_body
+import nuvio.composeapp.generated.resources.settings_telegram_tv_approve_button
+import nuvio.composeapp.generated.resources.settings_telegram_tv_manual_title
+import nuvio.composeapp.generated.resources.settings_telegram_tv_qr_waiting
+import nuvio.composeapp.generated.resources.settings_telegram_tv_start
+import com.nuvio.app.features.tvremote.PhoneTvRemote
+import com.nuvio.app.features.tvremote.PhoneTvRemoteClient
+import com.nuvio.app.features.tvremote.TvRemotePairedPhones
+import com.nuvio.app.features.tvremote.TvRemoteTelegramActionType
+import com.nuvio.app.features.tvremote.TvRemoteTelegramState
+import com.nuvio.app.features.tvremote.TvRemoteTelegramStep
+import com.nuvio.app.tv.TvAppRuntime
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import org.jetbrains.compose.resources.stringResource
 import java.util.Locale
 
@@ -75,6 +102,29 @@ internal actual fun LazyListScope.telegramSettingsContent(isTablet: Boolean) {
         ) {
             SettingsGroup(isTablet = isTablet) {
                 TelegramAccountContent(isTablet = isTablet)
+            }
+        }
+    }
+    // Phone with a paired Nuvio TV: logs in to Telegram on the TV from here.
+    if (!TvAppRuntime.isTvApp) {
+        item(key = "telegram_tv") {
+            val client = PhoneTvRemote.activeClient ?: return@item
+            val remote by client.state.collectAsStateWithLifecycle()
+            val tv = remote.pairedTv ?: return@item
+            SettingsSection(
+                title = stringResource(Res.string.settings_telegram_tv_section),
+                isTablet = isTablet,
+            ) {
+                SettingsGroup(isTablet = isTablet) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = if (isTablet) 20.dp else 16.dp, vertical = if (isTablet) 18.dp else 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        TvTelegramLogin(client = client, tvName = tv.name)
+                    }
+                }
             }
         }
     }
@@ -92,6 +142,14 @@ private fun TelegramAccountContent(isTablet: Boolean) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BodyText(stringResource(Res.string.settings_telegram_description))
+        val loginInProgress = authState !is TelegramAuthState.Ready &&
+            authState != TelegramAuthState.NotConfigured &&
+            authState != TelegramAuthState.Unavailable
+        if (TvAppRuntime.isTvApp && loginInProgress) {
+            // TV: the login from the paired phone comes first, the manual one stays below.
+            PhoneLoginStep()
+            StepTitle(stringResource(Res.string.settings_telegram_manual_login_title))
+        }
         when (val state = authState) {
             TelegramAuthState.Idle, TelegramAuthState.WaitPhone -> PhoneStep()
             TelegramAuthState.Initializing -> Row(verticalAlignment = Alignment.CenterVertically) {
@@ -131,6 +189,170 @@ private fun TelegramAccountContent(isTablet: Boolean) {
                     Text(stringResource(Res.string.settings_telegram_retry))
                 }
             }
+        }
+    }
+}
+
+/** TV: login driven by the paired phone (disabled until a phone is paired). */
+@Composable
+private fun PhoneLoginStep() {
+    val pairedPhones by TvRemotePairedPhones.count.collectAsStateWithLifecycle()
+    var started by rememberSaveable { mutableStateOf(false) }
+    StepTitle(stringResource(Res.string.settings_telegram_phone_login_title))
+    if (pairedPhones == 0) {
+        BodyText(stringResource(Res.string.settings_telegram_phone_login_needs_pairing))
+        Button(onClick = {}, enabled = false) {
+            Text(stringResource(Res.string.settings_telegram_phone_login_button))
+        }
+        return
+    }
+    BodyText(stringResource(Res.string.settings_telegram_phone_login_body))
+    if (started) {
+        StepTitle(stringResource(Res.string.settings_telegram_phone_login_waiting), MaterialTheme.colorScheme.primary)
+    } else {
+        Button(onClick = {
+            started = true
+            TelegramRepository.startAuth()
+        }) {
+            Text(stringResource(Res.string.settings_telegram_phone_login_button))
+        }
+    }
+}
+
+/** Phone: Telegram login of the paired TV, through the TV remote connection. */
+@Composable
+private fun TvTelegramLogin(client: PhoneTvRemoteClient, tvName: String) {
+    val phoneAuth by TelegramRepository.authState.collectAsStateWithLifecycle()
+    var tvState by remember { mutableStateOf<TvRemoteTelegramState?>(null) }
+    var reachable by remember { mutableStateOf(true) }
+    var busy by remember { mutableStateOf(false) }
+    // The user asked to approve: the QR link is confirmed as soon as the TV shows it.
+    var approving by remember { mutableStateOf(false) }
+    var approveError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(client) {
+        while (isActive) {
+            val state = client.telegramState()
+            reachable = state != null
+            if (state != null) tvState = state
+            delay(if (state == null) 4_000L else 2_000L)
+        }
+    }
+    val qrLink = tvState?.qrLink
+    LaunchedEffect(approving, qrLink) {
+        if (approving && qrLink != null) {
+            approveError = TelegramRepository.confirmQrLogin(qrLink)
+            approving = false
+            client.telegramState()?.let { tvState = it }
+        }
+    }
+    val send: (TvRemoteTelegramActionType, String?) -> Unit = { action, value ->
+        scope.launch {
+            busy = true
+            val state = client.telegramAction(action, value)
+            if (state != null) tvState = state
+            reachable = state != null
+            busy = false
+        }
+    }
+
+    BodyText(stringResource(Res.string.settings_telegram_tv_description, tvName))
+    if (!reachable) {
+        StepTitle(stringResource(Res.string.settings_telegram_tv_unreachable), MaterialTheme.colorScheme.error)
+    }
+    val state = tvState ?: return
+    when (state.step) {
+        TvRemoteTelegramStep.Unavailable -> BodyText(stringResource(Res.string.settings_telegram_tv_unavailable))
+        TvRemoteTelegramStep.Starting -> {
+            BodyText(stringResource(Res.string.settings_telegram_tv_starting))
+            Button(onClick = { send(TvRemoteTelegramActionType.Start, null) }, enabled = !busy) {
+                Text(stringResource(Res.string.settings_telegram_tv_start))
+            }
+        }
+        TvRemoteTelegramStep.Ready -> StepTitle(
+            stringResource(Res.string.settings_telegram_tv_connected, state.accountName.orEmpty()),
+            MaterialTheme.colorScheme.primary,
+        )
+        TvRemoteTelegramStep.WaitPhone, TvRemoteTelegramStep.WaitQr -> {
+            val account = phoneAuth as? TelegramAuthState.Ready
+            if (account != null) {
+                StepTitle(stringResource(Res.string.settings_telegram_tv_approve_title))
+                BodyText(
+                    stringResource(
+                        Res.string.settings_telegram_tv_approve_body,
+                        account.firstName.ifBlank { account.userId.toString() },
+                    ),
+                )
+                Button(
+                    onClick = {
+                        approving = true
+                        approveError = null
+                        if (state.step != TvRemoteTelegramStep.WaitQr) send(TvRemoteTelegramActionType.RequestQr, null)
+                    },
+                    enabled = !approving && !busy,
+                ) {
+                    if (approving) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(Res.string.settings_telegram_tv_approve_button))
+                    }
+                }
+                approveError?.let { BodyText(it) }
+            } else if (state.step == TvRemoteTelegramStep.WaitQr && qrLink != null) {
+                BodyText(stringResource(Res.string.settings_telegram_tv_qr_waiting, qrLink))
+            }
+            StepTitle(stringResource(Res.string.settings_telegram_tv_manual_title))
+            PhoneNumberField(busy = busy) { phone -> send(TvRemoteTelegramActionType.SubmitPhone, phone) }
+        }
+        TvRemoteTelegramStep.WaitCode -> SecretStep(
+            title = stringResource(Res.string.settings_telegram_code_card_title),
+            instruction = stringResource(Res.string.settings_telegram_code_instruction, state.codeLength ?: 5),
+            label = stringResource(Res.string.settings_telegram_code_label),
+            action = stringResource(Res.string.settings_telegram_verify_code),
+            keyboardType = KeyboardType.Number,
+            isPassword = false,
+            onSubmit = { code -> send(TvRemoteTelegramActionType.SubmitCode, code) },
+        )
+        TvRemoteTelegramStep.WaitPassword -> SecretStep(
+            title = stringResource(Res.string.settings_telegram_2fa_card_title),
+            instruction = stringResource(Res.string.settings_telegram_2fa_instruction),
+            label = stringResource(Res.string.settings_telegram_2fa_label),
+            action = stringResource(Res.string.settings_telegram_submit_password),
+            keyboardType = KeyboardType.Password,
+            isPassword = true,
+            onSubmit = { password -> send(TvRemoteTelegramActionType.SubmitPassword, password) },
+        )
+        TvRemoteTelegramStep.Error -> {
+            StepTitle(stringResource(Res.string.settings_telegram_error_title), MaterialTheme.colorScheme.error)
+            BodyText(state.error.orEmpty())
+            Button(onClick = { send(TvRemoteTelegramActionType.Retry, null) }, enabled = !busy) {
+                Text(stringResource(Res.string.settings_telegram_retry))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhoneNumberField(busy: Boolean, onSubmit: (String) -> Unit) {
+    var phone by rememberSaveable { mutableStateOf("+") }
+    val submit = { if (phone.length > 1 && !busy) onSubmit(phone) }
+    BodyText(stringResource(Res.string.settings_telegram_phone_instruction))
+    OutlinedTextField(
+        value = phone,
+        onValueChange = { value -> phone = "+" + value.filter(Char::isDigit) },
+        label = { Text(stringResource(Res.string.settings_telegram_phone_label)) },
+        placeholder = { Text(stringResource(Res.string.settings_telegram_phone_placeholder)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { submit() }),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Button(onClick = { submit() }, enabled = !busy) {
+        if (busy) {
+            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+        } else {
+            Text(stringResource(Res.string.settings_telegram_send_code))
         }
     }
 }

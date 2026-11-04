@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.KSerializer
 import okhttp3.MediaType.Companion.toMediaType
@@ -718,6 +719,60 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
 
     // endregion
 
+    // region Telegram login of the TV
+
+    override suspend fun telegramState(): TvRemoteTelegramState? =
+        telegramPost(
+            path = TV_REMOTE_PATH_TELEGRAM_STATE,
+            requestSerializer = TvRemoteTelegramStateRequest.serializer(),
+            request = TvRemoteTelegramStateRequest(
+                timestampMs = System.currentTimeMillis(),
+                requestId = TvRemoteCrypto.randomId(),
+            ),
+        )
+
+    override suspend fun telegramAction(action: TvRemoteTelegramActionType, value: String?): TvRemoteTelegramState? {
+        log.i { "Telegram login step $action sent to the TV" }
+        return telegramPost(
+            path = TV_REMOTE_PATH_TELEGRAM_ACTION,
+            requestSerializer = TvRemoteTelegramActionRequest.serializer(),
+            request = TvRemoteTelegramActionRequest(
+                timestampMs = System.currentTimeMillis(),
+                requestId = TvRemoteCrypto.randomId(),
+                action = action,
+                value = value,
+            ),
+        )
+    }
+
+    private suspend fun <Req> telegramPost(
+        path: String,
+        requestSerializer: KSerializer<Req>,
+        request: Req,
+    ): TvRemoteTelegramState? = withContext(Dispatchers.IO) {
+        val paired = _state.value.pairedTv ?: return@withContext null
+        val clientId = preferences.getString(CLIENT_ID, null) ?: return@withContext null
+        val key = loadClientKey() ?: return@withContext null
+        runCatching {
+            post(
+                host = paired.host,
+                port = paired.port,
+                path = path,
+                key = key,
+                clientId = clientId,
+                requestSerializer = requestSerializer,
+                request = request,
+                responseSerializer = TvRemoteTelegramState.serializer(),
+                timeoutMs = TELEGRAM_TIMEOUT_MS,
+            )
+        }.onFailure { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            log.w(error) { "Telegram request to the TV failed ($path)" }
+        }.getOrNull()
+    }
+
+    // endregion
+
     // region Scanner
 
     @Composable
@@ -847,6 +902,8 @@ internal class PhoneTvRemoteClientImpl(context: Context) : PhoneTvRemoteClient {
         const val CLIENT_KEY = "client_key"
         const val PAIRING_TIMEOUT_MS = 12_000L
         const val COMMAND_TIMEOUT_MS = 6_000L
+        /** The TV may have to start its Telegram client before answering. */
+        const val TELEGRAM_TIMEOUT_MS = 20_000L
         const val MAX_BACKOFF_MS = 8_000L
         const val DISCOVERY_TIMEOUT_MS = 6_000L
         const val RESOLVE_TIMEOUT_MS = 5_000L

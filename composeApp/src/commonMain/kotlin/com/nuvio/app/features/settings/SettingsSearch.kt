@@ -2188,6 +2188,31 @@ private fun addAdditionalSearchEntries(
             category = generalCategory,
             icon = Icons.Rounded.Send,
         )
+        if (TvAppRuntime.isTvApp) {
+            // TV: login driven by the paired phone.
+            row(
+                page = SettingsPage.Telegram,
+                key = "telegram-phone-login",
+                title = stringResource(Res.string.settings_telegram_phone_login_title),
+                description = stringResource(Res.string.settings_telegram_phone_login_body),
+                pageLabel = stringResource(Res.string.compose_settings_page_telegram),
+                section = stringResource(Res.string.settings_telegram_section_account),
+                category = generalCategory,
+                icon = Icons.Rounded.Send,
+            )
+        } else if (PhoneTvRemote.activeClient != null) {
+            // Phone: Telegram login of the paired TV (the section shows up once a TV is paired).
+            row(
+                page = SettingsPage.Telegram,
+                key = "telegram-tv-login",
+                title = stringResource(Res.string.settings_telegram_tv_section),
+                description = stringResource(Res.string.settings_telegram_tv_approve_title),
+                pageLabel = stringResource(Res.string.compose_settings_page_telegram),
+                section = stringResource(Res.string.settings_telegram_tv_section),
+                category = generalCategory,
+                icon = Icons.Rounded.Send,
+            )
+        }
     }
 
     // Downloads
