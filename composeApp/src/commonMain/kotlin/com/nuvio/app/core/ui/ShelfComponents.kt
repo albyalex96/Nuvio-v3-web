@@ -198,11 +198,12 @@ fun NuvioPosterCard(
                         contentScale = ContentScale.Crop,
                     )
                 }
-                AsyncImage(
+                AnimatedArtworkImage(
                     model = imageModel,
                     contentDescription = title,
                     modifier = Modifier.matchParentSize(),
                     contentScale = if (fitImage) ContentScale.Fit else ContentScale.Crop,
+                    mode = posterCardStyle.animatedArtworkMode,
                 )
             } else {
                 Text(

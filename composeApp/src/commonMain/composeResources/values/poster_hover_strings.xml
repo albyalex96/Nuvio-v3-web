@@ -7,4 +7,8 @@
     <string name="settings_poster_hover_preview_delay">Preview delay</string>
     <string name="settings_poster_hover_preview_trailer">Play the trailer in the preview</string>
     <string name="settings_poster_hover_preview_trailer_sound">Trailer sound</string>
+    <string name="settings_poster_animated_artwork">Animated artwork</string>
+    <string name="settings_poster_animated_artwork_always">Always</string>
+    <string name="settings_poster_animated_artwork_on_hover">On hover</string>
+    <string name="settings_poster_animated_artwork_off">Off</string>
 </resources>

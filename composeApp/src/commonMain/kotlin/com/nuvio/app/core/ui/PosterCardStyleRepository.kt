@@ -43,6 +43,7 @@ private data class StoredPosterCardStylePreferences(
     val hideLabelsEnabled: Boolean = false,
     val alwaysShowLandscapeClearlogo: Boolean = false,
     val hoverScaleEnabled: Boolean = true,
+    val animatedArtworkMode: String = AnimatedArtworkMode.Always.name,
     val hoverPreviewEnabled: Boolean = true,
     val hoverPreviewOpenDelayMillis: Int = DefaultHoverPreviewOpenDelayMillis,
     val hoverPreviewTrailerEnabled: Boolean = false,
@@ -60,6 +61,7 @@ data class PosterCardStyleUiState(
     val hideLabelsEnabled: Boolean = false,
     val alwaysShowLandscapeClearlogo: Boolean = false,
     val hoverScaleEnabled: Boolean = true,
+    val animatedArtworkMode: AnimatedArtworkMode = AnimatedArtworkMode.Always,
     val hoverPreviewEnabled: Boolean = true,
     val hoverPreviewOpenDelayMillis: Int = DefaultHoverPreviewOpenDelayMillis,
     val hoverPreviewTrailerEnabled: Boolean = false,
@@ -159,6 +161,8 @@ object PosterCardStyleRepository {
 
     fun setHoverScaleEnabled(enabled: Boolean) = update { it.copy(hoverScaleEnabled = enabled) }
 
+    fun setAnimatedArtworkMode(mode: AnimatedArtworkMode) = update { it.copy(animatedArtworkMode = mode) }
+
     fun setHoverPreviewEnabled(enabled: Boolean) = update { it.copy(hoverPreviewEnabled = enabled) }
 
     fun setHoverPreviewOpenDelayMillis(delayMillis: Int) =
@@ -213,6 +217,7 @@ object PosterCardStyleRepository {
                 hideLabelsEnabled = stored.hideLabelsEnabled,
                 alwaysShowLandscapeClearlogo = stored.alwaysShowLandscapeClearlogo,
                 hoverScaleEnabled = stored.hoverScaleEnabled,
+                animatedArtworkMode = AnimatedArtworkMode.entries.firstOrNull { it.name == stored.animatedArtworkMode } ?: AnimatedArtworkMode.Always,
                 hoverPreviewEnabled = stored.hoverPreviewEnabled,
                 hoverPreviewOpenDelayMillis = normalizeHoverPreviewOpenDelayMillis(stored.hoverPreviewOpenDelayMillis),
                 hoverPreviewTrailerEnabled = stored.hoverPreviewTrailerEnabled,
@@ -235,6 +240,7 @@ object PosterCardStyleRepository {
                     hideLabelsEnabled = _uiState.value.hideLabelsEnabled,
                     alwaysShowLandscapeClearlogo = _uiState.value.alwaysShowLandscapeClearlogo,
                     hoverScaleEnabled = _uiState.value.hoverScaleEnabled,
+                    animatedArtworkMode = _uiState.value.animatedArtworkMode.name,
                     hoverPreviewEnabled = _uiState.value.hoverPreviewEnabled,
                     hoverPreviewOpenDelayMillis = _uiState.value.hoverPreviewOpenDelayMillis,
                     hoverPreviewTrailerEnabled = _uiState.value.hoverPreviewTrailerEnabled,

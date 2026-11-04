@@ -114,6 +114,10 @@ import nuvio.composeapp.generated.resources.settings_poster_hover_preview_delay
 import nuvio.composeapp.generated.resources.settings_poster_hover_preview_trailer
 import nuvio.composeapp.generated.resources.settings_poster_hover_preview_trailer_sound
 import nuvio.composeapp.generated.resources.settings_poster_card_width
+import nuvio.composeapp.generated.resources.settings_poster_animated_artwork
+import nuvio.composeapp.generated.resources.settings_poster_animated_artwork_always
+import nuvio.composeapp.generated.resources.settings_poster_animated_artwork_on_hover
+import nuvio.composeapp.generated.resources.settings_poster_animated_artwork_off
 import nuvio.composeapp.generated.resources.settings_poster_custom
 import nuvio.composeapp.generated.resources.settings_poster_description
 import nuvio.composeapp.generated.resources.settings_poster_hide_labels
@@ -1006,6 +1010,16 @@ private fun PosterMouseControls(isTablet: Boolean, uiState: PosterCardStyleUiSta
             .padding(horizontal = if (isTablet) 20.dp else 16.dp, vertical = if (isTablet) 18.dp else 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        PosterStyleOptionRow(
+            title = stringResource(Res.string.settings_poster_animated_artwork),
+            selectedValue = uiState.animatedArtworkMode.ordinal,
+            options = listOf(
+                PresetOption(stringResource(Res.string.settings_poster_animated_artwork_always), com.nuvio.app.core.ui.AnimatedArtworkMode.Always.ordinal),
+                PresetOption(stringResource(Res.string.settings_poster_animated_artwork_on_hover), com.nuvio.app.core.ui.AnimatedArtworkMode.OnHover.ordinal),
+                PresetOption(stringResource(Res.string.settings_poster_animated_artwork_off), com.nuvio.app.core.ui.AnimatedArtworkMode.Off.ordinal),
+            ),
+            onSelected = { PosterCardStyleRepository.setAnimatedArtworkMode(com.nuvio.app.core.ui.AnimatedArtworkMode.entries[it]) },
+        )
         PosterToggleRow(
             title = stringResource(Res.string.settings_poster_hover_scale),
             checked = uiState.hoverScaleEnabled,

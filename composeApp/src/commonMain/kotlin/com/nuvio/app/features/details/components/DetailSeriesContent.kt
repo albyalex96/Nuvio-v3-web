@@ -942,7 +942,7 @@ private fun EpisodeHorizontalCard(
 
         val shouldBlurArtwork = blurUnwatchedEpisodes && !isWatched
         if (imageUrl != null) {
-            AsyncImage(
+            com.nuvio.app.core.ui.AnimatedArtworkImage(
                 model = imageUrl,
                 contentDescription = video.title,
                 modifier = Modifier
@@ -950,6 +950,7 @@ private fun EpisodeHorizontalCard(
                     .height(metrics.cardHeight)
                     .then(if (shouldBlurArtwork) Modifier.blur(18.dp) else Modifier),
                 contentScale = ContentScale.Crop,
+                mode = com.nuvio.app.core.ui.rememberPosterCardStyleUiState().animatedArtworkMode,
             )
         }
 
@@ -1178,13 +1179,14 @@ private fun EpisodeHorizontalListCard(
                 .height(metrics.cardHeight),
         ) {
             if (imageUrl != null) {
-                AsyncImage(
+                com.nuvio.app.core.ui.AnimatedArtworkImage(
                     model = imageUrl,
                     contentDescription = video.title,
                     modifier = Modifier
                         .matchParentSize()
                         .then(if (blurUnwatchedEpisodes && !isWatched) Modifier.blur(18.dp) else Modifier),
                     contentScale = ContentScale.Crop,
+                    mode = com.nuvio.app.core.ui.rememberPosterCardStyleUiState().animatedArtworkMode,
                 )
             }
 
@@ -1567,13 +1569,14 @@ private fun EpisodeListCard(
                     val imageUrl = video.thumbnail ?: fallbackImage
                     val shouldBlurArtwork = blurUnwatchedEpisodes && !isWatched
                     if (imageUrl != null) {
-                        AsyncImage(
+                        com.nuvio.app.core.ui.AnimatedArtworkImage(
                             model = imageUrl,
                             contentDescription = video.title,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .then(if (shouldBlurArtwork) Modifier.blur(18.dp) else Modifier),
                             contentScale = ContentScale.Crop,
+                            mode = com.nuvio.app.core.ui.rememberPosterCardStyleUiState().animatedArtworkMode,
                         )
                     } else {
                         Box(

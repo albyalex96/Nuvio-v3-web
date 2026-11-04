@@ -1755,6 +1755,7 @@ private fun addAdditionalSearchEntries(
     if (com.nuvio.app.isDesktop) {
         val mouseSection = stringResource(Res.string.settings_poster_mouse_section)
         listOf(
+            PlaybackSearchRow("poster-animated-artwork", stringResource(Res.string.settings_poster_animated_artwork), "", mouseSection),
             PlaybackSearchRow("poster-hover-scale", stringResource(Res.string.settings_poster_hover_scale), "", mouseSection),
             PlaybackSearchRow("poster-hover-preview", stringResource(Res.string.settings_poster_hover_preview), stringResource(Res.string.settings_poster_hover_preview_description), mouseSection),
             PlaybackSearchRow("poster-hover-preview-delay", stringResource(Res.string.settings_poster_hover_preview_delay), "", mouseSection),

@@ -7,4 +7,8 @@
     <string name="settings_poster_hover_preview_delay">Ritardo dell'anteprima</string>
     <string name="settings_poster_hover_preview_trailer">Riproduci il trailer nell'anteprima</string>
     <string name="settings_poster_hover_preview_trailer_sound">Audio del trailer</string>
+    <string name="settings_poster_animated_artwork">Artwork animati</string>
+    <string name="settings_poster_animated_artwork_always">Sempre</string>
+    <string name="settings_poster_animated_artwork_on_hover">Al passaggio</string>
+    <string name="settings_poster_animated_artwork_off">Mai</string>
 </resources>
