@@ -382,7 +382,8 @@ private fun PlayerScreenRuntime.RenderPlayerControls(displayedPositionMs: Long, 
     }.collectAsStateWithLifecycle()
     // Stream Parser badges of the playing stream under the title (not for live TV channels).
     val showStreamBadges = streamParserSettings.enabled && streamParserSettings.playerBadgesEnabled && !isLiveTvPlayback
-    val streamBadgeInfo = if (showStreamBadges) {
+    // Parsed also without the badges: the "Via" line shows the stream source (as in the stream card).
+    val parsedStreamInfo = if (!isLiveTvPlayback) {
         remember(activeStream, activeStreamTitle, activeStreamSubtitle, activeSourceFilename, title) {
             parsePlayerStream(
                 stream = activeStream,
@@ -397,6 +398,7 @@ private fun PlayerScreenRuntime.RenderPlayerControls(displayedPositionMs: Long, 
     } else {
         null
     }
+    val streamBadgeInfo = parsedStreamInfo?.takeIf { showStreamBadges }
     AnimatedVisibility(
         visible = (controlsVisible || showParentalGuide) && !playerControlsLocked && !isInPip,
         enter = fadeIn(),
@@ -411,6 +413,7 @@ private fun PlayerScreenRuntime.RenderPlayerControls(displayedPositionMs: Long, 
                 PlayerStreamBadges(info = info, animationsEnabled = streamParserSettings.animationsEnabled)
             },
             streamTitle = activeStreamTitle,
+            streamSourceName = parsedStreamInfo?.sourceLabel,
             providerName = liveTvNowProgramTitle?.let { programTitle -> "$activeProviderName · $programTitle" }
                 ?: activeProviderName,
             seasonNumber = activeSeasonNumber,

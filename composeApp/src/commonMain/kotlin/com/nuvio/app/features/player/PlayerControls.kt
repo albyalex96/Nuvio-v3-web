@@ -91,6 +91,8 @@ internal fun PlayerControlsShell(
     title: String,
     logo: String? = null,
     streamBadges: PlayerStreamBadges? = null,
+    /** Source of the stream detected by the Stream Parser, shown in the "Via" line instead of the addon. */
+    streamSourceName: String? = null,
     clock: PlayerClockSettings? = null,
     streamTitle: String,
     providerName: String,
@@ -319,6 +321,15 @@ internal fun PlayerControlsShell(
                         .windowInsetsPadding(playerTimelineBottomInsets(metrics))
                         .padding(horizontal = metrics.horizontalPadding),
                 ) {
+                    val endTimeLabel: @Composable () -> Unit = {
+                        PlayerEndTimeLabel(
+                            positionMs = displayedPositionMs,
+                            durationMs = playbackSnapshot.durationMs,
+                            playbackSpeed = playbackSnapshot.playbackSpeed,
+                            use24Hour = clock?.use24Hour ?: true,
+                            metrics = metrics,
+                        )
+                    }
                     if (!hideDetails) {
                         PlayerTimelineDetails(
                             title = title,
@@ -330,8 +341,10 @@ internal fun PlayerControlsShell(
                             releaseInfo = releaseInfo,
                             streamTitle = streamTitle,
                             providerName = providerName,
+                            sourceName = streamSourceName,
                             isPlaying = playbackSnapshot.isPlaying,
                             metrics = metrics,
+                            sourceLineTrailing = endTimeLabel,
                         )
                     }
                     Row(
@@ -351,13 +364,8 @@ internal fun PlayerControlsShell(
                                 },
                             )
                         }
-                        PlayerEndTimeLabel(
-                            positionMs = displayedPositionMs,
-                            durationMs = playbackSnapshot.durationMs,
-                            playbackSpeed = playbackSnapshot.playbackSpeed,
-                            use24Hour = clock?.use24Hour ?: true,
-                            metrics = metrics,
-                        )
+                        // With the details hidden there is no "Via" line: keep the label here.
+                        if (hideDetails) endTimeLabel()
                     }
                     PlayerTimeline(
                         snapshot = playbackSnapshot,

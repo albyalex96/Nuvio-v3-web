@@ -23,6 +23,16 @@ import com.nuvio.app.features.streams.parser.GenericStreamParser
 import com.nuvio.app.features.streams.parser.StreamParserInfo
 import com.nuvio.app.features.streams.parser.StreamParserQualityBadge
 import com.nuvio.app.features.streams.parser.StreamParserTechChip
+import com.nuvio.app.features.streams.parser.StreamParserOutlinedChip
+import com.nuvio.app.features.streams.parser.StreamParserDirectChipColor
+import com.nuvio.app.features.streams.parser.StreamParserCachedBadge
+import com.nuvio.app.features.streams.parser.StreamParserTorrentBadge
+import com.nuvio.app.features.streams.parser.StreamParserProxiedBadge
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Link
+import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.stream_parser_direct
+import org.jetbrains.compose.resources.stringResource
 
 private val log = Logger.withTag("PlayerStreamBadges")
 
@@ -78,8 +88,20 @@ internal fun PlayerStreamBadgesRow(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StreamParserQualityBadge(badges.info.resolution, badges.animationsEnabled)
-        badges.info.tags.forEach { tag -> StreamParserTechChip(tag) }
+        val info = badges.info
+        StreamParserQualityBadge(info.resolution, badges.animationsEnabled)
+        info.tags.forEach { tag -> StreamParserTechChip(tag) }
+        // Same badges as the stream card: "Direct" without tags, then the cached/torrent/proxied status.
+        if (info.tags.isEmpty() && !info.isTorrent) {
+            StreamParserOutlinedChip(
+                label = stringResource(Res.string.stream_parser_direct),
+                icon = Icons.Rounded.Link,
+                color = StreamParserDirectChipColor,
+            )
+        }
+        if (info.isCached) StreamParserCachedBadge(badges.animationsEnabled)
+        if (info.isTorrent) StreamParserTorrentBadge(badges.animationsEnabled)
+        if (info.isProxied) StreamParserProxiedBadge(badges.animationsEnabled)
     }
 }
 

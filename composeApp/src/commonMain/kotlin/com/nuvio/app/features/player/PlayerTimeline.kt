@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -58,8 +59,11 @@ internal fun PlayerTimelineDetails(
     releaseInfo: String?,
     streamTitle: String,
     providerName: String,
+    sourceName: String? = null,
     isPlaying: Boolean,
     metrics: PlayerLayoutMetrics,
+    /** Drawn at the right end of the "Via ..." line (e.g. the "Ends at" label). */
+    sourceLineTrailing: (@Composable () -> Unit)? = null,
 ) {
     val typeScale = MaterialTheme.nuvioTypeScale
     Column(Modifier.padding(horizontal = PlayerTimelineContentInset)) {
@@ -105,15 +109,26 @@ internal fun PlayerTimelineDetails(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        val source = providerName.ifBlank { streamTitle }.replace("\n", " · ")
-        if (!isPlaying && source.isNotBlank()) {
-            Text(
-                text = stringResource(Res.string.compose_player_via, source),
-                style = typeScale.labelSm.copy(fontSize = metrics.metadataSize),
-                color = Color.White.copy(alpha = 0.68f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        val source = sourceName?.takeIf { it.isNotBlank() } ?: providerName.ifBlank { streamTitle }.replace("\n", " · ")
+        val showSource = !isPlaying && source.isNotBlank()
+        if (showSource || sourceLineTrailing != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    if (showSource) {
+                        Text(
+                            text = stringResource(Res.string.compose_player_via, source),
+                            style = typeScale.labelSm.copy(fontSize = metrics.metadataSize),
+                            color = Color.White.copy(alpha = 0.68f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                sourceLineTrailing?.invoke()
+            }
         }
     }
 }
