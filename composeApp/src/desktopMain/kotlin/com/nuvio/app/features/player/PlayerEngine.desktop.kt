@@ -69,7 +69,12 @@ actual fun PlatformPlayerSurface(
     var frameTick by remember { mutableIntStateOf(0) }
     DisposableEffect(player) {
         player.onFrame = { frameTick = player.frameNumber() }
+        player.setProperty("volume", (com.nuvio.app.desktop.mpv.DesktopActivePlayer.savedVolume * 100f).toString())
+        com.nuvio.app.desktop.mpv.DesktopActivePlayer.current = player
         onDispose {
+            if (com.nuvio.app.desktop.mpv.DesktopActivePlayer.current === player) {
+                com.nuvio.app.desktop.mpv.DesktopActivePlayer.current = null
+            }
             player.onFrame = null
             player.release()
         }

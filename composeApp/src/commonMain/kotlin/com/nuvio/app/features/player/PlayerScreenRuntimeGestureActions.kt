@@ -323,6 +323,11 @@ internal fun PlayerScreenRuntime.rememberSurfaceGestureCallbacks(): PlayerSurfac
         }
     }
     val onSurfaceDoubleTap = rememberUpdatedState { offset: Offset ->
+        // Desktop: double click toggles fullscreen, like mpv/VLC (seeking is on the arrow keys).
+        if (com.nuvio.app.isDesktop && PlayerWindowFullscreen.isSupported && !playerControlsLocked) {
+            PlayerWindowFullscreen.toggle()
+            return@rememberUpdatedState
+        }
         if (playerControlsLocked) {
             revealLockedOverlay()
             return@rememberUpdatedState

@@ -65,6 +65,28 @@ internal actual fun OnPlayerScreenOff(onScreenOff: () -> Unit) = Unit
 @Composable
 internal actual fun rememberProgressUploadKeepAlive(): () -> Unit = remember { {} }
 
-// Brightness and system volume swipe gestures are touch-only.
+/** Volume of the active mpv player (keyboard arrows, mouse wheel, M); no screen brightness on desktop. */
 @Composable
-internal actual fun rememberPlatformPlayerGestureController(): PlayerGestureController? = null
+internal actual fun rememberPlatformPlayerGestureController(): PlayerGestureController? =
+    remember { DesktopMpvGestureController }
+
+private object DesktopMpvGestureController : PlayerGestureController {
+    override fun currentBrightness(): Float? = null
+
+    override fun setBrightness(level: Float): Float? = null
+
+    override fun currentVolume(): PlayerAudioLevel? {
+        val player = com.nuvio.app.desktop.mpv.DesktopActivePlayer.current ?: return null
+        val volume = player.doubleProperty("volume") ?: return null
+        return PlayerAudioLevel(fraction = (volume / 100.0).toFloat().coerceIn(0f, 1f), isMuted = player.flagProperty("mute"))
+    }
+
+    override fun setVolume(level: Float): PlayerAudioLevel? {
+        val player = com.nuvio.app.desktop.mpv.DesktopActivePlayer.current ?: return null
+        val target = level.coerceIn(0f, 1f)
+        player.setProperty("volume", (target * 100f).toString())
+        if (target > 0f) player.setProperty("mute", "no")
+        com.nuvio.app.desktop.mpv.DesktopActivePlayer.rememberVolume(target)
+        return currentVolume()
+    }
+}

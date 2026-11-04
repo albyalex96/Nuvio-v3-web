@@ -147,6 +147,7 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
             .fillMaxSize()
             .onSizeChanged { layoutSize = it }
             .onPlayerMouseMove { revealControlsForMouse() }
+            .then(desktopPlayerInputModifier())
             .then(
                 hiddenPlayerPointerIcon
                     ?.takeIf { !controlsVisible && playbackSnapshot.isPlaying }

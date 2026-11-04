@@ -2,7 +2,11 @@ package com.nuvio.app
 
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
+import com.nuvio.app.features.player.PlayerWindowFullscreen
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -51,6 +55,15 @@ fun main(args: Array<String>) {
             title = "Nuvio",
             icon = painterResource(Res.drawable.app_logo_wordmark),
         ) {
+            // Fullscreen for the player (F, double click): the window owns it.
+            LaunchedEffect(windowState) {
+                PlayerWindowFullscreen.handler = { fullscreen ->
+                    windowState.placement = if (fullscreen) WindowPlacement.Fullscreen else WindowPlacement.Floating
+                }
+                snapshotFlow { windowState.placement }.collect { placement ->
+                    PlayerWindowFullscreen.reportState(placement == WindowPlacement.Fullscreen)
+                }
+            }
             App()
         }
     }
