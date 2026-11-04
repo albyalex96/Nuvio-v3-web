@@ -183,11 +183,12 @@ fun NuvioFloatingPrompt(
                     }
                 },
             // TV: a compact card in the bottom-right corner instead of a full-width banner.
+            // Desktop: same compact width, centred at the bottom of the window.
             contentAlignment = if (isTv) Alignment.BottomEnd else Alignment.BottomCenter,
         ) {
             Surface(
                 modifier = Modifier
-                    .then(if (isTv) Modifier.widthIn(max = TvPromptMaxWidth) else Modifier)
+                    .then(if (isTv || com.nuvio.app.isDesktop) Modifier.widthIn(max = TvPromptMaxWidth) else Modifier)
                     .onSizeChanged { promptHeightPx = it.height },
                 shape = tokens.shapes.card,
                 color = tokens.colors.surfacePopover,
