@@ -24,3 +24,6 @@ internal fun Modifier.onPlayerMouseMove(onMouseMove: () -> Unit): Modifier =
             }
         }
     }
+
+/** Pointer icon used while the controls are hidden during playback; null where the platform keeps the default. */
+internal expect val hiddenPlayerPointerIcon: androidx.compose.ui.input.pointer.PointerIcon?

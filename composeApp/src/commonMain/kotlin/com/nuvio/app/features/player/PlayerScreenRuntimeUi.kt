@@ -20,6 +20,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.features.cast.CastDevicePickerDialog
@@ -146,6 +147,12 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
             .fillMaxSize()
             .onSizeChanged { layoutSize = it }
             .onPlayerMouseMove { revealControlsForMouse() }
+            .then(
+                hiddenPlayerPointerIcon
+                    ?.takeIf { !controlsVisible && playbackSnapshot.isPlaying }
+                    ?.let { Modifier.pointerHoverIcon(it) }
+                    ?: Modifier,
+            )
             .playerSurfaceTapGestures(
                 layoutSize = layoutSize,
                 playbackGesturesEnabled = playbackGesturesEnabled,
