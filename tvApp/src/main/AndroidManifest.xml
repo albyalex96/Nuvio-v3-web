@@ -108,6 +108,12 @@
                 android:resource="@xml/searchable" />
         </activity>
 
+        <!-- Android TV global search: makes the app appear among the "Searchable apps". -->
+        <provider
+            android:name="com.nuvio.tv.search.TvSearchSuggestionsProvider"
+            android:authorities="${applicationId}.search"
+            android:exported="true" />
+
         <service
             android:name="com.nuvio.app.features.player.PlayerNowPlayingService"
             android:exported="false"

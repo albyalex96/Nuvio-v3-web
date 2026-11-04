@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Makes the app searchable by the system: Google Assistant / remote voice search. -->
+<!--
+  Makes the app searchable by the system: Google Assistant / remote voice search and the
+  Android TV global search ("Searchable apps"), which queries TvSearchSuggestionsProvider.
+-->
 <searchable xmlns:android="http://schemas.android.com/apk/res/android"
     android:label="@string/tv_app_name"
+    android:hint="@string/tv_app_name"
+    android:includeInGlobalSearch="true"
+    android:searchSettingsDescription="@string/tv_app_name"
+    android:searchSuggestAuthority="@string/tv_search_suggest_authority"
+    android:searchSuggestIntentAction="android.intent.action.VIEW"
+    android:searchSuggestThreshold="1"
+    android:queryAfterZeroResults="true"
     android:voiceSearchMode="showVoiceSearchButton|launchRecognizer" />

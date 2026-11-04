@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="tv_app_name">Nuvio Enhanced TV</string>
+    <string name="tv_app_name">Nuvio</string>
+    <string name="tv_global_search_suggestion">Search “%1$s” in Nuvio</string>
+    <string name="tv_global_search_suggestion_subtitle">Open the search in the app</string>
 
     <string name="tv_nav_home">Home</string>
     <string name="tv_nav_search">Search</string>

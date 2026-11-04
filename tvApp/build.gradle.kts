@@ -105,6 +105,11 @@ android {
         }
     }
 
+    buildFeatures {
+        // tv_search_suggest_authority (global search provider), see androidComponents below.
+        resValues = true
+    }
+
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
@@ -116,6 +121,13 @@ androidComponents {
     onVariants(selector().withBuildType("debug")) { variant ->
         // Release ID + ".debug" (hyphens are not allowed in Android application IDs).
         variant.applicationId.set("com.nuvioenhanced.alby.tv.debug")
+    }
+    onVariants { variant ->
+        // Global search authority used by res/xml/searchable.xml (must match the manifest provider).
+        variant.resValues.put(
+            variant.makeResValueKey("string", "tv_search_suggest_authority"),
+            com.android.build.api.variant.ResValue("${variant.applicationId.get()}.search"),
+        )
     }
 }
 
