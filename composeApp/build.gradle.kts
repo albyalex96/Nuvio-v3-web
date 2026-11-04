@@ -788,3 +788,12 @@ compose.desktop {
         }
     }
 }
+
+// Desktop render benchmark (MpvRenderBenchmarkTest): -Pnuvio.desktop.benchmark=true
+tasks.matching { it.name == "desktopTest" }.configureEach {
+    (this as Test).systemProperty(
+        "nuvio.desktop.benchmark",
+        providers.gradleProperty("nuvio.desktop.benchmark").orNull ?: "false",
+    )
+    testLogging.showStandardStreams = providers.gradleProperty("nuvio.desktop.benchmark").orNull == "true"
+}
