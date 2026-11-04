@@ -24,6 +24,9 @@ import nuvio.composeapp.generated.resources.app_logo_wordmark
 private val log = Logger.withTag("DesktopApp")
 
 fun main(args: Array<String>) {
+    // Before any socket: on Windows the IPv6 stack makes JmDNS (Chromecast discovery) fail with
+    // "setInterface6: Invalid argument". Also set in the packaged app's JVM options.
+    System.setProperty("java.net.preferIPv4Stack", "true")
     // Same order as NuvioApplication/MainActivity on Android: storage first, then logger and DNS.
     DesktopStorageBootstrap.initialize()
     AppLogger.install(debuggable = System.getProperty("nuvio.debug") == "true")

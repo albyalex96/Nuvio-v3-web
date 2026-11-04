@@ -769,6 +769,8 @@ compose.desktop {
         jvmArgs += listOf(
             "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
             "--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED",
+            // JmDNS (Chromecast discovery) fails on Windows' IPv6 socket stack: setInterface6 EINVAL.
+            "-Djava.net.preferIPv4Stack=true",
         )
         nativeDistributions {
             targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi)
