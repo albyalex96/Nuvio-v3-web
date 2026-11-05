@@ -465,6 +465,21 @@ private fun HeroContentBlock(
             showImdbRating = showImdbRating,
             showMdbListRatings = showMdbListRatings,
         )
+
+        if (layout.isTablet) {
+            item.description?.takeIf { it.isNotBlank() }?.let { description ->
+                Spacer(modifier = Modifier.height(14.dp))
+                Text(
+                    text = description,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.82f),
+                    textAlign = TextAlign.Start,
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }
 
