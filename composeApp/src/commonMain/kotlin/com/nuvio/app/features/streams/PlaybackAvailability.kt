@@ -78,7 +78,8 @@ internal fun rememberPlaybackAvailability(): PlaybackAvailability {
         PluginsUiState(pluginsEnabled = false)
     }
     val downloads by remember {
-        DownloadsRepository.ensureLoaded()
+        // Non-blocking: availability is recomputed when the downloads finish loading.
+        DownloadsRepository.preloadInBackground()
         DownloadsRepository.uiState
     }.collectAsStateWithLifecycle()
     val servers by remember {

@@ -6,6 +6,15 @@ import com.nuvio.app.features.downloads.hls.HlsDownloadSpec
 import com.nuvio.app.features.downloads.hls.HlsStreamAnalyzer
 import com.nuvio.app.features.player.addonSubtitleRequests
 import com.nuvio.app.features.streams.StreamItem
+import com.nuvio.app.core.logging.StartupTrace
+import kotlin.concurrent.Volatile
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,9 +39,30 @@ object DownloadsRepository {
     private var hasLoaded = false
     private var nextDownloadOrdinal = 0L
 
+    /** Guards the first load, which may run on a background thread (see [preloadInBackground]). */
+    private val loadLock = SynchronizedObject()
+    @Volatile private var firstLoadDone = false
+    private val preloadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Loads the saved downloads now; waits for a background load already in progress. */
     fun ensureLoaded() {
-        if (hasLoaded) return
-        loadFromDisk()
+        if (firstLoadDone) return
+        synchronized(loadLock) {
+            if (firstLoadDone) return
+            loadFromDisk()
+            firstLoadDone = true
+        }
+    }
+
+    /**
+     * Startup: reading the saved downloads checks every file on disk, so the first screen starts
+     * the load in background instead of waiting for it; [uiState] updates when it is done.
+     */
+    fun preloadInBackground() {
+        if (firstLoadDone) return
+        preloadScope.launch {
+            StartupTrace.measure("DownloadsRepository load (background)") { ensureLoaded() }
+        }
     }
 
     fun onProfileChanged() {
@@ -47,6 +77,7 @@ object DownloadsRepository {
         activeHandles.values.forEach(DownloadsTaskHandle::cancel)
         activeHandles.clear()
         hasLoaded = false
+        firstLoadDone = false
         _hasUnseenCompleted.value = false
         _uiState.value = DownloadsUiState()
         notifyLiveStatusPlatform()

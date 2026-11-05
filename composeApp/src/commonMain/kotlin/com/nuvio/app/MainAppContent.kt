@@ -221,6 +221,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -375,11 +378,19 @@ internal fun MainAppContent(
     }.collectAsStateWithLifecycle()
     val fullyWatchedSeriesKeys by WatchedRepository.fullyWatchedSeriesKeys.collectAsStateWithLifecycle()
     val downloadsUiState by remember {
-        StartupTrace.measure("DownloadsRepository.ensureLoaded") { DownloadsRepository.ensureLoaded() }
-        // Season downloads resume with the app (also those stopped while it was closed).
-        StartupTrace.measure("SeasonDownloadRepository.ensureLoaded") { com.nuvio.app.features.downloads.season.SeasonDownloadRepository.ensureLoaded() }
+        // Not needed for the first frame: loaded in background, the state updates when ready.
+        DownloadsRepository.preloadInBackground()
         DownloadsRepository.uiState
     }.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        // Season downloads resume with the app (also those stopped while it was closed), after the
+        // first frame and once the saved downloads are loaded off the main thread.
+        withFrameNanos { }
+        withContext(Dispatchers.IO) { DownloadsRepository.ensureLoaded() }
+        StartupTrace.measure("SeasonDownloadRepository.ensureLoaded") {
+            com.nuvio.app.features.downloads.season.SeasonDownloadRepository.ensureLoaded()
+        }
+    }
     val networkStatusUiState by remember {
         NetworkStatusRepository.uiState
     }.collectAsStateWithLifecycle()
