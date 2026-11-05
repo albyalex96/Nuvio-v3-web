@@ -185,7 +185,13 @@ open class MainActivity : AppCompatActivity() {
         PlatformLocalAccountDataCleaner.initialize(applicationContext)
         EpisodeReleaseNotificationPlatform.initialize(applicationContext)
         EpisodeReleaseNotificationPlatform.bindActivity(this)
-        StartupTrace.measure("Cast init") { CastPlatform.initialize(applicationContext) }
+        // Cast is not needed for the first frame: CastContext and the Play services check are
+        // slow, so they start once the home is on screen (a saved session is resumed then).
+        window.decorView.postDelayed({
+            if (!isFinishing && !isDestroyed) {
+                StartupTrace.measure("Cast init (deferred)") { CastPlatform.initialize(applicationContext) }
+            }
+        }, CAST_INIT_DELAY_MS)
         handleIncomingAppIntent(intent)
         StartupTrace.mark("MainActivity setContent")
 
@@ -238,5 +244,9 @@ open class MainActivity : AppCompatActivity() {
         val appUrl = (intent?.dataString ?: intent?.getStringExtra(LinkActivity.EXTRA_LINK))?.trim().orEmpty()
         if (appUrl.isBlank()) return
         handleAppUrl(appUrl)
+    }
+
+    private companion object {
+        const val CAST_INIT_DELAY_MS = 1_500L
     }
 }
