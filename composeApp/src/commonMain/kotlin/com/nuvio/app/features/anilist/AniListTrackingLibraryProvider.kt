@@ -114,7 +114,7 @@ internal fun projectAniListLibrary(
                 val contentId = AniListLibraryResolver.contentId(entry.aniListId, entry.malId, index, preference)
                 AniListLibraryResolver.alternateContentIds(entry.aniListId, entry.malId, index)
                     .plus(contentId.lowercase())
-                    .forEach { id -> aniListIdsByContentId.putIfAbsent(id, entry.aniListId) }
+                    .forEach { id -> aniListIdsByContentId.getOrPut(id) { entry.aniListId } }
                 entry.toLibraryItem(contentId, definition.key)
             }
             .distinctBy { item -> "${item.type}:${item.id}" }

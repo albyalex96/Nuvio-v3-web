@@ -1,5 +1,6 @@
 package com.nuvio.app
 
+import com.nuvio.app.core.compat.appIo
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.MutableTransitionState
@@ -222,7 +223,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.getString
@@ -386,7 +386,7 @@ internal fun MainAppContent(
         // Season downloads resume with the app (also those stopped while it was closed), after the
         // first frame and once the saved downloads are loaded off the main thread.
         withFrameNanos { }
-        withContext(Dispatchers.IO) { DownloadsRepository.ensureLoaded() }
+        withContext(Dispatchers.appIo) { DownloadsRepository.ensureLoaded() }
         StartupTrace.measure("SeasonDownloadRepository.ensureLoaded") {
             com.nuvio.app.features.downloads.season.SeasonDownloadRepository.ensureLoaded()
         }

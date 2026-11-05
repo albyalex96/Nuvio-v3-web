@@ -57,7 +57,7 @@ internal fun projectWeTrakrLibrary(entries: List<WeTrakrListEntry>, sectionTitle
     val byContentId = linkedMapOf<String, WeTrakrListEntry>()
     val items = entries
         .map { entry ->
-            entry.contentIds().forEach { id -> byContentId.putIfAbsent(id, entry) }
+            entry.contentIds().forEach { id -> byContentId.getOrPut(id) { entry } }
             entry.toLibraryItem()
         }
         .distinctBy { item -> "${item.type}:${item.id}" }

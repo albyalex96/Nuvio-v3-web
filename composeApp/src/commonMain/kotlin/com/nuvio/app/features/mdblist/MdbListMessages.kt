@@ -1,6 +1,6 @@
 package com.nuvio.app.features.mdblist
 
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 import org.jetbrains.compose.resources.getString
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.StringResource

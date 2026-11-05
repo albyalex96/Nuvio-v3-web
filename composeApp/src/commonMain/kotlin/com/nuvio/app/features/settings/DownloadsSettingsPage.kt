@@ -1,5 +1,6 @@
 package com.nuvio.app.features.settings
 
+import com.nuvio.app.core.compat.appIo
 import com.nuvio.app.core.ui.NuvioActionMenuDivider
 import com.nuvio.app.core.ui.NuvioActionMenuGroup
 import com.nuvio.app.core.ui.NuvioActionMenuRow
@@ -136,7 +137,6 @@ import com.nuvio.app.tv.TvAppRuntime
 import com.nuvio.app.tv.tvLongPressKeys
 import kotlin.time.TimeSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -187,7 +187,7 @@ private fun DownloadsSettingsBody(isTablet: Boolean) {
     LaunchedEffect(folder, refreshKey, completedCount) {
         val selected = folder
         val knownItems = currentItems
-        val (accessible, found, stats) = withContext(Dispatchers.IO) {
+        val (accessible, found, stats) = withContext(Dispatchers.appIo) {
             val accessible = selected?.let { DownloadsFolderPlatform.isFolderAccessible(it.treeUri) } ?: true
             val folderEntries = if (selected != null && accessible) {
                 DownloadsFolderPlatform.listFolderFiles(selected.treeUri)

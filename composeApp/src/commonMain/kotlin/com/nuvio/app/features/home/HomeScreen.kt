@@ -1,5 +1,6 @@
 package com.nuvio.app.features.home
 
+import com.nuvio.app.core.compat.appIo
 import co.touchlab.kermit.Logger
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -103,7 +104,6 @@ import com.nuvio.app.tv.buildTvHomeModel
 import com.nuvio.app.features.profiles.ProfileRepository
 import com.nuvio.app.features.home.components.HomeCollectionRowSection
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -1609,7 +1609,7 @@ private suspend fun resolveHomeNextUpCandidate(
     // Dispatchers.Default every candidate parked a worker, so the Compose resource loading (and the
     // main thread waiting in stringResource) starved: ANR when opening Settings during this pass.
     // Blocking on IO does not hold a Default worker.
-    val action = withContext(Dispatchers.IO) {
+    val action = withContext(Dispatchers.appIo) {
         meta.seriesPrimaryAction(
             content = completedEntry.content,
             entries = resolvedProgressEntries,

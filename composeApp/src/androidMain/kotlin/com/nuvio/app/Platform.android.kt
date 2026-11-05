@@ -10,5 +10,6 @@ actual fun getPlatform(): Platform = AndroidPlatform()
 
 internal actual val isDesktop: Boolean = false
 internal actual val isIos: Boolean = false
+internal actual val isWeb: Boolean = false
 
 internal actual val supportsPosterNavigationMotion: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S

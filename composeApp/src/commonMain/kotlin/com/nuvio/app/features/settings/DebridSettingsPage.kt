@@ -206,7 +206,7 @@ import nuvio.composeapp.generated.resources.settings_debrid_rule_excluded_releas
 import nuvio.composeapp.generated.resources.settings_debrid_rule_excluded_release_groups_desc
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 
 private const val CLOUD_SERVICES_FAQ_URL = "https://nuvioapp.space/faq#common-cloud-library-and-cloud-services"
 

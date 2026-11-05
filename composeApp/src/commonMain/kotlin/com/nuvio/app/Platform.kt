@@ -8,6 +8,9 @@ expect fun getPlatform(): Platform
 
 internal expect val isIos: Boolean
 
+/** Web build (Kotlin/Wasm in the browser). */
+internal expect val isWeb: Boolean
+
 /** Compose Desktop build (Windows). */
 internal expect val isDesktop: Boolean
 

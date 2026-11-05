@@ -8,7 +8,7 @@ import com.nuvio.app.features.cloudstream.CloudStreamCatalog
 import com.nuvio.app.features.servers.ServerCatalog
 import com.nuvio.app.features.servers.ServerRepository
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

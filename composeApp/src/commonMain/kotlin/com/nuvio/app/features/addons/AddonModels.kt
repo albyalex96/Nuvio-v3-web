@@ -1,6 +1,6 @@
 package com.nuvio.app.features.addons
 
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.generic_addon
 import org.jetbrains.compose.resources.getString

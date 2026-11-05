@@ -4,7 +4,7 @@ import com.nuvio.app.features.streams.StreamBehaviorHints
 import com.nuvio.app.features.streams.StreamItem
 import com.nuvio.app.features.streams.StreamProxyHeaders
 import com.nuvio.app.features.streams.normalizeStreamType
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 import com.nuvio.app.features.player.streamAudioDelayMs
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

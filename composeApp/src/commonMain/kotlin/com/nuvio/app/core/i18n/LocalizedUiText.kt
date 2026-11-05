@@ -1,7 +1,7 @@
 package com.nuvio.app.core.i18n
 
 import com.nuvio.app.core.format.formatEpisodeCodeWithSelectedFormat
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 import nuvio.composeapp.generated.resources.player_picture_in_picture
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.action_play

@@ -1,0 +1,97 @@
+name: Web (GitHub Pages)
+
+# Builds the web version (Kotlin/Wasm, single page) and publishes it on GitHub Pages.
+# Requirements:
+#   - Settings > Pages > Source: "GitHub Actions".
+#   - Secret NUVIO_LOCAL_PROPERTIES_BASE64 (same as the Android release): API keys of the runtime config.
+#   - Repository variables (Settings > Secrets and variables > Actions > Variables):
+#       NUVIO_CORS_PROXY        address of the Cloudflare worker (cloudflare-cors-proxy.js)
+#       NUVIO_CORS_PROXY_TOKEN  optional PROXY_TOKEN of the worker. It ends up in the public page:
+#                               it only stops casual reuse, ALLOWED_ORIGINS on the worker is the real limit.
+
+on:
+  push:
+    branches:
+      - enhanced/v2
+    paths-ignore:
+      - '**.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'androidApp/**'
+      - 'tvApp/**'
+      - 'iosApp/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: web-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build web version
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_PROPERTIES_BASE64: ${{ secrets.NUVIO_LOCAL_PROPERTIES_BASE64 }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Write local.properties
+        run: |
+          if [[ -n "${RELEASE_PROPERTIES_BASE64}" ]]; then
+            printf '%s' "${RELEASE_PROPERTIES_BASE64}" | base64 --decode > local.properties
+            sed -i -E '/^[[:space:]]*(sdk\.dir|NUVIO_RELEASE_STORE_FILE)[[:space:]]*=/d' local.properties
+          else
+            echo "::warning::NUVIO_LOCAL_PROPERTIES_BASE64 is not set: the web build has no API keys."
+            touch local.properties
+          fi
+
+      - name: Build
+        run: ./gradlew :composeApp:wasmJsBrowserDistribution --stacktrace -Dorg.gradle.jvmargs="-Xmx8g -XX:MaxMetaspaceSize=1536m -Dfile.encoding=UTF-8" -Pkotlin.daemon.jvmargs=-Xmx4g
+
+      - name: Configure the CORS proxy
+        env:
+          CORS_PROXY: ${{ vars.NUVIO_CORS_PROXY }}
+          CORS_PROXY_TOKEN: ${{ vars.NUVIO_CORS_PROXY_TOKEN }}
+        run: |
+          dist=composeApp/build/dist/wasmJs/productionExecutable
+          [[ -n "${CORS_PROXY}" ]] || echo "::warning::NUVIO_CORS_PROXY is not set: addons and streams without CORS will not work."
+          escape() { printf '%s' "$1" | sed -e 's/[\/&|]/\\&/g'; }
+          sed -i \
+            -e "s|__NUVIO_CORS_PROXY__|$(escape "${CORS_PROXY}")|" \
+            -e "s|__NUVIO_CORS_PROXY_TOKEN__|$(escape "${CORS_PROXY_TOKEN}")|" \
+            "${dist}/index.html"
+          touch "${dist}/.nojekyll"
+          ls -la "${dist}"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: composeApp/build/dist/wasmJs/productionExecutable
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    # Pages on private repositories needs a paid plan: private copies only build.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

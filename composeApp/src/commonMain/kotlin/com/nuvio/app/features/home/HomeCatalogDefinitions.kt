@@ -9,7 +9,7 @@ import com.nuvio.app.features.catalog.CatalogTarget
 import com.nuvio.app.features.catalog.supportsPagination
 import com.nuvio.app.features.cloudstream.CloudStreamCatalog
 import com.nuvio.app.features.servers.ServerCatalog
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.home_catalog_default_title
 import org.jetbrains.compose.resources.getString

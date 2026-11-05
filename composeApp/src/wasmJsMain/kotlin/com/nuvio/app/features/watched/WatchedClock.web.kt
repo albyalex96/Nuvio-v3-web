@@ -1,0 +1,7 @@
+package com.nuvio.app.features.watched
+
+
+actual object WatchedClock {
+    actual fun nowEpochMs(): Long = com.nuvio.app.web.compat.jsNowMs().toLong()
+}
+

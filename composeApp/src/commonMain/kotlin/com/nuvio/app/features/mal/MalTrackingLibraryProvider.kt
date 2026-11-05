@@ -76,7 +76,7 @@ internal fun projectMalLibrary(
                 val contentId = MalLibraryResolver.contentId(entry.malId, index, preference)
                 MalLibraryResolver.alternateContentIds(entry.malId, index?.byMal(entry.malId))
                     .plus(contentId.lowercase())
-                    .forEach { id -> malIdsByContentId.putIfAbsent(id, entry.malId) }
+                    .forEach { id -> malIdsByContentId.getOrPut(id) { entry.malId } }
                 entry.toLibraryItem(contentId, definition.key)
             }
             .distinctBy { item -> "${item.type}:${item.id}" }

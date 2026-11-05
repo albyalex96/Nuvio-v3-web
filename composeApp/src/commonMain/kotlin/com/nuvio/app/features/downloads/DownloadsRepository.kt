@@ -1,5 +1,6 @@
 package com.nuvio.app.features.downloads
 
+import com.nuvio.app.core.compat.appIo
 import co.touchlab.kermit.Logger
 import com.nuvio.app.core.i18n.localizedSeasonEpisodeCode
 import com.nuvio.app.features.downloads.hls.HlsDownloadSpec
@@ -12,10 +13,9 @@ import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,7 +42,7 @@ object DownloadsRepository {
     /** Guards the first load, which may run on a background thread (see [preloadInBackground]). */
     private val loadLock = SynchronizedObject()
     @Volatile private var firstLoadDone = false
-    private val preloadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val preloadScope = CoroutineScope(SupervisorJob() + Dispatchers.appIo)
 
     /** Loads the saved downloads now; waits for a background load already in progress. */
     fun ensureLoaded() {

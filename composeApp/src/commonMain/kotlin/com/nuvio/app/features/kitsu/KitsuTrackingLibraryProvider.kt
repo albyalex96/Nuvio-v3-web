@@ -111,7 +111,7 @@ internal fun projectKitsuLibrary(
                 val contentId = KitsuLibraryResolver.contentId(entry.kitsuId, index, preference)
                 KitsuLibraryResolver.alternateContentIds(entry.kitsuId, index)
                     .plus(contentId.lowercase())
-                    .forEach { id -> kitsuIdsByContentId.putIfAbsent(id, entry.kitsuId) }
+                    .forEach { id -> kitsuIdsByContentId.getOrPut(id) { entry.kitsuId } }
                 entry.toLibraryItem(contentId, definition.key)
             }
             .distinctBy { item -> "${item.type}:${item.id}" }

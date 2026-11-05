@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0d0d0d">
+    <title>Nuvio</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0d0d0d; }
+        #nuvio-root { position: fixed; inset: 0; }
+        #nuvio-loading {
+            position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; color: #e6e6e6; font: 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; z-index: 10;
+            background: #0d0d0d;
+        }
+        #nuvio-loading .spinner {
+            width: 36px; height: 36px; border-radius: 50%; border: 3px solid #333; border-top-color: #e6e6e6;
+            animation: nuvio-spin 0.9s linear infinite;
+        }
+        @keyframes nuvio-spin { to { transform: rotate(360deg); } }
+    </style>
+    <script>
+        // Runtime configuration. The GitHub Pages workflow fills these values from the
+        // repository variables NUVIO_CORS_PROXY and NUVIO_CORS_PROXY_TOKEN.
+        window.NUVIO_CONFIG = {
+            corsProxy: "__NUVIO_CORS_PROXY__",
+            corsProxyToken: "__NUVIO_CORS_PROXY_TOKEN__"
+        };
+        for (var k in window.NUVIO_CONFIG) {
+            if (window.NUVIO_CONFIG[k].indexOf("__NUVIO_") === 0) window.NUVIO_CONFIG[k] = "";
+        }
+    </script>
+    <!-- HLS playback in browsers without native HLS (Chrome, Firefox, Edge). -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+    <script src="nuvio-player.js"></script>
+</head>
+<body>
+<div id="nuvio-loading">
+    <div class="spinner"></div>
+    <div>Nuvio</div>
+</div>
+<div id="nuvio-root"></div>
+<script src="nuvio.js"></script>
+</body>
+</html>

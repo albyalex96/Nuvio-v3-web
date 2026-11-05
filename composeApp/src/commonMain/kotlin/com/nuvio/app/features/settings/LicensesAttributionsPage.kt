@@ -40,6 +40,7 @@ import com.nuvio.app.features.discord.DiscordRpcPlatform
 import com.nuvio.app.features.telegram.TelegramSourceResolver
 import com.nuvio.app.isDesktop
 import com.nuvio.app.isIos
+import com.nuvio.app.isWeb
 import com.nuvio.app.features.player.seekthumb.seekThumbnailsSupported
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.StringResource
@@ -80,6 +81,7 @@ private const val TavilyUrl = "https://tavily.com"
 private const val NuvioRepositoryUrl = "https://github.com/NuvioMedia/NuvioMobile"
 private const val NuvioArcRepositoryUrl = "https://github.com/ysosrs123/NuvioTV-Fork"
 private const val MpvKitUrl = "https://github.com/mpvkit/MPVKit"
+private const val HlsJsLicenseUrl = "https://github.com/video-dev/hls.js/blob/master/LICENSE"
 private const val MpvUrl = "https://github.com/mpv-player/mpv"
 private const val FfmpegPresetsUrl = "https://github.com/bytedeco/javacpp-presets/tree/master/ffmpeg"
 private const val JmdnsUrl = "https://github.com/jmdns/jmdns"
@@ -677,6 +679,13 @@ private fun platformLicenseItem(): LicenseItem =
             bodyRes = Res.string.settings_licenses_attributions_libmpv_body,
             licenseRes = Res.string.settings_licenses_attributions_libmpv_license,
             link = MpvUrl,
+        )
+    } else if (isWeb) {
+        LicenseItem(
+            titleRes = Res.string.settings_licenses_attributions_hlsjs_title,
+            bodyRes = Res.string.settings_licenses_attributions_hlsjs_body,
+            licenseRes = Res.string.settings_licenses_attributions_hlsjs_license,
+            link = HlsJsLicenseUrl,
         )
     } else if (isIos) {
         LicenseItem(

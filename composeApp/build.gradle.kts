@@ -9,6 +9,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.CommandLineArgumentProvider
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.TestExecutable
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
@@ -423,6 +424,18 @@ kotlin {
         }
     }
 
+    // Web version (browser, single page): published on GitHub Pages.
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        outputModuleName.set("nuvio")
+        browser {
+            commonWebpackConfig {
+                outputFileName = "nuvio.js"
+            }
+        }
+        binaries.executable()
+    }
+
     val iosTargets = listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -639,6 +652,10 @@ kotlin {
                 implementation(libs.ktor.server.core)
                 implementation(libs.ktor.server.cio)
             }
+        }
+        wasmJsMain.dependencies {
+            implementation("io.ktor:ktor-client-js:${libs.versions.ktor.get()}")
+            implementation("org.jetbrains.kotlinx:kotlinx-browser:0.5.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

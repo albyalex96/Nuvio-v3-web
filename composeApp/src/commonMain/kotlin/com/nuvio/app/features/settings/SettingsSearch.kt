@@ -82,6 +82,7 @@ import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.p2p.P2pSettingsRepository
 import com.nuvio.app.isDesktop
 import com.nuvio.app.isIos
+import com.nuvio.app.isWeb
 import com.nuvio.app.tv.LocalTvShell
 import com.nuvio.app.features.discord.DiscordRpcPlatform
 import com.nuvio.app.features.telegram.TelegramSourceResolver
@@ -418,6 +419,11 @@ internal fun settingsSearchEntries(
                 "libmpv-license",
                 stringResource(Res.string.settings_licenses_attributions_libmpv_title),
                 stringResource(Res.string.settings_licenses_attributions_libmpv_license),
+            )
+            isWeb -> PlaybackSearchRow(
+                "hlsjs-license",
+                stringResource(Res.string.settings_licenses_attributions_hlsjs_title),
+                stringResource(Res.string.settings_licenses_attributions_hlsjs_license),
             )
             isIos -> PlaybackSearchRow(
                 "mpvkit-license",

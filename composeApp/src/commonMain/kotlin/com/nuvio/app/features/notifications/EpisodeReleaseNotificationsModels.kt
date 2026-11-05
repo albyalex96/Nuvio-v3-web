@@ -2,7 +2,7 @@ package com.nuvio.app.features.notifications
 
 import com.nuvio.app.core.format.formatEpisodeCodeWithSelectedFormat
 import com.nuvio.app.core.time.parseEpisodeReleaseLocalDate
-import kotlinx.coroutines.runBlocking
+import com.nuvio.app.core.compat.runBlocking
 import kotlinx.serialization.Serializable
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_player_episode_code_episode_only

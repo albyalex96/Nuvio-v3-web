@@ -624,6 +624,9 @@
     <string name="settings_licenses_attributions_exoplayer_title">AndroidX Media3 ExoPlayer 1.8.0</string>
     <string name="settings_licenses_attributions_exoplayer_body">Used for playback on Android builds.</string>
     <string name="settings_licenses_attributions_exoplayer_license">Licensed under the Apache License, Version 2.0.</string>
+    <string name="settings_licenses_attributions_hlsjs_title">hls.js 1.5.13</string>
+    <string name="settings_licenses_attributions_hlsjs_body">Used by the web version to play HLS streams in browsers without native HLS support.</string>
+    <string name="settings_licenses_attributions_hlsjs_license">Licensed under the Apache License, Version 2.0.</string>
     <string name="settings_licenses_attributions_section_ai">AI ASSISTANT SERVICES</string>
     <string name="settings_licenses_attributions_myanimelist_title">MyAnimeList</string>
     <string name="settings_licenses_attributions_myanimelist_body">Nuvio connects to MyAnimeList for account authentication, anime lists, watched episode updates, and MyAnimeList scores. Anime data is provided by MyAnimeList. Nuvio is not affiliated with or endorsed by MyAnimeList.</string>

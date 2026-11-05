@@ -11,6 +11,9 @@
  * Uso:
  *   https://<worker>.workers.dev/?url=<URL codificato>
  *   https://<worker>.workers.dev/?url=<URL codificato>&token=<PROXY_TOKEN>
+ *   https://<worker>.workers.dev/?url=<URL codificato>&headers=<JSON codificato>
+ *     (header da inviare all'origine, es. {"Referer":"https://..."}: serve per i
+ *      video, dato che il tag <video> del browser non può impostare header)
  *
  * Supporta GET/HEAD/POST/PUT/PATCH/DELETE, preflight OPTIONS, richieste Range
  * (seek nei video) e redirect. Gli URL interni nelle playlist HLS (.m3u8)
@@ -89,6 +92,19 @@ export default {
       }
     }
 
+    // Header passati come parametro JSON (usati dal player, che non può impostare header).
+    const headersParam = reqUrl.searchParams.get("headers");
+    if (headersParam) {
+      try {
+        const extra = JSON.parse(headersParam);
+        for (const [key, value] of Object.entries(extra)) {
+          if (typeof value === "string") headers.set(key, value);
+        }
+      } catch {
+        return fail(400, "Parametro 'headers' non valido");
+      }
+    }
+
     let upstream;
     try {
       upstream = await fetch(targetUrl.toString(), {
@@ -119,6 +135,7 @@ export default {
         const absolute = new URL(u, base).toString();
         let out = `${reqUrl.origin}/?url=${encodeURIComponent(absolute)}`;
         if (token) out += `&token=${encodeURIComponent(token)}`;
+        if (headersParam) out += `&headers=${encodeURIComponent(headersParam)}`;
         return out;
       };
       const rewritten = text.split("\n").map((line) => {
