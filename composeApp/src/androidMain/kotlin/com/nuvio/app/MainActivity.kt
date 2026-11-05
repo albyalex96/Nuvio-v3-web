@@ -113,6 +113,7 @@ open class MainActivity : AppCompatActivity() {
         com.nuvio.app.features.tvremote.TvRemoteBootstrap.initialize(applicationContext)
         window.setBackgroundDrawableResource(R.color.nuvio_background)
         pipRemoteActionReceiver = PipRemoteActionReceiver.register(this)
+        StartupTrace.mark("Storage init start")
         SyncClientIdentityStorage.initialize(applicationContext)
         AddonHttpClientProvider.initialize(applicationContext)
         AddonStorage.initialize(applicationContext)
@@ -184,6 +185,7 @@ open class MainActivity : AppCompatActivity() {
         AndroidAppUpdaterPlatform.initialize(applicationContext)
         PlatformLocalAccountDataCleaner.initialize(applicationContext)
         EpisodeReleaseNotificationPlatform.initialize(applicationContext)
+        StartupTrace.mark("Storage init done")
         EpisodeReleaseNotificationPlatform.bindActivity(this)
         // Cast is not needed for the first frame: CastContext and the Play services check are
         // slow, so they start once the home is on screen (a saved session is resumed then).
