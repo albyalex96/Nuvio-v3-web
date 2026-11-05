@@ -88,11 +88,13 @@ import com.nuvio.app.features.watchprogress.ContinueWatchingEnrichmentStorage
 import com.nuvio.app.features.watchprogress.ContinueWatchingPreferencesStorage
 import com.nuvio.app.features.watchprogress.ResumePromptStorage
 import com.nuvio.app.features.watchprogress.WatchProgressStorage
+import com.nuvio.app.core.logging.StartupTrace
 
 open class MainActivity : AppCompatActivity() {
     private var pipRemoteActionReceiver: PipRemoteActionReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        StartupTrace.mark("MainActivity.onCreate")
         installSplashScreen()
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.dark(
@@ -102,10 +104,12 @@ open class MainActivity : AppCompatActivity() {
         ThemeSettingsStorage.initialize(applicationContext)
         AppIconPlatform.initialize(applicationContext)
         SentrySettingsStorage.initialize(applicationContext)
-        SentryInitializer.start(application)
+        StartupTrace.measure("Sentry start") { SentryInitializer.start(application) }
         super.onCreate(savedInstanceState)
         AutoSyncPreferencesAndroid.initialize(applicationContext) // AutoSync hook
-        com.nuvio.app.features.telegram.TelegramBootstrap.initialize(applicationContext)
+        StartupTrace.measure("Telegram bootstrap") {
+            com.nuvio.app.features.telegram.TelegramBootstrap.initialize(applicationContext)
+        }
         com.nuvio.app.features.tvremote.TvRemoteBootstrap.initialize(applicationContext)
         window.setBackgroundDrawableResource(R.color.nuvio_background)
         pipRemoteActionReceiver = PipRemoteActionReceiver.register(this)
@@ -181,8 +185,9 @@ open class MainActivity : AppCompatActivity() {
         PlatformLocalAccountDataCleaner.initialize(applicationContext)
         EpisodeReleaseNotificationPlatform.initialize(applicationContext)
         EpisodeReleaseNotificationPlatform.bindActivity(this)
-        CastPlatform.initialize(applicationContext)
+        StartupTrace.measure("Cast init") { CastPlatform.initialize(applicationContext) }
         handleIncomingAppIntent(intent)
+        StartupTrace.mark("MainActivity setContent")
 
         setContent {
             App()

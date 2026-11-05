@@ -20,6 +20,7 @@ import co.touchlab.kermit.Logger
 import com.nuvio.app.tv.TvAppRuntime
 import com.nuvio.app.core.logging.AppLogPlatform
 import com.nuvio.app.core.logging.AppLogger
+import com.nuvio.app.core.logging.StartupTrace
 import com.nuvio.app.core.mediaproxy.LanMediaProxy
 import com.nuvio.app.core.network.NuvioDns
 import com.nuvio.app.core.network.dns.DnsOverHttpsRepository
@@ -40,6 +41,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+        StartupTrace.mark("Application.onCreate")
         AppLogPlatform.initialize(this)
         AppLogger.install(
             debuggable = applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0,
@@ -49,6 +51,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
         DnsOverHttpsRepository.ensureLoaded()
         LanMediaProxy.initialize(this)
         SeekThumbnailPlatform.initialize(this)
+        StartupTrace.mark("Application.onCreate done")
     }
 
     override fun newImageLoader(context: android.content.Context): ImageLoader {

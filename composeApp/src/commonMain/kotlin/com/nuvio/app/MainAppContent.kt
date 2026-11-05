@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import com.nuvio.app.core.logging.StartupTrace
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -246,7 +247,7 @@ internal fun MainAppContent(
         val navBackStack = rememberNavBackStack(navigationSavedStateConfiguration, initialRoute)
         val posterNavigation = remember { PosterNavigationState() }
         val metaScreenSettings by remember {
-            MetaScreenSettingsRepository.ensureLoaded()
+            StartupTrace.measure("MetaScreenSettingsRepository.ensureLoaded") { MetaScreenSettingsRepository.ensureLoaded() }
             MetaScreenSettingsRepository.uiState
         }.collectAsStateWithLifecycle()
         val posterNavigationEnabled = supportsPosterNavigationMotion &&
@@ -329,15 +330,15 @@ internal fun MainAppContent(
         var pendingTrackingRemoval by remember { mutableStateOf<PendingTrackingMembershipRemoval?>(null) }
         val trackingListsUpdateFailedMessage = stringResource(Res.string.tracking_lists_update_failed)
         val addonsUiState by remember {
-            AddonRepository.initialize()
+            StartupTrace.measure("AddonRepository.initialize") { AddonRepository.initialize() }
             AddonRepository.uiState
         }.collectAsStateWithLifecycle()
         val libraryUiState by remember {
-            LibraryRepository.ensureLoaded()
+            StartupTrace.measure("LibraryRepository.ensureLoaded") { LibraryRepository.ensureLoaded() }
             LibraryRepository.uiState
         }.collectAsStateWithLifecycle()
         val liveTvUiState by remember {
-            LiveTvRepository.ensureLoaded()
+            StartupTrace.measure("LiveTvRepository.ensureLoaded") { LiveTvRepository.ensureLoaded() }
             LiveTvRepository.uiState
         }.collectAsStateWithLifecycle()
         val showLiveTvInNavigation = liveTvUiState.showInNavigation
@@ -355,7 +356,7 @@ internal fun MainAppContent(
         val profileState by ProfileRepository.state.collectAsStateWithLifecycle()
         val launchOverlayProfile = profileState.activeProfile ?: profileState.profiles.firstOrNull()
     val playerSettingsUiState by remember {
-        PlayerSettingsRepository.ensureLoaded()
+        StartupTrace.measure("PlayerSettingsRepository.ensureLoaded") { PlayerSettingsRepository.ensureLoaded() }
         PlayerSettingsRepository.uiState
     }.collectAsStateWithLifecycle()
     var visiblePlayerEntries by remember { mutableIntStateOf(0) }
@@ -365,18 +366,18 @@ internal fun MainAppContent(
         HidePlayerSystemBars()
     }
     val p2pSettingsUiState by remember {
-        P2pSettingsRepository.ensureLoaded()
+        StartupTrace.measure("P2pSettingsRepository.ensureLoaded") { P2pSettingsRepository.ensureLoaded() }
         P2pSettingsRepository.uiState
     }.collectAsStateWithLifecycle()
     val watchedUiState by remember {
-        WatchedRepository.ensureLoaded()
+        StartupTrace.measure("WatchedRepository.ensureLoaded") { WatchedRepository.ensureLoaded() }
         WatchedRepository.uiState
     }.collectAsStateWithLifecycle()
     val fullyWatchedSeriesKeys by WatchedRepository.fullyWatchedSeriesKeys.collectAsStateWithLifecycle()
     val downloadsUiState by remember {
-        DownloadsRepository.ensureLoaded()
+        StartupTrace.measure("DownloadsRepository.ensureLoaded") { DownloadsRepository.ensureLoaded() }
         // Season downloads resume with the app (also those stopped while it was closed).
-        com.nuvio.app.features.downloads.season.SeasonDownloadRepository.ensureLoaded()
+        StartupTrace.measure("SeasonDownloadRepository.ensureLoaded") { com.nuvio.app.features.downloads.season.SeasonDownloadRepository.ensureLoaded() }
         DownloadsRepository.uiState
     }.collectAsStateWithLifecycle()
     val networkStatusUiState by remember {
@@ -433,12 +434,12 @@ internal fun MainAppContent(
     }
 
     val serversUiState by remember {
-        ServerRepository.ensureLoaded()
+        StartupTrace.measure("ServerRepository.ensureLoaded") { ServerRepository.ensureLoaded() }
         ServerRepository.uiState
     }.collectAsStateWithLifecycle()
 
     val cloudStreamUiState by remember {
-        CloudStreamRepository.initialize()
+        StartupTrace.measure("CloudStreamRepository.initialize") { CloudStreamRepository.initialize() }
         CloudStreamRepository.uiState
     }.collectAsStateWithLifecycle()
     val cloudStreamCatalogKey = remember(cloudStreamUiState) { CloudStreamCatalog.revision() }
@@ -759,7 +760,7 @@ internal fun MainAppContent(
         }
     }
     val continueWatchingPreferencesUiState by remember {
-        ContinueWatchingPreferencesRepository.ensureLoaded()
+        StartupTrace.measure("ContinueWatchingPreferencesRepository.ensureLoaded") { ContinueWatchingPreferencesRepository.ensureLoaded() }
         ContinueWatchingPreferencesRepository.uiState
     }.collectAsStateWithLifecycle()
 
@@ -1841,7 +1842,10 @@ internal fun MainAppContent(
                                 onRequestedSettingsPageConsumed = {
                                     requestedSettingsPageName = null
                                 },
-                                onInitialHomeContentRendered = { initialHomeReady = true },
+                                onInitialHomeContentRendered = {
+                                    if (!initialHomeReady) StartupTrace.mark("Home first content rendered")
+                                    initialHomeReady = true
+                                },
                             )
                         },
                         onBack = {
