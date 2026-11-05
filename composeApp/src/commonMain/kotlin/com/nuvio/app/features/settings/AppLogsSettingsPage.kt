@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -145,6 +146,9 @@ private const val DAY_KEY_PATTERN = "yyyyMMdd"
 private const val CONSOLE_WINDOW_HEIGHT_FRACTION = 0.7f
 private val ConsoleMinHeight = 280.dp
 private val ConsoleMaxHeight = 900.dp
+
+/** The category picker never grows past this share of the window (phone, tablet, TV, desktop); its list scrolls. */
+private const val CATEGORY_SHEET_MAX_HEIGHT_FRACTION = 0.6f
 
 private val AppLogInfoColor = Color(0xFF4FA3FF)
 private val AppLogWarnColor = Color(0xFFFFB020)
@@ -374,6 +378,9 @@ private fun AppLogsCategorySheet(
         val known = categories.map { it.first }.toSet()
         categories + selected.filter { it !in known }.map { it to 0 }
     }
+    val density = LocalDensity.current
+    val windowHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
+    val sheetMaxHeight = windowHeight * CATEGORY_SHEET_MAX_HEIGHT_FRACTION
 
     NuvioModalBottomSheet(
         onDismissRequest = dismiss,
@@ -382,6 +389,7 @@ private fun AppLogsCategorySheet(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = sheetMaxHeight)
                 .padding(bottom = 16.dp),
         ) {
             item {
