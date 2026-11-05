@@ -612,9 +612,15 @@ internal fun MainAppContent(
     LaunchedEffect(appContentGeneration) {
         if (!ownsAppRuntime) return@LaunchedEffect
         NetworkStatusRepository.ensureStarted()
-        EpisodeReleaseNotificationsRepository.refreshAsync()
-        kotlinx.coroutines.delay(5_000)
+        // The release notifications refresh calls addons and TMDB: it waits for the home to show its
+        // first content (at most 5 s), so it does not compete with the catalogs and posters.
+        kotlinx.coroutines.withTimeoutOrNull(5_000) {
+            snapshotFlow { initialHomeReady }.first { it }
+        }
         initialHomeReady = true
+        kotlinx.coroutines.delay(HOME_SECONDARY_WORK_DELAY_MS)
+        StartupTrace.mark("Release notifications refresh started")
+        EpisodeReleaseNotificationsRepository.refreshAsync()
     }
 
     LaunchedEffect(networkStatusUiState.condition) {
@@ -2540,3 +2546,6 @@ internal fun MainAppContent(
             }
         }
 }
+
+/** Delay after the first home content before secondary network work starts. */
+private const val HOME_SECONDARY_WORK_DELAY_MS = 2_000L
