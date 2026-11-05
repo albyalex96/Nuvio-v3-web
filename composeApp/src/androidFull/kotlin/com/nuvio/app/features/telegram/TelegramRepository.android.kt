@@ -2,7 +2,11 @@ package com.nuvio.app.features.telegram
 
 import android.content.Context
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import org.drinkless.tdlib.TdApi
 import java.io.File
 
@@ -27,14 +31,20 @@ object TelegramRepository {
     fun initialize(context: Context) {
         val ctx = context.applicationContext
         appContext = ctx
-        if (sessionMarker(ctx).exists()) {
-            log.i { "Restoring the saved Telegram session" }
-            TelegramClient.initialize(ctx)
-        } else {
-            // A login that was never completed leaves a half-written database behind.
-            wipeTdlibFiles(ctx)
+        // Called from MainActivity.onCreate: the file checks and the cleanup run off the main
+        // thread so they never delay the first frame (TDLib itself already starts in background).
+        startupScope.launch {
+            if (sessionMarker(ctx).exists()) {
+                log.i { "Restoring the saved Telegram session" }
+                TelegramClient.initialize(ctx)
+            } else {
+                // A login that was never completed leaves a half-written database behind.
+                wipeTdlibFiles(ctx)
+            }
         }
     }
+
+    private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private fun sessionMarker(context: Context) = File(context.filesDir, TelegramClient.TDLIB_SESSION_MARKER)
 
@@ -84,6 +94,8 @@ object TelegramRepository {
     }
 
     private fun wipeTdlibFiles(context: Context) {
+        // A login started in the meantime owns the files now.
+        if (TelegramClient.authState.value !is TelegramAuthState.Idle) return
         sessionMarker(context).delete()
         File(context.filesDir, TelegramClient.TDLIB_DB_DIR).deleteRecursively()
         File(context.filesDir, TelegramClient.TDLIB_FILES_DIR).deleteRecursively()
