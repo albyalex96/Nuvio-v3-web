@@ -229,7 +229,7 @@ jobs:
 
   build-desktop:
     name: Build Windows desktop installer
-    needs: build
+    needs: [build, build-tv]
     runs-on: windows-latest
     env:
       RELEASE_PROPERTIES_BASE64: ${{ secrets.NUVIO_LOCAL_PROPERTIES_BASE64 }}
